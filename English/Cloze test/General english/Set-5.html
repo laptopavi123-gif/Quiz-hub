@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Results Section */
+        .result-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-result-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-q-text { font-weight: 500; margin-bottom: 12px; font-size: 1.05rem; color: #334155; font-style: italic; }
+        .result-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 600; }
+        .text-wrong { color: #b91c1c; font-weight: 600; }
+        .result-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Comprehensive Practice Set</h1>
+    <button class="btn-finish" onclick="showResults()">Finish & View Results</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p3', this)">Passage 1</button>
+    <button class="tab-btn" onclick="switchPassage('p4', this)">Passage 2</button>
+    <button class="tab-btn" onclick="switchPassage('p5', this)">Passage 3</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="questionArea">
+            <div class="q-header" id="questionTitle">Select the appropriate word for the highlighted blank:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-section" id="resultSection">
+    <div class="result-container" id="resultContainer">
+        <!-- Result Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p3: {
+            title: "Passage 1",
+            text: "Decisions may be <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ &nbsp; ]</span> at either through initiative or through inertia. Many misfortunes in the world come across the bridge of indecision. Power corrupts but weakness also corrupts. The fruits of weakness like fear, bitterness and suspicion can <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ &nbsp; ]</span> in a paralysis of decision. Inner division can produce indecision, and indecision results by weakness of character. An occasional wrong decision may be sometimes <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ &nbsp; ]</span> to indecision. The <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ &nbsp; ]</span> man is often self-centred. He fears making a <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ &nbsp; ]</span> and the fear paralyses him. When indecision grips a nation, free men feel the need for an <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ &nbsp; ]</span> ruler and they are prepared to <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ &nbsp; ]</span> democracy overboard. In certain large democracies, the governments rule with a <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ &nbsp; ]</span> majority. They often know what decisions would be beneficial in the long run, but they <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ &nbsp; ]</span> to take them lest they be unpopular. Their <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ &nbsp; ]</span> to carry the opposition and to rally people to a larger purpose, makes them ineffective rulers.",
+            questions: [
+                { opts: {a: "aimed", b: "looked", c: "arrived", d: "deferred", e: "formulated"}, ans: "c", expl: "<strong>arrived:</strong> 'Arrived at' is the correct idiomatic expression when talking about reaching a decision.", context: "Decisions may be [...] at either through initiative..." },
+                { opts: {a: "drown", b: "result", c: "exist", d: "indulge", e: "entangle"}, ans: "b", expl: "<strong>result:</strong> The preposition 'in' follows 'result', meaning to cause a particular situation (paralysis of decision).", context: "...fear, bitterness and suspicion can [...] in a paralysis..." },
+                { opts: {a: "useful", b: "preferable", c: "acceptable", d: "susceptible", e: "questionable"}, ans: "b", expl: "<strong>preferable:</strong> 'Preferable to' means more desirable than something else. A wrong decision is better (preferable) than no decision.", context: "An occasional wrong decision may be sometimes [...] to indecision." },
+                { opts: {a: "dishonest", b: "common", c: "selfish", d: "indecisive", e: "trustworthy"}, ans: "d", expl: "<strong>indecisive:</strong> The entire passage discusses the flaws of indecision, making 'indecisive man' the logical subject here.", context: "The [...] man is often self-centred." },
+                { opts: {a: "decision", b: "query", c: "mistake", d: "presentation", e: "submission"}, ans: "c", expl: "<strong>mistake:</strong> Indecisive people typically fear making a 'mistake', which causes their paralysis.", context: "He fears making a [...] and the fear paralyses him." },
+                { opts: {a: "indecisive", b: "energetic", c: "eccentric", d: "optimistic"}, ans: "b", expl: "<strong>energetic:</strong> When crippled by indecision, a nation seeks a strong, 'energetic' ruler who can take decisive action.", context: "...free men feel the need for an [...] ruler..." },
+                { opts: {a: "regard", b: "accept", c: "throw", d: "cultivate", e: "sacrifice"}, ans: "c", expl: "<strong>throw:</strong> 'Throw overboard' is a common idiom meaning to discard or abandon something.", context: "...and they are prepared to [...] democracy overboard." },
+                { opts: {a: "derisive", b: "slender", c: "vast", d: "winning", e: "substantial"}, ans: "b", expl: "<strong>slender:</strong> A 'slender majority' explains why the government is hesitant to take unpopular decisions; they fear losing their slim advantage.", context: "...governments rule with a [...] majority." },
+                { opts: {a: "like", b: "fail", c: "prefer", d: "decide", e: "hesitate"}, ans: "e", expl: "<strong>hesitate:</strong> Because of their slender majority and fear of unpopularity, they 'hesitate' to make necessary decisions.", context: "...but they [...] to take them lest they be unpopular." },
+                { opts: {a: "desire", b: "skill", c: "apathy", d: "inability", e: "indifference"}, ans: "d", expl: "<strong>inability:</strong> The lack of capacity ('inability') to rally people is what ultimately makes them ineffective.", context: "Their [...] to carry the opposition... makes them ineffective rulers." }
+            ],
+            answers: []
+        },
+        p4: {
+            title: "Passage 2",
+            text: "The Universities in India must learn to <span class='blank' id='b-p4-0' onclick='loadQuestion(\"p4\", 0)'>[ &nbsp; ]</span> individuality, variety and dissent <span class='blank' id='b-p4-1' onclick='loadQuestion(\"p4\", 1)'>[ &nbsp; ]</span> a climate of tolerance. Dissent there is, even now, but usually of a sensational kind. The general tendency however, is, to produce the 'organisation man' who is <span class='blank' id='b-p4-2' onclick='loadQuestion(\"p4\", 2)'>[ &nbsp; ]</span> to challenge the accepted pattern of social behaviour and social institutions at the intellectual level and who is <span class='blank' id='b-p4-3' onclick='loadQuestion(\"p4\", 3)'>[ &nbsp; ]</span> often anxious to worm himself into the good <span class='blank' id='b-p4-4' onclick='loadQuestion(\"p4\", 4)'>[ &nbsp; ]</span> of the people who count so that he may be able to 'get on' in life.",
+            questions: [
+                { opts: {a: "ignore", b: "create", c: "suppress", d: "establish", e: "encourage"}, ans: "e", expl: "<strong>encourage:</strong> In the context of education and progress, universities should 'encourage' positive traits like individuality and constructive dissent.", context: "The Universities in India must learn to [...] individuality, variety and dissent..." },
+                { opts: {a: "within", b: "from", c: "but", d: "before", e: "without"}, ans: "a", expl: "<strong>within:</strong> These traits should be fostered 'within' (inside) a climate of tolerance.", context: "...individuality, variety and dissent [...] a climate of tolerance." },
+                { opts: {a: "free", b: "naive", c: "afraid", d: "willing", e: "ignorant"}, ans: "c", expl: "<strong>afraid:</strong> The 'organisation man' conforms to norms and is therefore 'afraid' to challenge accepted social behaviors.", context: "...produce the 'organisation man' who is [...] to challenge the accepted pattern..." },
+                { opts: {a: "never", b: "less", c: "too", d: "rarely", e: "hardly"}, ans: "c", expl: "<strong>too:</strong> 'Too often' is a standard phrase used to express that something undesirable happens more frequently than it should.", context: "...and who is [...] often anxious to worm himself..." },
+                { opts: {a: "graces", b: "looks", c: "charm", d: "influence", e: "connection"}, ans: "a", expl: "<strong>graces:</strong> 'To worm oneself into someone's good graces' is a common idiom meaning to manipulate one's way into someone's favor.", context: "...anxious to worm himself into the good [...] of the people who count..." }
+            ],
+            answers: []
+        },
+        p5: {
+            title: "Passage 3",
+            text: "Many of us believe that science is something modern <span class='blank' id='b-p5-0' onclick='loadQuestion(\"p5\", 0)'>[ &nbsp; ]</span> the truth is that <span class='blank' id='b-p5-1' onclick='loadQuestion(\"p5\", 1)'>[ &nbsp; ]</span> has been using science for <span class='blank' id='b-p5-2' onclick='loadQuestion(\"p5\", 2)'>[ &nbsp; ]</span> very long time. However, it has <span class='blank' id='b-p5-3' onclick='loadQuestion(\"p5\", 3)'>[ &nbsp; ]</span> a greater effect on human lives in the last 25 <span class='blank' id='b-p5-4' onclick='loadQuestion(\"p5\", 4)'>[ &nbsp; ]</span> 30 years than in the hundreds of years <span class='blank' id='b-p5-5' onclick='loadQuestion(\"p5\", 5)'>[ &nbsp; ]</span> the invention of the plough. The <span class='blank' id='b-p5-6' onclick='loadQuestion(\"p5\", 6)'>[ &nbsp; ]</span> gifts of science have made modern life <span class='blank' id='b-p5-7' onclick='loadQuestion(\"p5\", 7)'>[ &nbsp; ]</span> and comfortable. But science has <span class='blank' id='b-p5-8' onclick='loadQuestion(\"p5\", 8)'>[ &nbsp; ]</span> the same time created new problems. One of these, which may become <span class='blank' id='b-p5-9' onclick='loadQuestion(\"p5\", 9)'>[ &nbsp; ]</span> in the years to come, is <span class='blank' id='b-p5-10' onclick='loadQuestion(\"p5\", 10)'>[ &nbsp; ]</span> of 'jet-lag'. With the coming of modern jets, flying at more than 900 kilometres an hour, the world <span class='blank' id='b-p5-11' onclick='loadQuestion(\"p5\", 11)'>[ &nbsp; ]</span> very small indeed. Today if you <span class='blank' id='b-p5-12' onclick='loadQuestion(\"p5\", 12)'>[ &nbsp; ]</span> New Delhi at 4.00 in the morning, you <span class='blank' id='b-p5-13' onclick='loadQuestion(\"p5\", 13)'>[ &nbsp; ]</span> eat an early breakfast in the sky <span class='blank' id='b-p5-14' onclick='loadQuestion(\"p5\", 14)'>[ &nbsp; ]</span> Kabul, and be in London by about 1.00 p.m.",
+            questions: [
+                { opts: {a: "unless", b: "it", c: "though"}, ans: "c", expl: "<strong>though:</strong> Used as a conjunction to introduce a contrasting fact (similar to 'although' or 'but').", context: "...science is something modern [...] the truth is that..." },
+                { opts: {a: "people", b: "man", c: "nuclear"}, ans: "b", expl: "<strong>man:</strong> 'Man' is used here in the general sense representing humankind.", context: "...the truth is that [...] has been using science..." },
+                { opts: {a: "the", b: "a", c: "that"}, ans: "b", expl: "<strong>a:</strong> 'For a very long time' is the correct standard English phrase.", context: "...has been using science for [...] very long time." },
+                { opts: {a: "have", b: "had", c: "has"}, ans: "b", expl: "<strong>had:</strong> Present perfect tense ('it has had') refers to an effect that started in the past and continues to the present.", context: "However, it has [...] a greater effect on human lives..." },
+                { opts: {a: "and", b: "or", c: "either"}, ans: "b", expl: "<strong>or:</strong> '25 or 30 years' is a common way to express an approximate range of time.", context: "...in the last 25 [...] 30 years than in the hundreds of years..." },
+                { opts: {a: "from", b: "for", c: "since"}, ans: "c", expl: "<strong>since:</strong> Used to indicate the starting point of a period of time continuing to the present.", context: "...than in the hundreds of years [...] the invention of the plough." },
+                { opts: {a: "marvellous", b: "costly", c: "inexpensive"}, ans: "a", expl: "<strong>marvellous:</strong> A positive adjective fits perfectly with 'gifts' that make life comfortable.", context: "The [...] gifts of science have made modern life..." },
+                { opts: {a: "dull", b: "exciting", c: "aimless"}, ans: "b", expl: "<strong>exciting:</strong> Pairs positively with 'comfortable' to describe the benefits brought by science.", context: "...have made modern life [...] and comfortable." },
+                { opts: {a: "at", b: "in", c: "within"}, ans: "a", expl: "<strong>at:</strong> 'At the same time' is the correct prepositional phrase.", context: "But science has [...] the same time created new problems." },
+                { opts: {a: "bad", b: "worse", c: "good"}, ans: "b", expl: "<strong>worse:</strong> Suggests deterioration. Problems that exist now may intensify or become 'worse' in the future.", context: "One of these, which may become [...] in the years to come..." },
+                { opts: {a: "those", b: "this", c: "that"}, ans: "c", expl: "<strong>that:</strong> Used as a pronoun referencing 'the problem'. 'The problem is that of jet-lag'.", context: "...in the years to come, is [...] of 'jet-lag'." },
+                { opts: {a: "can become", b: "became", c: "has become"}, ans: "c", expl: "<strong>has become:</strong> Present perfect is appropriate here for a change that has recently happened and currently affects us.", context: "...flying at more than 900 kilometres an hour, the world [...] very small indeed." },
+                { opts: {a: "leave", b: "will have", c: "would have"}, ans: "a", expl: "<strong>leave:</strong> First conditional structure ('if you leave... you can eat').", context: "Today if you [...] New Delhi at 4.00 in the morning..." },
+                { opts: {a: "will", b: "can", c: "must"}, ans: "b", expl: "<strong>can:</strong> Indicates ability or possibility resulting from the speed of modern travel.", context: "...at 4.00 in the morning, you [...] eat an early breakfast..." },
+                { opts: {a: "at", b: "on", c: "over"}, ans: "c", expl: "<strong>over:</strong> You fly 'over' a city or country when traveling in an airplane.", context: "...eat an early breakfast in the sky [...] Kabul..." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = null;
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        switchPassage('p3', document.querySelector('.tab-btn'));
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+
+        // Automatically load the first question
+        loadQuestion(passageId, 0);
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        const activeBlank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(activeBlank) activeBlank.classList.add('active');
+
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function showResults() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        resultSection.style.display = 'block';
+        
+        let score = 0;
+        let resultHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            resultHTML += `<div class="passage-result-title">${passage.title} Results</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `(${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+                
+                const contextStr = q.context.replace('[...]', `<strong class="${statusClass}">[ ${statusText} ]</strong>`);
+
+                resultHTML += `
+                    <div class="result-item">
+                        <div class="result-q-text">"${contextStr}"</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="result-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="result-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        resultContainer.innerHTML = scoreCard + resultHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>
