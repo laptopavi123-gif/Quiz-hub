@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC CGL Advanced Vocabulary Quiz</title>
+    <style>
+        :root {
+            --primary: #673AB7; /* Deep Purple */
+            --secondary: #9575CD;
+            --dark: #121212;
+            --card: #1E1E1E;
+            --text: #E0E0E0;
+            --correct: #4CAF50;
+            --wrong: #F44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-wrapper {
+            background-color: var(--card);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .header {
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-box {
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .btn {
+            background-color: #2D2D2D;
+            border: 2px solid #3D3D3D;
+            color: var(--text);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+            background-color: #333;
+        }
+
+        .btn.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            border-color: var(--correct);
+            color: var(--correct);
+        }
+
+        .btn.wrong {
+            background-color: rgba(244, 67, 54, 0.2);
+            border-color: var(--wrong);
+            color: var(--wrong);
+        }
+
+        .btn.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .next-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            margin-top: 25px;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .results-view {
+            display: none;
+        }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-wrapper">
+    <div class="header">
+        <span id="progress">1 / 30</span>
+        <span>Confusing Options Quiz</span>
+    </div>
+
+    <div id="quiz-interface">
+        <div class="question-box">
+            <div class="question-text" id="question">Loading...</div>
+        </div>
+        <div class="options-grid" id="options"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+    </div>
+
+    <div id="results-view" class="results-view">
+        <h2>Quiz Complete</h2>
+        <div class="final-score" id="score">0</div>
+        <p>Check your errors against the definitions.</p>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">Restart</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { 
+            word: "Monolithic", 
+            meaning: "Formed of a single large block of stone // (of an organization) large, powerful, and intractably indivisible and uniform",
+            distractors: ["Polylithic", "Neolithic", "Paleolithic"] 
+        },
+        { 
+            word: "Heterolinguistic", 
+            meaning: "Pertaining to or characterized by the use of different languages",
+            distractors: ["Homolinguistic", "Monolinguistic", "Multilingual"] 
+        },
+        { 
+            word: "Contentious", 
+            meaning: "A person who likes to argue about anything",
+            distractors: ["Contagious", "Contented", "Conscientious"] 
+        },
+        { 
+            word: "Veracious", 
+            meaning: "Speaking or representing the truth",
+            distractors: ["Voracious", "Vicious", "Vivacious"] 
+        },
+        { 
+            word: "Sceptic", 
+            meaning: "A person inclined to question or doubt accepted opinions",
+            distractors: ["Septic", "Ascetic", "Cryptic"] 
+        },
+        { 
+            word: "Satyromania", 
+            meaning: "A man's excessive and often uncontrollable sexual desire and behavior",
+            distractors: ["Kleptomania", "Dipsomania", "Pyromania"] 
+        },
+        { 
+            word: "Inferno", 
+            meaning: "A large fire that is dangerously out of control",
+            distractors: ["Internal", "Infernal", "Infrared"] 
+        },
+        { 
+            word: "Euphoria", 
+            meaning: "A feeling or state of intense excitement and happiness",
+            distractors: ["Utopia", "Dysphoria", "Euthanasia"] 
+        },
+        { 
+            word: "Dystopia", 
+            meaning: "An imagined world or society in which people lead wretched, dehumanized, fearful lives",
+            distractors: ["Utopia", "Myopia", "Cornucopia"] 
+        },
+        { 
+            word: "Agoraphobia", 
+            meaning: "Fear of going outside and being in public places",
+            distractors: ["Claustrophobia", "Acrophobia", "Xenophobia"] 
+        },
+        { 
+            word: "Clique", 
+            meaning: "Exclusive circle of people with a common purpose",
+            distractors: ["Click", "Claque", "Plaque"] 
+        },
+        { 
+            word: "Pique", 
+            meaning: "A feeling of anger, especially caused by someone damaging your feeling of being proud of yourself",
+            distractors: ["Peak", "Peek", "Pick"] 
+        },
+        { 
+            word: "Alchemist", 
+            meaning: "A person who transforms or creates something through a seemingly magical process",
+            distractors: ["Chemist", "Pharmacist", "Botanist"] 
+        },
+        { 
+            word: "Atrophy", 
+            meaning: "A decrease in size of an organ caused by disease or disuse",
+            distractors: ["Entropy", "Trophy", "Hypertrophy"] 
+        },
+        { 
+            word: "Entropy", 
+            meaning: "Lack of order or predictability",
+            distractors: ["Atrophy", "Enthalpy", "Energy"] 
+        },
+        { 
+            word: "Lustrum", 
+            meaning: "A period of five years",
+            distractors: ["Decade", "Century", "Millennium"] 
+        },
+        { 
+            word: "Steward", 
+            meaning: "A person employed to look after the passengers on a ship, aircraft, or train",
+            distractors: ["Chauffeur", "Pilot", "Captain"] 
+        },
+        { 
+            word: "Screech", 
+            meaning: "High shrill piercing cry",
+            distractors: ["Speech", "Preach", "Beseech"] 
+        },
+        { 
+            word: "Creche", 
+            meaning: "A nursery where babies and young children are cared for during the working day",
+            distractors: ["Cache", "Crash", "Clutch"] 
+        },
+        { 
+            word: "Allegories", 
+            meaning: "Stories, poems, or pictures that can be interpreted to reveal a hidden meaning",
+            distractors: ["Categories", "Allergies", "Galleries"] 
+        },
+        { 
+            word: "Perennial", 
+            meaning: "Lasting for a long time / Round the year",
+            distractors: ["Biennial", "Centennial", "Millennial"] 
+        },
+        { 
+            word: "Mordancy", 
+            meaning: "A sharply critical or bitter quality of thought or feeling",
+            distractors: ["Dormancy", "Constancy", "Vacancy"] 
+        },
+        { 
+            word: "Palaeography", 
+            meaning: "The study of ancient writing systems and the deciphering and dating of historical manuscripts",
+            distractors: ["Calligraphy", "Geography", "Archeology"] 
+        },
+        { 
+            word: "Polemist", 
+            meaning: "A person who strongly attacks or defends a particular opinion, person, idea, or set of beliefs",
+            distractors: ["Pacifist", "Pugilist", "Optimist"] 
+        },
+        { 
+            word: "Pathos", 
+            meaning: "A quality that evokes pity or sadness",
+            distractors: ["Ethos", "Logos", "Chaos"] 
+        },
+        { 
+            word: "Innuendos", 
+            meaning: "Remarks that suggest something sexual or unpleasant but do not refer to it directly",
+            distractors: ["Crescendos", "Mementos", "Commandos"] 
+        },
+        { 
+            word: "Pragmatic", 
+            meaning: "Dealing with things in a practical and sensible way",
+            distractors: ["Dogmatic", "Dramatic", "Automatic"] 
+        },
+        { 
+            word: "Tangible", 
+            meaning: "Things that can be seen and touched",
+            distractors: ["Intangible", "Edible", "Audible"] 
+        },
+        { 
+            word: "Rampage", 
+            meaning: "To go through an area making a lot of noise and causing damage",
+            distractors: ["Rummage", "Passage", "Savage"] 
+        },
+        { 
+            word: "Bayonet", 
+            meaning: "Short sword fixed onto the end of the gun",
+            distractors: ["Baron", "Baton", "Bigot"] 
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    // Shuffle questions
+    quizData.sort(() => Math.random() - 0.5);
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('next-btn');
+    const progressEl = document.getElementById('progress');
+    const interfaceEl = document.getElementById('quiz-interface');
+    const resultsEl = document.getElementById('results-view');
+    const scoreEl = document.getElementById('score');
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        progressEl.innerText = `${currentIdx + 1} / ${quizData.length}`;
+        questionEl.innerText = data.meaning;
+        
+        optionsEl.innerHTML = '';
+        nextBtn.style.display = 'none';
+
+        // Create options array with answer + distractors
+        let opts = [...data.distractors, data.word];
+        opts.sort(() => Math.random() - 0.5);
+
+        opts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, data.word);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(b => {
+            b.classList.add('disabled');
+            if (b.innerText === correct) b.classList.add('correct');
+        });
+
+        if (selected === correct) {
+            score++;
+        } else {
+            btn.classList.add('wrong');
+        }
+        nextBtn.style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        interfaceEl.style.display = 'none';
+        progressEl.style.display = 'none';
+        resultsEl.style.display = 'block';
+        scoreEl.innerText = `${score} / ${quizData.length}`;
+    }
+
+    // Start
+    loadQuestion();
+
+</script>
+
+</body>
+</html>

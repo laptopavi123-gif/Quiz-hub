@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>120 Rules of Grammar: Complete Drill</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --accent-hover: #2980b9; --correct: #27ae60; --wrong: #c0392b; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; background: var(--bg); padding: 20px; color: #333; max-width: 900px; margin: 0 auto; line-height: 1.6; }
+        
+        /* Header Styling */
+        .header { text-align: center; margin-bottom: 30px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header h1 { margin: 0; color: var(--primary); font-size: 2.2rem; letter-spacing: -0.5px; }
+        .header p { margin: 10px 0 0; color: #7f8c8d; font-size: 1.1rem; }
+        
+        /* Question Card Styling */
+        .question-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; overflow: hidden; }
+        .question-card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 6px; background: var(--accent); }
+        
+        .rule-label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 1.5px; color: #95a5a6; font-weight: 800; margin-bottom: 15px; display: block; }
+        .question-text { font-size: 1.35em; font-weight: 700; margin-bottom: 25px; color: var(--primary); line-height: 1.4; }
+        
+        /* Options Styling */
+        .options { list-style: none; padding: 0; }
+        .option { padding: 15px 20px; border: 2px solid #e9ecef; margin-bottom: 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; font-size: 1.05em; background: #fff; }
+        .option:hover { border-color: var(--accent); background: #f4faff; transform: translateX(5px); }
+        .option.correct { border-color: var(--correct); background: #dffbe9; color: #1e7e34; font-weight: 600; }
+        .option.wrong { border-color: var(--wrong); background: #fceceb; color: #a92216; opacity: 0.7; }
+        
+        /* Explanation Styling */
+        .explanation { display: none; margin-top: 25px; padding: 20px; background: #fff8e1; border-radius: 8px; border-left: 4px solid #f1c40f; color: #856404; font-size: 1em; animation: fadeIn 0.5s ease; }
+        
+        /* Sticky Score Board */
+        #score-board { position: sticky; top: 20px; background: var(--primary); color: white; padding: 10px 25px; border-radius: 50px; display: inline-block; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3); z-index: 100; font-weight: bold; float: right; font-size: 1.1em; }
+        
+        /* BEAUTIFUL NEXT BUTTON STYLING */
+        .btn-wrapper {
+            display: flex;
+            justify-content: flex-end; /* Places button on the right */
+            margin-top: 25px;
+        }
+
+        .nav-btn { 
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white; 
+            border: none; 
+            padding: 16px 45px; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-size: 1.2rem; 
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 15px 25px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+        }
+
+        .nav-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Result Screen */
+        #result-screen { text-align: center; display: none; }
+        .score-circle { width: 150px; height: 150px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5em; font-weight: bold; margin: 20px auto; box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4); }
+    </style>
+</head>
+<body>
+
+<div style="overflow: hidden;">
+    <div id="score-board">Score: 0 / 0</div>
+</div>
+
+<div class="header">
+    <h1>120 Rules of Grammar</h1>
+    <p>Ultimate Practice Drill</p>
+</div>
+
+<div id="quiz-container">
+    </div>
+
+<div id="result-screen" class="question-card">
+    <h2 style="color: var(--primary); font-size: 2em;">Quiz Completed!</h2>
+    <div class="score-circle" id="final-score"></div>
+    <p style="font-size: 1.2em; color: #7f8c8d;">Great job reviewing the rules!</p>
+    <button class="nav-btn" onclick="location.reload()" style="margin: 0 auto;">Retake Quiz ↺</button>
+</div>
+
+<script>
+    const allQuestions = [
+        // --- RULE 1: Each vs Every ---
+        { r: "Rule 1", q: "I have a book in _____ hand. (Referring to 2 hands)", o: ["every", "each", "all"], a: 1, e: "Use 'Each' for two items. 'Every' is for more than two." },
+        { r: "Rule 1", q: "_____ student is working hard.", o: ["Each", "Every", "Both Each and Every"], a: 2, e: "Both Each and Every can be used as adjectives for singular nouns." },
+        
+        // --- RULE 2: Both ---
+        { r: "Rule 2", q: "Both Ram _____ Shyam are coming.", o: ["as well as", "and", "with"], a: 1, e: "'Both' is always followed by 'and', never 'as well as'." },
+        { r: "Rule 2", q: "_____ of them did not go.", o: ["Both", "Neither"], a: 1, e: "'Both' is not used in negative sentences. Use 'Neither'." },
+
+        // --- RULE 3: Who vs Whom ---
+        { r: "Rule 3", q: "The boy _____ stole the pen was punished.", o: ["who", "whom"], a: 0, e: "Subjective case needed for the verb 'stole' -> 'Who'." },
+        { r: "Rule 3", q: "The boy _____ I met was polite.", o: ["who", "whom"], a: 1, e: "Objective case needed (I met him) -> 'Whom'." },
+
+        // --- RULE 4: Conditionals ---
+        { r: "Rule 4", q: "If I _____ (know) the answer, I would tell you.", o: ["knew", "know", "had known"], a: 0, e: "Simple Past in condition -> 'Would + V1' in result." },
+        { r: "Rule 4", q: "If I _____ (be) the PM, I would change the law.", o: ["was", "am", "were"], a: 2, e: "Hypothetical situations always use 'were'." },
+        { r: "Rule 4", q: "If he _____ (come) on time, he would have met me.", o: ["came", "had came", "had come"], a: 2, e: "Past Perfect (Had + V3) -> Would have + V3." },
+
+        // --- RULE 5: One of the ---
+        { r: "Rule 5", q: "One of the boys _____ missing.", o: ["is", "are"], a: 0, e: "'One of the + Plural Noun' takes a Singular verb." },
+        { r: "Rule 5", q: "He is one of the boys who _____ helpful.", o: ["is", "are"], a: 1, e: "Relative pronoun 'who' relates to 'boys' (plural) -> 'are'." },
+        { r: "Rule 5", q: "He is ONLY one of the boys who _____ helpful.", o: ["is", "are"], a: 0, e: "If 'Only' is used, the verb is Singular." },
+
+        // --- RULE 6: Units ---
+        { r: "Rule 6", q: "I have five _____ rupees.", o: ["dozen", "dozens"], a: 0, e: "When a number precedes a unit (five dozen), the unit remains singular." },
+        { r: "Rule 6", q: "_____ of people gathered there.", o: ["Thousand", "Thousands"], a: 1, e: "Indefinite units (no specific number) take plural (Thousands of)." },
+
+        // --- RULE 11: Gerunds ---
+        { r: "Rule 11", q: "I don't like _____ going there.", o: ["him", "his"], a: 1, e: "Possessive adjective (his) is used before a Gerund (going)." },
+
+        // --- RULE 12: Inversion ---
+        { r: "Rule 12", q: "Hardly _____ entered the room when it rained.", o: ["I had", "had I"], a: 1, e: "Negative adverbs at the start require Inversion (Helping verb before Subject)." },
+        { r: "Rule 12", q: "No sooner did he see me _____ he ran.", o: ["when", "then", "than"], a: 2, e: "No sooner... Than." },
+
+        // --- RULE 15: Reflexive ---
+        { r: "Rule 15", q: "He availed _____ of the chance.", o: ["--", "himself"], a: 1, e: "'Avail' must be followed by a reflexive pronoun if no object exists." },
+        { r: "Rule 15", q: "She enjoyed _____ at the party.", o: ["herself", "at"], a: 0, e: "'Enjoy' without an object takes a reflexive pronoun." },
+
+        // --- RULE 16: No Reflexive ---
+        { r: "Rule 16", q: "He hid _____ in the room.", o: ["himself", "--"], a: 1, e: "Verbs like Hide, Keep, Stop, Turn do not take reflexive pronouns." },
+
+        // --- RULE 19: Comparison of Pronouns ---
+        { r: "Rule 19", q: "He is taller than _____.", o: ["me", "I"], a: 1, e: "Compare Subject to Subject. 'He' is subject, so compare with 'I'." },
+        { r: "Rule 19", q: "My father loves me more than _____ (he loves him).", o: ["he", "him"], a: 1, e: "Comparing objects (me vs him)." },
+
+        // --- RULE 22: Reciprocal Pronouns ---
+        { r: "Rule 22", q: "The two brothers love _____.", o: ["one another", "each other"], a: 1, e: "Each other is for two. One another is for more than two." },
+        
+        // --- RULE 23: Seldom ---
+        { r: "Rule 23", q: "Seldom or _____ have I seen him.", o: ["ever", "never"], a: 1, e: "Pair: Seldom or never." },
+        { r: "Rule 23", q: "Seldom if _____ have I seen him.", o: ["ever", "never"], a: 0, e: "Pair: Seldom if ever." },
+
+        // --- RULE 24: Very vs Much ---
+        { r: "Rule 24", q: "This is a _____ interesting book.", o: ["very", "much"], a: 0, e: "Very + Present Participle (Interesting)." },
+        { r: "Rule 24", q: "He is _____ weaker than I.", o: ["very", "much"], a: 1, e: "Much + Comparative Degree (Weaker)." },
+
+        // --- RULE 26: No 'As' ---
+        { r: "Rule 26", q: "The teacher called him _____ stupid.", o: ["as", "--", "like"], a: 1, e: "Verbs like Call, Elect, Name, Consider do not take 'as'." },
+        { r: "Rule 26", q: "I regard him _____ my brother.", o: ["as", "--"], a: 0, e: "Regard, Treat, View take 'as'." },
+
+        // --- RULE 28: Stative Verbs ---
+        { r: "Rule 28", q: "I am _____ a car.", o: ["owning", "own", "having"], a: 1, e: "Possession verbs (own, have) are not used in -ing form. Use 'I own'." },
+        { r: "Rule 28", q: "I am _____ the stars.", o: ["seeing", "see"], a: 0, e: "Perception verbs usually don't take -ing, but 'seeing' can mean meeting/dating. Here 'seeing' is okay if meaning meeting, but simple perception is 'see'." },
+
+        // --- RULE 29: Present Perfect Triggers ---
+        { r: "Rule 29", q: "I have not seen him _____.", o: ["yesterday", "yet", "ago"], a: 1, e: "Yet, So far, Already are used with Present Perfect." },
+
+        // --- RULE 31: Prepositions (Latin adjectives) ---
+        { r: "Rule 31", q: "He is senior _____ me.", o: ["than", "to", "from"], a: 1, e: "Words ending in -ior (Senior, Junior) take 'to'." },
+        { r: "Rule 31", q: "I prefer tea _____ coffee.", o: ["than", "to", "over"], a: 1, e: "Prefer takes 'to'." },
+
+        // --- RULE 33: Times ---
+        { r: "Rule 33", q: "My house is three times _____ yours.", o: ["bigger than", "as big as"], a: 1, e: "With 'Times', use Positive degree (as big as), not Comparative." },
+
+        // --- RULE 36: Dual Qualities ---
+        { r: "Rule 36", q: "He is _____ than brave.", o: ["wiser", "more wise"], a: 1, e: "Comparing two qualities of the SAME person: Use 'More + Positive Degree'." },
+
+        // --- RULE 37: More than one ---
+        { r: "Rule 37", q: "More than one student _____ absent.", o: ["was", "were"], a: 0, e: "More than one + Singular Noun + Singular Verb." },
+        { r: "Rule 37", q: "More students than one _____ absent.", o: ["was", "were"], a: 1, e: "More + Plural Noun + than one + Plural Verb." },
+
+        // --- RULE 39: Sequence of Tenses ---
+        { r: "Rule 39", q: "He said that the earth _____ round.", o: ["was", "is"], a: 1, e: "Universal truths remain in Simple Present even if the main verb is Past." },
+
+        // --- RULE 40: Little/A Little/The Little ---
+        { r: "Rule 40", q: "_____ knowledge is a dangerous thing.", o: ["Little", "A little", "The little"], a: 1, e: "A little (some) is dangerous. Little (none) is not." },
+        { r: "Rule 40", q: "I drank _____ water that was in the pot.", o: ["a little", "the little"], a: 1, e: "The little = All that was available." },
+
+        // --- RULE 41: Preposition Case ---
+        { r: "Rule 41", q: "He laughed at _____.", o: ["he", "him"], a: 1, e: "Prepositions are followed by Objective Case." },
+
+        // --- RULE 42: Order of Pronouns ---
+        { r: "Rule 42", q: "Good act: _____ are going.", o: ["You, he and I", "I, you and he"], a: 0, e: "Normal order: 2-3-1 (You, He, I)." },
+        { r: "Rule 42", q: "Confession/Crime: _____ are guilty.", o: ["You, he and I", "I, you and he"], a: 1, e: "Bad act order: 1-2-3 (I, You, He)." },
+
+        // --- RULE 43: Superfluous ---
+        { r: "Rule 43", q: "He returned _____ from London.", o: ["back", "--"], a: 1, e: "'Return' implies back. 'Return back' is superfluous." },
+        { r: "Rule 43", q: "She is my cousin _____.", o: ["sister", "--"], a: 1, e: "Never use sister/brother with Cousin." },
+
+        // --- RULE 46: Non-gradable ---
+        { r: "Rule 46", q: "This is the _____ unique idea.", o: ["most", "--"], a: 1, e: "Unique, Perfect, Round, Full are absolute. No 'more/most'." },
+
+        // --- RULE 49: Possession ---
+        { r: "Rule 49", q: "_____ father is a doctor. (Ram and Shyam are brothers)", o: ["Ram and Shyam's", "Ram's and Shyam's"], a: 0, e: "Common possession (one father) -> Apostrophe only on the last noun." },
+        { r: "Rule 49", q: "_____ wives are here. (Separate)", o: ["Ram and Shyam's", "Ram's and Shyam's"], a: 1, e: "Split possession -> Apostrophe on both." },
+
+        // --- RULE 51: Number of ---
+        { r: "Rule 51", q: "The number of boys _____ 50.", o: ["is", "are"], a: 0, e: "'The number' refers to the digit/count -> Singular." },
+        { r: "Rule 51", q: "A number of boys _____ playing.", o: ["is", "are"], a: 1, e: "'A number of' means 'many' -> Plural." },
+
+        // --- RULE 52: It is time ---
+        { r: "Rule 52", q: "It is high time we _____.", o: ["start", "started", "should start"], a: 1, e: "It is high time + Subject + V2 (Past Simple)." },
+
+        // --- RULE 53: Prepositions (Angry) ---
+        { r: "Rule 53", q: "I am angry _____ you.", o: ["at", "with"], a: 1, e: "Angry WITH a person." },
+        { r: "Rule 53", q: "I am angry _____ your behavior.", o: ["at", "with"], a: 0, e: "Angry AT a thing/action." },
+
+        // --- RULE 54: Know + How ---
+        { r: "Rule 54", q: "I know _____ to drive.", o: ["--", "how"], a: 1, e: "Know/Teach/Learn are followed by 'how/when/where' + infinitive." },
+
+        // --- RULE 55: Else/Other ---
+        { r: "Rule 55", q: "I want nothing else _____ peace.", o: ["than", "but"], a: 1, e: "Else... But." },
+        { r: "Rule 55", q: "I have no other option _____ this.", o: ["than", "but"], a: 0, e: "Other... Than." },
+
+        // --- RULE 56: Kind/Sort ---
+        { r: "Rule 56", q: "I don't like these _____ of pens.", o: ["kind", "kinds"], a: 1, e: "'These' is plural, so 'kinds' must be plural." },
+
+        // --- RULE 57: In vs Into ---
+        { r: "Rule 57", q: "He jumped _____ the river.", o: ["in", "into"], a: 1, e: "Motion inward/Change of medium -> Into." },
+        { r: "Rule 57", q: "He is sitting _____ the room.", o: ["in", "into"], a: 0, e: "Static position -> In." },
+
+        // --- RULE 59: Start/Begin ---
+        { r: "Rule 59", q: "The exam starts _____ Monday.", o: ["from", "on"], a: 1, e: "Start/Begin/Commence take 'ON' for days, not 'from'." },
+
+        // --- RULE 60: Addicted to ---
+        { r: "Rule 60", q: "He is addicted to _____.", o: ["smoke", "smoking"], a: 1, e: "Phrases like 'Addicted to', 'With a view to', 'Look forward to' take V1+ing (Gerund)." },
+
+        // --- RULE 61: A vs An ---
+        { r: "Rule 61", q: "He is _____ MP.", o: ["a", "an"], a: 1, e: "MP starts with vowel sound 'Em' -> An." },
+        { r: "Rule 61", q: "It is _____ one-rupee coin.", o: ["a", "an"], a: 0, e: "One starts with consonant sound 'Wa' -> A." },
+
+        // --- RULE 64: The + Adjective ---
+        { r: "Rule 64", q: "The poor _____ suffering.", o: ["is", "are"], a: 1, e: "'The poor' means 'Poor people' (Plural)." },
+
+        // --- RULE 65: Noun + Prep + Noun ---
+        { r: "Rule 65", q: "_____ after _____ were destroyed.", o: ["Village...village", "Villages...villages"], a: 0, e: "Noun + Preposition + Same Noun -> Both nouns must be Singular." },
+
+        // --- RULE 67: Man/Woman vs Male/Female ---
+        { r: "Rule 67", q: "She is a _____ doctor.", o: ["female", "woman"], a: 1, e: "For profession/job title, use Woman/Man. For physical characteristics, use Male/Female." },
+        { r: "Rule 67", q: "These are _____ shoes.", o: ["ladies", "female"], a: 0, e: "Shoes meant for ladies." },
+
+        // --- RULE 69: Question Tags ---
+        { r: "Rule 69", q: "I am late, _____?", o: ["amn't I", "aren't I"], a: 1, e: "Question tag for 'I am' is 'aren't I'." },
+        { r: "Rule 69", q: "Let us go, _____?", o: ["will we", "shall we"], a: 1, e: "Question tag for 'Let us' is 'shall we'." },
+
+        // --- RULE 80: Parallelism ---
+        { r: "Rule 80", q: "He likes swimming, dancing and _____.", o: ["to sing", "singing"], a: 1, e: "Keep the form consistent (Gerunds)." },
+
+        // --- RULE 84: Politics ---
+        { r: "Rule 84", q: "Politics _____ a dirty game.", o: ["is", "are"], a: 0, e: "Subject -> Singular." },
+        { r: "Rule 84", q: "His politics _____ different.", o: ["is", "are"], a: 1, e: "Meaning 'Political views' -> Plural." },
+
+        // --- RULE 88: Optative ---
+        { r: "Rule 88", q: "Long _____ the King!", o: ["live", "lives"], a: 0, e: "Optative sentences take Plural verb (Subjunctive mood)." },
+
+        // --- RULE 89: Dangling Participle ---
+        { r: "Rule 89", q: "_____ a rainy day, I stayed home.", o: ["Being", "It being"], a: 1, e: "Without 'It', the subject becomes 'I' (I am not a rainy day)." },
+
+        // --- RULE 92: Always Plural ---
+        { r: "Rule 92", q: "My scissors _____ sharp.", o: ["is", "are"], a: 1, e: "Scissors, Tongs, Pants are always plural." },
+
+        // --- RULE 98: Quantity ---
+        { r: "Rule 98", q: "_____ quantity of rice.", o: ["Small", "Less", "Few"], a: 0, e: "Use 'Small/Large' with the word 'Quantity', not 'Less/Little'." },
+
+        // --- RULE 99: Hang/Hung ---
+        { r: "Rule 99", q: "The prisoner was _____.", o: ["hung", "hanged"], a: 1, e: "Hanged = Execution. Hung = Placing an object." },
+        { r: "Rule 99", q: "I _____ the picture on the wall.", o: ["hung", "hanged"], a: 0, e: "Object placement -> Hung." },
+
+        // --- RULE 100: Lie/Lay ---
+        { r: "Rule 100", q: "He _____ on the grass yesterday.", o: ["lay", "laid"], a: 0, e: "Past of Lie (recline) is Lay." },
+        { r: "Rule 100", q: "The hen _____ an egg.", o: ["lay", "laid"], a: 1, e: "Past of Lay (produce/put) is Laid." },
+
+        // --- RULE 101: Die of/from ---
+        { r: "Rule 101", q: "He died _____ cancer.", o: ["of", "from"], a: 0, e: "Die OF a disease." },
+        { r: "Rule 101", q: "He died _____ hunger.", o: ["of", "from"], a: 1, e: "Die FROM a cause (hunger, thirst, loss of blood)." },
+
+        // --- RULE 102: Beside/Besides ---
+        { r: "Rule 102", q: "Sit _____ me.", o: ["beside", "besides"], a: 0, e: "Beside = Next to." },
+        { r: "Rule 102", q: "_____ English, I know Hindi.", o: ["Beside", "Besides"], a: 1, e: "Besides = In addition to." },
+
+        // --- RULE 108: Wood/Woods ---
+        { r: "Rule 108", q: "The chair is made of _____.", o: ["wood", "woods"], a: 0, e: "Wood = Material." },
+        { r: "Rule 108", q: "He got lost in the _____.", o: ["wood", "woods"], a: 1, e: "Woods = Forest." },
+
+        // --- RULE 109: English Teacher ---
+        { r: "Rule 109", q: "He is my _____.", o: ["English Teacher", "Teacher of English"], a: 1, e: "'English Teacher' implies a teacher from England. 'Teacher of English' is the subject teacher." },
+
+        // --- RULE 110: One's ---
+        { r: "Rule 110", q: "One must do _____ duty.", o: ["his", "one's"], a: 1, e: "Possessive of 'One' is 'One's'." },
+
+        // --- RULE 118: Apostrophe (Hissing) ---
+        { r: "Rule 118", q: "For _____ sake.", o: ["conscience's", "conscience'"], a: 1, e: "Words ending in hissing sound take only apostrophe (')." },
+
+        // --- RULE 120: Predicative Adjectives ---
+        { r: "Rule 120", q: "He is an _____ man.", o: ["afraid", "frightened"], a: 1, e: "Adjectives like Afraid, Asleep, Awake cannot be used before a noun (Attributive). Use Frightened/Sleeping." }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+
+    function renderQuestion() {
+        if (currentQIndex >= allQuestions.length) {
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('result-screen').style.display = 'block';
+            document.getElementById('score-board').style.display = 'none';
+            document.getElementById('final-score').innerText = `${score}/${allQuestions.length}`;
+            return;
+        }
+
+        const q = allQuestions[currentQIndex];
+        const container = document.getElementById('quiz-container');
+        
+        container.innerHTML = `
+            <div class="question-card">
+                <span class="rule-label">${q.r}</span>
+                <div class="question-text">${currentQIndex + 1}. ${q.q}</div>
+                <ul class="options">
+                    ${q.o.map((opt, i) => 
+                        `<li class="option" onclick="selectAnswer(${i}, this)">${opt}</li>`
+                    ).join('')}
+                </ul>
+                <div id="explanation-${currentQIndex}" class="explanation">${q.e}</div>
+                
+                <div class="btn-wrapper">
+                    <button id="next-btn" class="nav-btn hidden" onclick="nextQuestion()">
+                        Next Question ➜
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Update stats
+        document.getElementById('score-board').innerText = `Score: ${score} / ${allQuestions.length}`;
+    }
+
+    function selectAnswer(index, element) {
+        if (element.parentElement.querySelector('.correct') || element.parentElement.querySelector('.wrong')) return; 
+
+        const q = allQuestions[currentQIndex];
+        const options = element.parentElement.children;
+
+        if (index === q.a) {
+            element.classList.add('correct');
+            score++;
+        } else {
+            element.classList.add('wrong');
+            options[q.a].classList.add('correct');
+        }
+
+        document.getElementById(`explanation-${currentQIndex}`).style.display = 'block';
+        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('score-board').innerText = `Score: ${score} / ${allQuestions.length}`;
+    }
+
+    function nextQuestion() {
+        currentQIndex++;
+        renderQuestion();
+    }
+
+    // Start
+    renderQuestion();
+
+</script>
+
+</body>
+</html>

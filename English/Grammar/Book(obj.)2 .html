@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Spotting Errors - Exercise B</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #22c55e;
+            --error: #ef4444;
+            --background: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --exp-bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 750px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header & Progress */
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Question Section */
+        .question-text {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .instructions {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+            font-style: italic;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #eef2ff;
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: var(--success);
+            color: #166534;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: var(--error);
+            color: #991b1b;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: var(--exp-bg);
+            border-left: 5px solid var(--primary);
+            border-radius: 8px;
+            animation: fadeIn 0.4s ease-out;
+            line-height: 1.6;
+        }
+
+        .exp-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Results */
+        .result-box {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 20px 0;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen" class="result-box">
+        <h1 style="color: var(--primary); margin-bottom: 10px;">Spotting Errors: Exercise B</h1>
+        <p style="margin-top: 10px; color: var(--text-sub); font-size: 1.1rem;">25 Questions based on Subject-Verb Agreement, Tenses, and Prepositions.</p>
+        <button class="btn" onclick="startQuiz()" style="margin-top: 30px;">Start Practice</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div class="header">
+            <div class="stats-bar">
+                <span id="question-count">Question 1/25</span>
+                <span id="score-tracker">Score: 0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress-fill" class="progress-bar-fill"></div>
+            </div>
+        </div>
+        
+        <p class="instructions">Identify the segment that contains a grammatical error. If there is no error, select (d).</p>
+        <div id="question-text" class="question-text"></div>
+
+        <div id="options-container" class="options-grid"></div>
+
+        <div id="explanation-display" class="explanation-box hidden">
+            <span class="exp-title">Analysis & Correct Answer</span>
+            <span id="explanation-text"></span>
+        </div>
+
+        <div class="controls">
+            <button id="next-btn" class="btn" onclick="nextQuestion()" disabled>Next Question</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden result-box">
+        <h2>Quiz Completed!</h2>
+        <div class="score-display">
+            <span id="final-score">0</span><span style="font-size: 2rem; color: #9ca3af;"> / 25</span>
+        </div>
+        <p id="score-message" style="color: var(--text-main); font-size: 1.1rem; margin-bottom: 25px;"></p>
+        <button class="btn" onclick="restartQuiz()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    // Data extracted from Exercise B (PDF Pages 1-3)
+    const quizQuestions = [
+      {
+        id: 1,
+        question: "Beware of a fair weather friend who is neither a friend in need nor a friend indeed.",
+        options: [
+          "(a) Beware of a fair weather friend",
+          "(b) who is neither",
+          "(c) a friend in need nor a friend indeed",
+          "(d) No error"
+        ],
+        correctAnswer: "(d) No error",
+        explanation: "Answer (d): The sentence is grammatically correct. 'Fair weather friend' is a standard idiom. The contrast between 'friend in need' and 'friend indeed' (referencing the famous proverb) is correctly used."
+      },
+      {
+        id: 2,
+        question: "Copernicus proved that Earth moves round the Sun.",
+        options: [
+          "(a) Copernicus proved",
+          "(b) that Earth moves",
+          "(c) round the Sun",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) that Earth moves",
+        explanation: "Answer (b): It should be 'that the Earth'. [Rule: We use the definite article 'the' before the names of planets and unique celestial bodies like the Earth, the Sun, the Moon]."
+      },
+      {
+        id: 3,
+        question: "Seldom we have been treated in such a rude manner by the police personnel.",
+        options: [
+          "(a) Seldom we have been treated",
+          "(b) in such a rude manner",
+          "(c) by the police personnel",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Seldom we have been treated",
+        explanation: "Answer (a): It should be 'Seldom have we been treated'. [Rule: Law of Inversion. When a sentence starts with a negative adverb like 'Seldom', 'Hardly', 'Scarcely', the auxiliary verb must come before the subject]."
+      },
+      {
+        id: 4,
+        question: "Some men are born great some achieve greatness and some had greatness thrust on them.",
+        options: [
+          "(a) Some men are born great",
+          "(b) some achieve greatness",
+          "(c) and some had greatness thrust on them",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) and some had greatness thrust on them",
+        explanation: "Answer (c): It should be 'have greatness thrust on them'. [Rule: Parallelism/Tense Consistency. The previous verbs 'are' and 'achieve' are in the Present Tense, so the final clause must also be in the Present Tense]."
+      },
+      {
+        id: 5,
+        question: "The property was divided among the two brothers.",
+        options: [
+          "(a) The property was divided",
+          "(b) among the two brothers",
+          "(c) No error",
+          "(d) (This option left blank in source)"
+        ],
+        correctAnswer: "(b) among the two brothers",
+        explanation: "Answer (b): It should be 'between the two brothers'. [Rule: 'Between' is used for two persons/things; 'Among' is used for more than two]."
+      },
+      {
+        id: 6,
+        question: "I am quite certain that the lady is not only greedy but miserly.",
+        options: [
+          "(a) I am quite certain",
+          "(b) that the lady is not only greedy",
+          "(c) but miserly",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) but miserly",
+        explanation: "Answer (c): It should be 'but also miserly'. [Rule: Correlative Conjunctions go in pairs: 'Not only... but also'. You cannot omit 'also' here]."
+      },
+      {
+        id: 7,
+        question: "There are a number of reasons I do not like him, but his selfishness is intolerable.",
+        options: [
+          "(a) There are a number of reasons",
+          "(b) I do not like him,",
+          "(c) but his selfishness is intolerable",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) I do not like him,",
+        explanation: "Answer (b): The connection between the clauses is missing. It should be 'reasons why I do not like him' or 'reasons for which I do not like him'. As written, it is a run-on sentence."
+      },
+      {
+        id: 8,
+        question: "I have read an interesting book yesterday and underlined the new words which are simple but effective.",
+        options: [
+          "(a) I have read an interesting book yesterday",
+          "(b) and underlined the new words",
+          "(c) which are simple but effective",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) I have read an interesting book yesterday",
+        explanation: "Answer (a): It should be 'I read an interesting book yesterday'. [Rule: When a past time adverb (like 'yesterday', 'last year', 'ago') is used, we must use the Simple Past Tense, not the Present Perfect]."
+      },
+      {
+        id: 9,
+        question: "He cannot be trusted with important secret informations; otherwise I would have made him my assistant.",
+        options: [
+          "(a) He cannot be trusted",
+          "(b) with important secret informations;",
+          "(c) otherwise I would have made him my assistant",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) with important secret informations;",
+        explanation: "Answer (b): It should be 'information'. [Rule: 'Information' is an uncountable noun. It does not have a plural form 'informations'.]"
+      },
+      {
+        id: 10,
+        question: "Is there further reasons you can give me for your failure to do as you promised?",
+        options: [
+          "(a) Is there further reasons",
+          "(b) you can give me for your failure",
+          "(c) to do as you promised?",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Is there further reasons",
+        explanation: "Answer (a): It should be 'Are there further reasons'. [Rule: Subject-Verb Agreement. The subject 'reasons' is plural, so the verb must be plural 'Are', not 'Is'.]"
+      },
+      {
+        id: 11,
+        question: "During the final minutes of the speech the speaker requested to the audience to have patience.",
+        options: [
+          "(a) During the final minutes of the speech",
+          "(b) the speaker requested to",
+          "(c) the audience to have patience",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) the speaker requested to",
+        explanation: "Answer (b): Remove 'to' after requested. [Rule: 'Request' is a transitive verb. It takes a direct object without a preposition. Example: 'He requested the audience'.]"
+      },
+      {
+        id: 12,
+        question: "He is running temperature since last Friday and doctors suspect that he is down with typhoid.",
+        options: [
+          "(a) He is running temperature since last Friday",
+          "(b) and doctors suspect",
+          "(c) that he is down with typhoid",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) He is running temperature since last Friday",
+        explanation: "Answer (a): It should be 'He has been running a temperature'. [Rule: When 'since' or 'for' is used to indicate time duration, we use the Present Perfect Continuous tense, not Simple Present Continuous.]"
+      },
+      {
+        id: 13,
+        question: "Travel agents around the world have come to rely on computers to book seats in air flights or rooms in hotels.",
+        options: [
+          "(a) Travel agents around the world have come to rely on computers",
+          "(b) to book seats in air flights or rooms in hotels",
+          "(c) either today or a year from now",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) to book seats in air flights or rooms in hotels",
+        explanation: "Answer (b): It should be 'on air flights' (or simply 'on flights'). We book a seat 'on' a flight, not 'in' a flight."
+      },
+      {
+        id: 14,
+        question: "She expressed her gratitudes to all those who had supported her.",
+        options: [
+          "(a) She expressed her gratitudes",
+          "(b) to all those",
+          "(c) who had supported her",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) She expressed her gratitudes",
+        explanation: "Answer (a): It should be 'gratitude'. [Rule: 'Gratitude' is an abstract noun and is uncountable. It should not be pluralized.]"
+      },
+      {
+        id: 15,
+        question: "When the meeting was over he was very tired so that he went home immediately.",
+        options: [
+          "(a) When the meeting was over",
+          "(b) he was very tired",
+          "(c) so that he went home immediately",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) so that he went home immediately",
+        explanation: "Answer (c): Remove 'that'. It should be 'so he went home immediately'. 'So that' indicates purpose/intention, whereas 'so' (therefore) indicates a result."
+      },
+      {
+        id: 16,
+        question: "Modern man must pull himself off together and act his part in life as God's own most favourite creature.",
+        options: [
+          "(a) Modern man must pull himself off together",
+          "(b) and act his part in life",
+          "(c) as God's own most favourite creature",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Modern man must pull himself off together",
+        explanation: "Answer (a): Remove 'off'. The correct idiom is 'pull himself together' (meaning to recover control of one's emotions)."
+      },
+      {
+        id: 17,
+        question: "There would be fewer follies, and happiness and good feeling all round if we applied the scientific attitude for all our affairs.",
+        options: [
+          "(a) There would be fewer follies, and happiness and good feeling all round",
+          "(b) if we applied the scientific attitude",
+          "(c) for all our affairs",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) for all our affairs",
+        explanation: "Answer (c): It should be 'to all our affairs'. [Rule: We 'apply' something 'to' a situation, not 'for' it.]"
+      },
+      {
+        id: 18,
+        question: "Heera told to the teacher that she couldn't come for the rehearsals the next day.",
+        options: [
+          "(a) Heera told to the teacher",
+          "(b) that she couldn't come for the rehearsals",
+          "(c) the next day",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Heera told to the teacher",
+        explanation: "Answer (a): Remove 'to'. [Rule: 'Tell' is a transitive verb. It is followed directly by the object. Example: 'He told me', 'He told the teacher'. We do not say 'told to'.]"
+      },
+      {
+        id: 19,
+        question: "I am told that Anjali has been suffering from fever since ten days.",
+        options: [
+          "(a) I am told that Anjali has been",
+          "(b) suffering from fever",
+          "(c) since ten days",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) since ten days",
+        explanation: "Answer (c): It should be 'for ten days'. [Rule: 'Since' is used for a point in time (since Monday, since 2010). 'For' is used for a duration of time (for 2 days, for 10 days).]"
+      },
+      {
+        id: 20,
+        question: "The armed forces have been working around the clock to bring a semblance of normality in the flood affected areas.",
+        options: [
+          "(a) The armed forces have been working around the clock",
+          "(b) to bring a semblance of normality",
+          "(c) in the flood affected areas",
+          "(d) No error"
+        ],
+        correctAnswer: "(d) No error",
+        explanation: "Answer (d): The sentence is grammatically correct. 'Working around the clock' is a standard phrase, and the tenses are used correctly."
+      },
+      {
+        id: 21,
+        question: "Just when Alfred Nobel's discoveries were beginning to bring him rewards, which were to make him one of the richest man of his day an anti-Nobel campaign was started in France.",
+        options: [
+          "(a) Just when Alfred Nobel's discoveries were beginning to bring him rewards",
+          "(b) which were to make him one of the richest man of his day",
+          "(c) an anti-Nobel campaign was started in France",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) which were to make him one of the richest man of his day",
+        explanation: "Answer (b): It should be 'richest men'. [Rule: The phrase 'one of the' is always followed by a Plural Noun (one of the boys, one of the men).]"
+      },
+      {
+        id: 22,
+        question: "This is the second communication we have sent and we are much surprised at receiving no answer.",
+        options: [
+          "(a) This is the second communication we have sent",
+          "(b) and we are much surprised",
+          "(c) at receiving no answer",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) and we are much surprised",
+        explanation: "Answer (b): It is better to use 'very surprised'. While 'much' can be used with past participles in passive voice, 'very' is the standard intensifier for participial adjectives like 'surprised', 'interested', 'pleased' in modern English."
+      },
+      {
+        id: 23,
+        question: "Several guests noticed Mr. Sharma falling back in his chair and gasping for breath.",
+        options: [
+          "(a) Several guests noticed Mr. Sharma",
+          "(b) falling back in his chair",
+          "(c) and gasping for breath",
+          "(d) No error"
+        ],
+        correctAnswer: "(d) No error",
+        explanation: "Answer (d): The sentence is correct. The structure 'Noticed + Object + Participle (falling/gasping)' is standard for observing an action in progress."
+      },
+      {
+        id: 24,
+        question: "Long life is good if one be happy and has friends.",
+        options: [
+          "(a) Long life is good",
+          "(b) if one be happy",
+          "(c) and has friends",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) if one be happy",
+        explanation: "Answer (b): It should be 'if one is happy'. [Rule: Parallelism/Mood consistency. The verb 'has' (in 'has friends') is Indicative. Therefore, the earlier verb must also be Indicative ('is'), not Subjunctive ('be').]"
+      },
+      {
+        id: 25,
+        question: "His assistants have and are still doing excellent work for the organization.",
+        options: [
+          "(a) His assistants have and are still doing",
+          "(b) excellent work for the organization",
+          "(c) No error",
+          "(d) (Blank)"
+        ],
+        correctAnswer: "(a) His assistants have and are still doing",
+        explanation: "Answer (a): It should be 'His assistants have done and are still doing'. [Rule: When two auxiliaries (have, are) are used with different principal verbs forms (V3 vs V4), both main verbs must be expressed. 'Have' takes V3 (done), 'Are' takes V4 (doing).]"
+      }
+    ];
+
+    // --- APP LOGIC ---
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const screens = {
+        start: document.getElementById('start-screen'),
+        quiz: document.getElementById('quiz-screen'),
+        result: document.getElementById('result-screen')
+    };
+
+    const els = {
+        questionText: document.getElementById('question-text'),
+        optionsContainer: document.getElementById('options-container'),
+        progressFill: document.getElementById('progress-fill'),
+        questionCount: document.getElementById('question-count'),
+        scoreTracker: document.getElementById('score-tracker'),
+        nextBtn: document.getElementById('next-btn'),
+        finalScore: document.getElementById('final-score'),
+        scoreMsg: document.getElementById('score-message'),
+        expDisplay: document.getElementById('explanation-display'),
+        expText: document.getElementById('explanation-text')
+    };
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        showScreen('quiz');
+        loadQuestion();
+    }
+
+    function showScreen(screenName) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenName].classList.remove('hidden');
+    }
+
+    function loadQuestion() {
+        const q = quizQuestions[currentQuestionIndex];
+        
+        // Update UI
+        els.questionText.textContent = `${q.id}. ${q.question}`;
+        els.questionCount.textContent = `Question ${currentQuestionIndex + 1}/${quizQuestions.length}`;
+        els.scoreTracker.textContent = `Score: ${score}`;
+        els.nextBtn.disabled = true;
+        
+        els.expDisplay.classList.add('hidden');
+        els.expText.textContent = '';
+
+        const progress = (currentQuestionIndex / quizQuestions.length) * 100;
+        els.progressFill.style.width = `${progress}%`;
+
+        els.optionsContainer.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => checkAnswer(btn, opt, q);
+            els.optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedBtn, selectedOption, questionObj) {
+        const allBtns = els.optionsContainer.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.disabled = true);
+
+        const isCorrect = selectedOption === questionObj.correctAnswer;
+
+        if (isCorrect) {
+            selectedBtn.classList.add('correct');
+            score++;
+        } else {
+            selectedBtn.classList.add('wrong');
+            allBtns.forEach(btn => {
+                if (btn.textContent === questionObj.correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        els.expText.textContent = questionObj.explanation;
+        els.expDisplay.classList.remove('hidden');
+
+        els.nextBtn.disabled = false;
+        els.scoreTracker.textContent = `Score: ${score}`;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizQuestions.length) {
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        showScreen('result');
+        els.finalScore.textContent = score;
+        els.progressFill.style.width = '100%';
+
+        const percentage = (score / quizQuestions.length) * 100;
+        if (percentage === 100) els.scoreMsg.textContent = "Outstanding! You have mastered these rules.";
+        else if (percentage >= 80) els.scoreMsg.textContent = "Excellent work! You are ready for the exam.";
+        else if (percentage >= 50) els.scoreMsg.textContent = "Good effort! Review the explanations for the ones you missed.";
+        else els.scoreMsg.textContent = "Keep practicing. Focus on Tense Consistency and Prepositions.";
+    }
+
+    function restartQuiz() {
+        startQuiz();
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-hover: #0284c7;
+            --bg-body: #f1f5f9;
+            --bg-panel: #ffffff;
+            --text-main: #0f172a;
+            --text-light: #475569;
+            --border: #cbd5e1;
+            --blank-bg: #e0f2fe;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.5px; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+        }
+
+        .tab-btn {
+            padding: 16px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--primary); background: #f8fafc; }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: #f0f9ff;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Passage Panel */
+        .passage-panel {
+            flex: 1.1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2.1;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+            padding: 2px 12px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #38bdf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary-hover);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #bae6fd; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        /* Question Panel */
+        .question-panel {
+            flex: 0.9;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #e2e8f0;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+            color: #334155;
+        }
+
+        .explanation strong { color: var(--primary-hover); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cloze Test Practice (SBI P.O. Pattern)</h1>
+    <span style="font-size: 0.9rem; opacity: 0.9;">Click the blanks to solve</span>
+</header>
+
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">Passage 1 (Urbanization)</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Passage 2 (Mental Health)</button>
+</div>
+
+<div class="main-container">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="welcomeMessage" style="text-align: center; color: var(--text-light); margin-top: 50px;">
+            <svg style="width: 64px; height: 64px; color: #cbd5e1; margin-bottom: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+            <h2>Select a blank in the passage</h2>
+            <p>Click on any numbered blank on the left to view its options here.</p>
+        </div>
+
+        <div id="questionArea" style="display: none;">
+            <div class="q-header" id="questionTitle">Select the appropriate word for Blank 1:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data containing correct grammar fixes and precise explanations
+    const clozeData = {
+        p1: {
+            text: "The cities are <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ 1 ]</span> up and urban unemployment steadily grows. Very probably there is an equal measure of <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ 2 ]</span> in the countryside. The poorest quarter of the population in developing lands <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ 3 ]</span> being left almost entirely behind in the vast <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ 4 ]</span> of the modern technological society. The \"marginal men\", the <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ 5 ]</span> strugglers for survival on the <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ 6 ]</span> of farm and city, may <span class='blank' id='b-p1-6' onclick='loadQuestion(\"p1\", 6)'>[ 7 ]</span> more than two billion. Can we <span class='blank' id='b-p1-7' onclick='loadQuestion(\"p1\", 7)'>[ 8 ]</span> any human order surviving with so <span class='blank' id='b-p1-8' onclick='loadQuestion(\"p1\", 8)'>[ 9 ]</span> a mass of <span class='blank' id='b-p1-9' onclick='loadQuestion(\"p1\", 9)'>[ 10 ]</span> piling up at its base?",
+            questions: [
+                { opts: {a: "filling", b: "piling", c: "growing", d: "enlarging", e: "developing"}, ans: "a", expl: "<strong>filling:</strong> 'Filling up' is a phrasal verb meaning becoming full. Cities are filling up with people." },
+                { opts: {a: "diversity", b: "imbalance", c: "shortage", d: "employment", e: "worklessness"}, ans: "e", expl: "<strong>worklessness:</strong> The passage contrasts urban unemployment with the countryside, so 'worklessness' is the exact parallel term required here." },
+                { opts: {a: "risks", b: "suffers", c: "believes", d: "condemns", e: "endeavours"}, ans: "a", expl: "<strong>risks:</strong> 'Risks being left behind' is a standard English collocation indicating a high probability of a negative outcome." },
+                { opts: {a: "result", b: "struggle", c: "surface", d: "abundance", e: "transformation"}, ans: "e", expl: "<strong>transformation:</strong> Society is going through a massive technological shift, which is best described as a 'transformation'." },
+                { opts: {a: "brave", b: "honest", c: "aged", d: "ultimate", e: "wretched"}, ans: "e", expl: "<strong>wretched:</strong> Meaning in a very unhappy or unfortunate state, perfectly describing poor 'strugglers for survival'." },
+                { opts: {a: "surface", b: "ground", c: "fringes", d: "environment", e: "background"}, ans: "c", expl: "<strong>fringes:</strong> The outer edges or margins. 'Marginal men' literally live on the fringes of society and the city." },
+                { opts: {a: "mount", b: "extent", c: "project", d: "number", e: "account"}, ans: "d", expl: "<strong>number:</strong> Used here as a verb meaning 'to amount to' (e.g., they may number more than two billion)." },
+                { opts: {a: "argue", b: "hope", c: "suspect", d: "imagine", e: "question"}, ans: "d", expl: "<strong>imagine:</strong> The author is asking a rhetorical question: Can we even 'imagine' a society surviving under these conditions?" },
+                { opts: {a: "far", b: "long", c: "little", d: "many", e: "gross"}, ans: "e", expl: "<strong>gross:</strong> In this context, 'gross' means unacceptably massive, dense, or glaring ('so gross a mass')." },
+                { opts: {a: "misery", b: "humility", c: "generation", d: "population", e: "degradation"}, ans: "a", expl: "<strong>misery:</strong> The entire passage discusses poverty, unemployment, and survival—culminating in a 'mass of misery'." }
+            ],
+            answers: [] 
+        },
+        p2: {
+            text: "The <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ 11 ]</span> of a survey by the National Institute of <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ 12 ]</span> health give <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ 13 ]</span> for <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ 14 ]</span>. According to the survey about 14 million people in India are affected by <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ 15 ]</span> mental <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ 16 ]</span> at any point of time. In the case of the mentally ill, it is <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ 17 ]</span> enough difficult to <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ 18 ]</span> them, let alone <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ 19 ]</span> them. The most <span class='blank' id='b-p2-9' onclick='loadQuestion(\"p2\", 9)'>[ 20 ]</span> are those in the <span class='blank' id='b-p2-10' onclick='loadQuestion(\"p2\", 10)'>[ 21 ]</span>, for whatever <span class='blank' id='b-p2-11' onclick='loadQuestion(\"p2\", 11)'>[ 22 ]</span> for the mentally sick exist are concentrated around major urban centres.",
+            questions: [
+                { opts: {a: "verdicts", b: "measure", c: "findings", d: "decisions", e: "judgements"}, ans: "c", expl: "<strong>findings:</strong> The results or conclusions derived from a survey or research study are called 'findings'." },
+                { opts: {a: "social", b: "mental", c: "physical", d: "psychical", e: "spiritual"}, ans: "b", expl: "<strong>mental:</strong> The context of the entire passage revolves around psychiatric issues, pointing to the National Institute of Mental Health." },
+                { opts: {a: "cause", b: "food", c: "support", d: "purpose"}, ans: "a", expl: "<strong>cause:</strong> The idiom is to 'give cause for', meaning to provide a reason or justification for a specific feeling." },
+                { opts: {a: "fear", b: "alarm", c: "vexation", d: "discontent"}, ans: "b", expl: "<strong>alarm:</strong> 'Cause for alarm' is the correct and most standard English collocation indicating a reason to worry." },
+                { opts: {a: "fatal", b: "serious", c: "strong", d: "important", e: "dangerous"}, ans: "b", expl: "<strong>serious:</strong> Illnesses and medical conditions are grammatically described as 'serious' or 'severe'." },
+                { opts: {a: "disorder", b: "confusion", c: "dislocation", d: "involvement", e: "perturbation"}, ans: "a", expl: "<strong>disorder:</strong> 'Mental disorder' is the accurate medical terminology for psychiatric conditions." },
+                { opts: {a: "hardly", b: "never", c: "seldom", d: "often", e: "occasionally"}, ans: "d", expl: "<strong>often:</strong> 'It is often enough difficult' establishes the frequent reality of the challenge being discussed." },
+                { opts: {a: "cure", b: "identify", c: "select", d: "recognise", e: "rehabilitate"}, ans: "b", expl: "<strong>identify:</strong> The first step in medical care is diagnosis. It is difficult to even 'identify' them." },
+                { opts: {a: "treat", b: "cure", c: "guide", d: "advise", e: "facilitate"}, ans: "a", expl: "<strong>treat:</strong> Following identification, the logical progression is treatment. 'Let alone treat them' emphasizes the difficulty." },
+                { opts: {a: "serious", b: "careless", c: "abandoned", d: "indifferent", e: "neglected"}, ans: "e", expl: "<strong>neglected:</strong> People who do not receive care or attention because resources are concentrated elsewhere are 'neglected'." },
+                { opts: {a: "villages", b: "hospitals", c: "cities", d: "asylums", e: "metropolis"}, ans: "a", expl: "<strong>villages:</strong> <em>(Custom Question)</em> The passage contrasts these people with those near 'major urban centres', making 'villages' or rural areas the correct contrast." },
+                { opts: {a: "medicines", b: "doctors", c: "facilities", d: "treatments", e: "funds"}, ans: "c", expl: "<strong>facilities:</strong> <em>(Custom Question)</em> 'Facilities' acts as the best umbrella term covering hospitals, clinics, and resources that exist in urban centers." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = 'p1';
+    let currentBlankIndex = null;
+
+    // Initialization
+    window.onload = () => {
+        document.getElementById('passageContent').innerHTML = clozeData['p1'].text;
+    };
+
+    // Switch between passages
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        // Update Tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Render Passage
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        // Hide Question Area, Show Welcome
+        document.getElementById('questionArea').style.display = 'none';
+        document.getElementById('welcomeMessage').style.display = 'block';
+        currentBlankIndex = null;
+        
+        // Re-apply previous answers to blanks
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+    }
+
+    // Load a specific question when a blank is clicked
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        // UI toggles
+        document.getElementById('welcomeMessage').style.display = 'none';
+        document.getElementById('questionArea').style.display = 'block';
+        
+        // Highlight active blank in text
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        document.getElementById(`b-${passageId}-${qIndex}`).classList.add('active');
+
+        // Populate Right Panel
+        document.getElementById('questionTitle').innerText = `Select the appropriate word for Blank ${qIndex + 11 - (passageId==='p1' ? 10 : 0)}:`;
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    // Handle user selection
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        // Save state
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        // Disable options and show correct/wrong
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        // Show Explanation
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        // Update Passage Blank
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    // Update the visual state of the blank inside the passage text
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    // Manage 'Next Blank' button visibility
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            
+            // Scroll passage to the next blank
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+</script>
+
+</body>
+</html>

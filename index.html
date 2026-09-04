@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Hub</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --text: #333;
+            --sphere-english-1: #4facfe;
+            --sphere-english-2: #1b1109;
+            --sphere-gk-1: rgb(12, 218, 173);
+            --sphere-gk-2: #498603;
+            --sphere-math-1: #000000;
+            --sphere-math-2: #86afd3;
+            --sphere-reasoning-1: #c8ff00;
+            --sphere-reasoning-2: #851b00;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            background-color: #1a1a1a;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4); 
+            z-index: -2;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 60px;
+            color: #ffffff; 
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+            animation: slideDown 0.8s ease-out;
+            position: relative;
+            z-index: 10;
+        }
+
+        .orbit-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 60px;
+            padding: 40px;
+            max-width: 1200px;
+            perspective: 1000px;
+            z-index: 10;
+        }
+
+        .sphere-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform; 
+        }
+
+        .sphere-wrapper:hover {
+            transform: translateY(-15px) scale(1.05) !important;
+        }
+
+        .sphere {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                inset 10px 10px 20px rgba(255,255,255,0.5), 
+                inset -10px -10px 20px rgba(0,0,0,0.3),
+                0 15px 35px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .sphere::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 25%;
+            height: 15%;
+            border-radius: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.1));
+            transform: rotate(-45deg);
+        }
+
+        .sphere.english { background: linear-gradient(135deg, var(--sphere-english-2), var(--sphere-english-1)); }
+        .sphere.gk { background: linear-gradient(135deg, var(--sphere-gk-2), var(--sphere-gk-1)); }
+        .sphere.math { background: linear-gradient(135deg, var(--sphere-math-2), var(--sphere-math-1)); }
+        .sphere.reasoning { background: linear-gradient(135deg, var(--sphere-reasoning-2), var(--sphere-reasoning-1)); }
+        .sphere.sub { background: linear-gradient(135deg, #e64141 0%, #9c2048 100%); }
+        .sphere.purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .sphere.teal { background: linear-gradient(135deg, #d41737 0%, #148f7e 100%); }
+        .sphere.new { background: linear-gradient(135deg, #ebcfd4 0%, #4d867f 100%); }
+
+        .sphere span {
+            font-size: 3.5rem;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .label {
+            margin-top: 25px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 20;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+        .exit-zoom {
+            animation: zoomOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            pointer-events: none;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes zoomOut {
+            from { transform: scale(1); opacity: 1; filter: blur(0px); }
+            to { transform: scale(2.5); opacity: 0; filter: blur(12px); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <button id="back-btn" class="back-btn hidden" onclick="goBack()">❮ Back</button>
+
+    <h1 id="main-title">Select Category</h1>
+
+    <div id="level-1" class="orbit-container fade-in">
+        <div class="sphere-wrapper" onclick="showLevel2('english')">
+            <div class="sphere english"><span>Aa</span></div>
+            <div class="label"><center><div>📘</div></center>English</div>
+        </div>
+        <div class="sphere-wrapper" onclick="showLevel2('gk')">
+            <div class="sphere gk"><span>Gk</span></div>
+            <div class="label"><div> <center>🌍</center> </div>General knowledge </div>
+        </div>
+        <div class="sphere-wrapper" onclick="showLevel2('math')">
+            <div class="sphere math"><span>+-×÷</span></div>
+            <div class="label"><div> <center>📐</center> </div>Mathematics</div>
+        </div>
+        <div class="sphere-wrapper" onclick="showLevel2('reasoning')">
+            <div class="sphere reasoning"><span>Ga</span></div>
+            <div class="label"><div> <center>🧠</center> </div>General Awarness </div>
+        </div>
+    </div>
+
+    <div id="level-2" class="orbit-container hidden"></div>
+    <div id="level-3" class="orbit-container hidden"></div>
+    <div id="level-4" class="orbit-container hidden"></div>
+
+    <script>
+        let currentFolderIndex = 0;
+        let currentSubFolderIndex = 0;
+
+        // --- 1. CONFIGURATION ---
+        const data = {
+            english: {
+                title: "English",
+                items: [
+                    { 
+                        name: "Homonyms", icon: "H", folder: true,
+                        contents: [
+                            { name: "Part-1", icon: "1", theme: "purple", file: "English/Homonyms/Part-1.html" },
+                            { name: "Part-2", icon: "2", theme: "purple", file: "English/Homonyms/Part-2.html" },
+                            { name: "Part-3", icon: "3", theme: "purple", file: "English/Homonyms/Part-3.html" }
+                        ]
+                    },
+                    { 
+                        name: "Vocab", icon: "V", folder: true,
+                        contents: [
+                            { name: "Day 1", icon: "1", theme: "purple", file: "English/Vocab/Day-1.html" },
+                            { name: "Day 2", icon: "2", theme: "purple", file: "English/Vocab/Day-2.html" },
+                            { name: "Day 3", icon: "3", theme: "purple", file: "English/Vocab/Day-3.html" },
+                            { name: "Pinnacle", icon: "P", theme: "purple", file: "English/Vocab/Pinnacle.html" }
+                        ]
+                    },
+                    { 
+                        name: "Grammar", icon: "G", folder: true,
+                        contents: [
+                            { 
+                                name: "Combined", icon: "1", theme: "purple", folder: true, 
+                                contents: [   
+                                    { name: "Set-1", icon: "1", theme: "new", file: "English/Grammar/Combined/Set-1.html" },
+                                    { name: "Set-2", icon: "2", theme: "new", file: "English/Grammar/Combined/Set-2.html" },
+                                    { name: "Set-3", icon: "3", theme: "new", file: "English/Grammar/Combined/Set-3.html" },
+                                    { name: "Set-4", icon: "4", theme: "new", file: "English/Grammar/Combined/Set-4.html" }
+                                ]
+                            },
+                            { 
+                                name: "Noun", icon: "2", theme: "purple", folder: true, 
+                                contents: [   
+                                    { name: "Class", icon: "C", theme: "new", file: "English/Grammar/Noun/Class.html" },
+                                    { name: "Objective english", icon: "O", theme: "new", file: "English/Grammar/Noun/Objective english.html" },
+                                    { name: "Pinnacle", icon: "P", theme: "new", file: "English/Grammar/Noun/Pinnacle.html" }
+                                ]
+                            }
+                        ]
+                    },
+                    { 
+                        name: "Objective english", icon: "O", folder: true,
+                        contents: [
+                            { 
+                                name: "Idiom & Phrase", icon: "1", theme: "purple", folder: true,
+                                contents: [ 
+                                    { name: "Idioms", icon: "I", theme: "new", file: "English/Idioms/Idioms.html" },
+                                    { name: "Pinnacle", icon: "P", theme: "new", file: "English/Idioms/Pinnacle.html" }
+                                ]
+                            },
+                            { 
+                                name: "One Word Substitution", icon: "2", theme: "purple", folder: true, 
+                                contents: [ 
+                                    { name: "Part-1", icon: "1", theme: "new", file: "English/One word substitution/Part-1.html" },
+                                    { name: "Part-2", icon: "2", theme: "new", file: "English/One word substitution/Part-2.html" },
+                                    { name: "Part-3", icon: "3", theme: "new", file: "English/One word substitution/Part-3.html" },
+                                    { name: "Pinnacle", icon: "P", theme: "new", file: "English/One word substitution/Pinnacle.html" }
+                                ]
+                            }
+                        ]
+                    },
+                    { 
+                        name: "General English", icon: "G E", folder: true,
+                        contents: [
+                            { 
+                                name: "Cloze test", icon: "CT", theme: "purple", folder: true,
+                                contents: [
+                                    { name: "Set-1", icon: "1", theme: "new", file: "English/Cloze test/General english/Set-1.html" },
+                                    { name: "Set-2", icon: "2", theme: "new", file: "English/Cloze test/General english/Set-2.html" },
+                                    { name: "Set-3", icon: "3", theme: "new", file: "English/Cloze test/General english/Set-3.html" },
+                                    { name: "Set-4", icon: "4", theme: "new", file: "English/Cloze test/General english/Set-4.html" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            gk: {
+                title: "General Knowledge",
+                items: [
+                    {
+                        name: "Geography", icon: "🌍", folder: true,
+                        contents: [
+                            { 
+                                name: "Physical Geography", icon: "🏔️", folder: true,
+                                contents: [
+                                    { name: "Type-1", icon: "1", theme: "teal", file: "GK/Geography/Physical/Type-1.html" },
+                                    { name: "Type-2", icon: "2", theme: "teal", file: "GK/Geography/Physical/Type-2.html" },
+                                    { name: "Type-3", icon: "3", theme: "teal", file: "GK/Geography/Physical/Type-3.html" },
+                                    { name: "Type-4", icon: "4", theme: "teal", file: "GK/Geography/Physical/Type-4.html" }
+                                ]
+                            },
+                            { 
+                                name: "Indian Geography", icon: "🇮🇳", folder: true,
+                                contents: [
+                                    { name: "Type-2", icon: "2", theme: "teal", file: "GK/Geography/Indian/Type-2.html" },
+                                    { name: "Type-3", icon: "3", theme: "teal", file: "GK/Geography/Indian/Type-3.html" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            math: { 
+                title: "Mathematics", 
+                items: [
+                    {
+                        name: "Mensuration", icon: "🔳", folder: true,
+                        contents: [
+                            { name: "Practice question", icon: "P", theme: "teal", file: "Math/Practice question/Mensuration.html" }
+                        ]
+                    },
+                    {
+                        name: "Coordinate geometry", icon: "♊", folder: true,
+                        contents: [
+                            { name: "Practice question", icon: "P", theme: "teal", file: "Math/Practice question/Coordinate geometry.html" }
+                        ]
+                    }
+                ] 
+            },
+            reasoning: { title: "General Awareness", items: [] }
+        };
+
+        const levels = [ null, document.getElementById('level-1'), document.getElementById('level-2'), document.getElementById('level-3'), document.getElementById('level-4') ];
+        const title = document.getElementById('main-title');
+        const backBtn = document.getElementById('back-btn');
+
+        let currentLevel = 1;
+        let currentCategoryKey = ''; 
+
+        const bgThemes = {
+            main: { 
+                bgImage: "url('assets/main.png')",
+                rgb: '150, 200, 255', speed: 1, shape: 'circle', connect: true, sizeMult: 1 
+            },
+            english: { 
+                bgImage: "url('https://images.unsplash.com/photo-1455390582262-044cdead27d8?auto=format&fit=crop&w=1920&q=80')", 
+                rgb: '255, 200, 100', speed: 1.5, shape: 'circle', connect: true, sizeMult: 1 
+            },
+            gk: { 
+                bgImage: "url('assets/Gk.png')",
+                rgb: '12, 218, 173', speed: 1.5, shape: 'circle', connect: true, sizeMult: 1 
+            },
+            math: { 
+                bgImage: "url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1920&q=80')", 
+                rgb: '100, 255, 255', speed: 2.5, shape: 'square', connect: true, sizeMult: 1 
+            },
+            reasoning: { 
+                bgImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80')", 
+                rgb: '255, 150, 50', speed: 1, shape: 'circle', connect: true, sizeMult: 1 
+            },
+            level3: { 
+                bgImage: "url('assets/Type1.png')",
+                rgb: '255, 255, 255', speed: 1, shape: 'circle', connect: true, sizeMult: 1 
+            },
+            level4: { 
+                bgImage: "url('assets/Type2.png')",
+                rgb: '255, 200, 100', speed: 1, shape: 'circle', connect: true, sizeMult: 1 
+            }
+        };
+        let activeThemeKey = 'main';
+
+        function applyTheme(themeKey) {
+            if(!bgThemes[themeKey]) themeKey = 'main';
+            activeThemeKey = themeKey;
+            document.body.style.backgroundImage = bgThemes[themeKey].bgImage;
+        }
+
+        function showLevel2(key) {
+            currentCategoryKey = key;
+            window.location.hash = key;
+            const categoryData = data[key];
+            populateContainer(levels[2], categoryData.items, 2);
+            switchLevel(1, 2, categoryData.title);
+        }
+
+        function showLevel3(index) {
+            currentFolderIndex = index;
+            const folderData = data[currentCategoryKey].items[index];
+            populateContainer(levels[3], folderData.contents, 3);
+            switchLevel(2, 3, folderData.name);
+        }
+
+        function showLevel4(subIndex) {
+            currentSubFolderIndex = subIndex; 
+            const subFolderData = data[currentCategoryKey].items[currentFolderIndex].contents[subIndex];
+            populateContainer(levels[4], subFolderData.contents, 4);
+            switchLevel(3, 4, subFolderData.name);
+        }
+
+        function switchLevel(from, to, newTitle) {
+            levels[from].classList.add('hidden');
+            levels[to].classList.remove('hidden');
+            levels[to].classList.add('fade-in'); 
+            
+            title.innerText = newTitle;
+            currentLevel = to;
+
+            if (to === 1) applyTheme('main');
+            else if (to === 2) applyTheme(currentCategoryKey); 
+            else if (to === 3) applyTheme('level3');
+            else if (to === 4) applyTheme('level4');
+
+            if (to > 1) backBtn.classList.remove('hidden');
+            else backBtn.classList.add('hidden');
+        }
+
+        function populateContainer(container, items, levelNum) {
+            let newHTML = '';
+            
+            items.forEach((item, index) => {
+                const delay = index * 50;
+                let clickAction;
+                
+                if (levelNum === 2 && item.folder) {
+                    clickAction = `showLevel3(${index})`;
+                } else if (levelNum === 3 && item.folder) {
+                    clickAction = `showLevel4(${index})`;
+                } else {
+                    clickAction = `launchQuiz('${item.file}')`;
+                }
+
+                newHTML += `
+                <div class="sphere-wrapper fade-in" title="${item.name}" style="animation-delay: ${delay}ms" onclick="${clickAction}">
+                    <div class="sphere ${item.theme || 'sub'}">
+                        <span style="font-size: 2.5rem">${item.icon}</span>
+                    </div>
+                    <div class="label">${item.name}</div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = newHTML;
+        }
+
+        function goBack() {
+            if (currentLevel === 4) {
+                const parentFolderName = data[currentCategoryKey].items[currentFolderIndex].name;
+                switchLevel(4, 3, parentFolderName);
+            } else if (currentLevel === 3) {
+                switchLevel(3, 2, data[currentCategoryKey].title);
+            } else if (currentLevel === 2) {
+                switchLevel(2, 1, "Select Category");
+                history.replaceState(null, null, ' ');
+            }
+        }
+
+        function launchQuiz(file) {
+            document.body.classList.add('exit-zoom');
+            setTimeout(() => {
+                window.location.href = file;
+            }, 450); 
+        }
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.baseVx = (Math.random() - 0.5) * 1; 
+                this.baseVy = (Math.random() - 0.5) * 1; 
+                this.baseSize = Math.random() * 3 + 1;
+            }
+            update(theme) {
+                this.x += this.baseVx * theme.speed;
+                this.y += this.baseVy * theme.speed;
+                if (this.x < 0 || this.x > canvas.width) this.baseVx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.baseVy *= -1;
+            }
+            draw(theme) {
+                ctx.fillStyle = `rgba(${theme.rgb}, 0.6)`;
+                ctx.beginPath();
+                
+                const finalSize = this.baseSize * theme.sizeMult;
+
+                if (theme.shape === 'square') {
+                    ctx.rect(this.x - finalSize, this.y - finalSize, finalSize * 2, finalSize * 2);
+                } else if (theme.shape === 'leaf') {
+                    ctx.moveTo(this.x, this.y - finalSize * 2);
+                    ctx.lineTo(this.x + finalSize, this.y);
+                    ctx.lineTo(this.x, this.y + finalSize * 2);
+                    ctx.lineTo(this.x - finalSize, this.y);
+                } else {
+                    ctx.arc(this.x, this.y, finalSize, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const numberOfParticles = Math.min(120, (window.innerWidth * window.innerHeight) / 12000);
+            for (let i = 0; i < numberOfParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const currentTheme = bgThemes[activeThemeKey];
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update(currentTheme);
+                particles[i].draw(currentTheme);
+                
+                if (currentTheme.connect) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distSq = dx * dx + dy * dy;
+                        
+                        if (distSq < 14400) {
+                            const distance = Math.sqrt(distSq);
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(${currentTheme.rgb}, ${0.25 - distance/480})`;
+                            ctx.lineWidth = 1.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+        applyTheme('main'); 
+
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.substring(1); 
+            if (hash && data[hash]) {
+                currentCategoryKey = hash;
+                const categoryData = data[hash];
+                populateContainer(levels[2], categoryData.items, 2);
+                
+                levels[1].classList.add('hidden');
+                levels[2].classList.remove('hidden');
+                title.innerText = categoryData.title;
+                currentLevel = 2;
+                backBtn.classList.remove('hidden');
+                applyTheme(hash); 
+            }
+        });
+    </script>
+</body>
+</html>

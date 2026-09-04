@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouns Practice Quiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --success: #00b894;
+            --danger: #d63031;
+            --bg-gradient: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+            --text-dark: #2d3436;
+            --text-light: #636e72;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-dark);
+        }
+
+        .container {
+            background: var(--white);
+            width: 90%;
+            max-width: 800px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #dfe6e9;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: #f1f2f6;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-size: 1.1rem;
+        }
+
+        .option:hover {
+            background: #eccc68;
+            color: var(--text-dark);
+        }
+
+        .option.correct {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .option.incorrect {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .review-section {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .review-category {
+            margin-bottom: 30px;
+        }
+
+        .review-category h3 {
+            text-align: left;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .correct-title { color: var(--success); }
+        .incorrect-title { color: var(--danger); }
+
+        .review-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #ccc;
+        }
+
+        .review-item.is-correct { border-color: var(--success); }
+        .review-item.is-incorrect { border-color: var(--danger); }
+
+        .review-question { font-weight: 600; margin-bottom: 8px; }
+        .review-explanation { font-size: 0.95rem; color: var(--text-light); }
+        
+        .center-btn { text-align: center; margin-top: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="start-screen" class="screen active">
+            <h1>Nouns Practice Master</h1>
+            <p>Test your knowledge on Nouns with these error-spotting questions. Select the part of the sentence that contains a grammatical error.</p>
+            <div class="center-btn">
+                <button class="btn" onclick="startQuiz()">Start Quiz</button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <p id="question-counter" style="text-align: left; font-size: 0.9rem; color: var(--text-light); margin-bottom: 10px;"></p>
+            <div class="question-text" id="question-text"></div>
+            <div class="options" id="options">
+                </div>
+        </div>
+
+        <div id="result-screen" class="screen">
+            <h1>Quiz Complete!</h1>
+            <p id="score-text" style="font-size: 1.5rem; font-weight: 600;"></p>
+            
+            <div class="review-section" id="review-section">
+                </div>
+
+            <div class="center-btn">
+                <button class="btn" onclick="location.reload()">Restart Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz Data based on provided PDF Noun Questions
+        const questions = [
+            {
+                text: "Find the error: (a) She told me/ (b) that I should go to the market/ (c) to bring some beautiful/ (d) summer's flowers./ (e) No error. ",
+                options: [
+                    "(a) She told me",
+                    "(b) that I should go to the market",
+                    "(c) to bring some beautiful",
+                    "(d) summer's flowers.",
+                    "(e) No error."
+                ],
+                correctIndex: 3,
+                explanation: "The error is in part (d). It should be 'summer flowers' instead of 'summer's flowers'. The word 'summer' acts as an adjective here."
+            },
+            {
+                text: "Find the error: (a) My brother/ (b) has read/ (c) pages after pages/ (d) of the Ramayana./ (e) No error.",
+                options: [
+                    "(a) My brother",
+                    "(b) has read",
+                    "(c) pages after pages",
+                    "(d) of the Ramayana.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). When a noun is repeated after a preposition, it must remain in the singular form (e.g., 'page after page')."
+            },
+            {
+                text: "Find the error: (a) I like/ (b) the poetries/ (c) of Rabindranath Tagore / (d) and Harivansh Rai Bachchan./ (e) No error. ",
+                options: [
+                    "(a) I like",
+                    "(b) the poetries",
+                    "(c) of Rabindranath Tagore",
+                    "(d) and Harivansh Rai Bachchan.",
+                    "(e) No error."
+                ],
+                correctIndex: 1,
+                explanation: "The error is in part (b). 'Poetry' is an uncountable noun and does not have a plural form 'poetries'. You can use 'poems' if you want a countable plural."
+            },
+            {
+                text: "Find the error: (a) She was advised / (b) to take/ (c) two spoonsful of / (d) medicine twice a day. / (e) No error. ",
+                options: [
+                    "(a) She was advised",
+                    "(b) to take",
+                    "(c) two spoonsful of",
+                    "(d) medicine twice a day.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). The correct plural form of 'spoonful' is 'spoonfuls', not 'spoonsful'."
+            },
+            {
+                text: "Find the error: (a) All his brother-in laws/ (b) are extremely co-operative/ (c) and she doesn't miss her/ (d) real brothers at all./ (e) No error.",
+                options: [
+                    "(a) All his brother-in laws",
+                    "(b) are extremely co-operative",
+                    "(c) and she doesn't miss her",
+                    "(d) real brothers at all.",
+                    "(e) No error."
+                ],
+                correctIndex: 0,
+                explanation: "The error is in part (a). The plural of a compound noun like 'brother-in-law' is formed by adding 's' to the principal word, making it 'brothers-in-law'."
+            },
+            // --- Expanded Questions ---
+            {
+                text: "Find the error: Tennis rankings work over (a)/ a rolling 52 weeks period, updated by adding points (b)/ and subtracting those from the equivalent (c)/ week in the previous year. (d)/ No Error.(e)/",
+                options: [
+                    "(a) Tennis rankings work over",
+                    "(b) a rolling 52 weeks period",
+                    "(c) and subtracting those from the equivalent",
+                    "(d) week in the previous year.",
+                    "(e) No error."
+                ],
+                correctIndex: 1,
+                explanation: "The error is in part (b). When a noun acts as an adjective modifying another noun (period), it should not be pluralized. It should be 'a rolling 52-week period'."
+            },
+            {
+                text: "Find the error: Agreeing with the rationale (a)/ of the law, the five judges Bench said; (b)/ 'The Places of Worship Act imposes a non derogable obligation towards enforcing our commitment to secularism' (c)/under the Indian Constitution.”(d)/ No Error.(e)/",
+                options: [
+                    "(a) Agreeing with the rationale",
+                    "(b) of the law, the five judges Bench said;The Places of Worship Act imposes ",
+                    "(c) a non derogable obligation towards enforcing our commitment to secularism",
+                    "(d) under the Indian Constitution.",
+                    "(e) No error."
+                ],
+                correctIndex: 1,
+                explanation: "The error is in part (b). Similar to the previous rule, a hyphenated noun acting as an adjective should be singular: 'five-judge Bench'."
+            },
+            {
+                text: "Find the error: Eight years after 2014, it (a)/ has been hard for the Government to claim brownie points (b)/ as few bad news of events on the (c)/ ground have been hard to keep hidden. (d)/ No Error.(e)/",
+                options: [
+                    "(a) Eight years after 2014, it",
+                    "(b) has been hard for the Government to claim brownie points globally for being ‘exceptional’,",
+                    "(c) as few bad news of events on the",
+                    "(d) ground have been hard to keep hidden.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). 'News' is an uncountable noun. It should be 'little bad news' or 'few pieces of bad news'."
+            },
+            {
+                text: "Find the error: Among the underlying ideas(a)/ is to strengthen India's 'soft power' through higher education collaboration, bringing (b)/ new ideas and institutions from abroad to stimulate reform and show (c)/ best practise, and in general to ensure that Indian higher education, for the first time, is a global player.(d)/ No Error.(e)/",
+                options: [
+                    "(a) Among the underlying ideas",
+                    "(b) is to strengthen India's soft power through higher education collaboration, bringing",
+                    "(c) new ideas and institutions from abroad to stimulate reform and show",
+                    "(d) best practise, and in general to ensure that Indian higher education, for the first time, is a global player.",
+                    "(e) No error."
+                ],
+                correctIndex: 3,
+                explanation: "The error is in part (d). 'Practise' with an 's' is a verb in British/Indian English. The noun form is 'practice' with a 'c'. It should be 'best practice'."
+            },
+            {
+                text: "Find the error: (a) Unfortunately for us/ (b) the root cause of our frustration lies / (c) in the students/ (d) lack of determination and confidence./ (e) No error.",
+                options: [
+                    "(a) Unfortunately for us",
+                    "(b) the root cause of our frustration lies",
+                    "(c) in the students",
+                    "(d) lack of determination and confidence.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). To show possession for plural students, it requires an apostrophe at the end: 'students\' lack of determination'."
+            },
+            {
+                text: "Find the error: (a) India's and Pakistan's present / (b) conditions clearly indicate/ (c) that both the countries / (d) will face a lot of problems in the coming future. / (e) No error.",
+                options: [
+                    "(a) India's and Pakistan's present",
+                    "(b) conditions clearly indicate",
+                    "(c) that both the countries",
+                    "(d) will face a lot of problems in the coming future.",
+                    "(e) No error."
+                ],
+                correctIndex: 3,
+                explanation: "The error is in part (d). 'Coming future' is redundant (a pleonasm). Just 'future' is sufficient."
+            },
+            {
+                text: "Find the error: Making the reservation (a)/ regime fair, objective, and empirical is a (b)/ major governance challenge, and the Courts attempts in that direction(c)/ are welcome.(d)/ No Error.(e)/",
+                options: [
+                    "(a) Making the reservation",
+                    "(b) regime fair, objective, and empirical is a",
+                    "(c) major governance challenge, and the Courts attempts in that direction",
+                    "(d) are welcome.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). It requires a possessive apostrophe to show the attempts belong to the Court: 'Court\'s attempts'."
+            },
+            {
+                text: "Find the error: As he says, 'It is (a)/ an absurd version of patriotism that discards data and evidence, (b)/ and disrespects the million of families for whom COVID19 brought (c)/ tragedy.' (d)/ No Error.(e)/",
+                options: [
+                    "(a) As he says, 'It is",
+                    "(b) an absurd version of patriotism that discards data and evidence,",
+                    "(c) and disrespects the million of families for whom COVID19 brought",
+                    "(d) tragedy.'",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). When referring to an indefinite large number followed by 'of', it should be pluralized as 'millions of families'."
+            },
+            {
+                text: "Find the error: The pandemic should be used as an (a)/ opportunity to train and retrain (in clinical skills and various aspects (b)/ of COVID19 case management) and empower general physician's, (c)/ family physicians and primary care providers in every setting. (d)/ No Error(e)/",
+                options: [
+                    "(a) The pandemic should be used as an",
+                    "(b) opportunity to train and retrain (in clinical skills and various aspects",
+                    "(c) of COVID19 case management) and empower general physician's,",
+                    "(d) family physicians and primary care providers in every setting.",
+                    "(e) No error."
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). The plural of physician is 'physicians'. No apostrophe is needed here as there is no possession indicated."
+            },
+            {
+                text: "Find the error: Clearly, the (a)/ local police has no (b)/ choice but to comply (c)/ with the order. (d)/ No Error(e)/",
+                options: [
+                    "(a) Clearly, the",
+                    "(b) local police has no",
+                    "(c) choice but to comply",
+                    "(d) with the order.",
+                    "(e) No error."
+                ],
+                correctIndex: 1,
+                explanation: "The error is in part (b). The collective noun 'police' always takes a plural verb. It should be 'local police have no choice'."
+            },
+            {
+                text: "Find the error: (a) Shivangi and Shweta / are (b)/ coward girls (c)/ no error(d)",
+                options: [
+                    "(a) Shivangi and Shweta",
+                    "(b) are",
+                    "(c) coward girls",
+                    "(d) no error"
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part (c). 'Coward' is a noun, not an adjective. It should either be just the noun 'cowards' or the adjective form 'cowardly girls'."
+            },
+            {
+                text: "Find the error: A. While Moscow remains influential  in the CAR, / B. Beijing has recently built deep economic ties, / C. including trade, which is valued $100 billions, / D. apart from big investments in the region. / E. No error",
+                options: [
+                    "A. While Moscow remains influential  in the CAR,",
+                    "B. Beijing has recently built deep economic ties,",
+                    "C. including trade, which is valued $100 billions,",
+                    "D. apart from big investments in the region.",
+                    "E. No error"
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part C. When a specific number precedes words like dozen, hundred, thousand, or billion, they remain singular. It should be '$100 billion'."
+            },
+            {
+                text: "Find the error: A hundred rupees note has immense value / because people accept it / as a symbolic medium / of exchange.",
+                options: [
+                    "A. A hundred rupees note has immense value",
+                    "B. because people accept it",
+                    "C. as a symbolic medium",
+                    "D. of exchange.",
+                    "E. No error"
+                ],
+                correctIndex: 0,
+                explanation: "The error is in part A. Hyphenated compound nouns acting as adjectives remain singular: 'A hundred-rupee note'."
+            },
+            {
+                text: "Find the error: The fractured edge of the bowl is heated, / trimmed with scissor and melted so as to be perfectly smooth and even, / and the bowl itself receives / its final form from the sugar-tongs tool.",
+                options: [
+                    "A. The fractured edge of the bowl is heated",
+                    "B. trimmed with scissor and melted so as to be perfectly smooth and even,",
+                    "C. and the bowl itself receives",
+                    "D. its final form from the sugar-tongs tool.",
+                    "E. No error"
+                ],
+                correctIndex: 1,
+                explanation: "The error is in part B. Tools with two identical parts functioning together are always plural. It should be 'trimmed with scissors'."
+            },
+            {
+                text: "Find the error: I absolutely want my sundae / with chocolate sauce / and my sister wants her's with caramel sauce;/ but our parents were scolding us or being stubborn",
+                options: [
+                    "A. I absolutely want my sundae",
+                    "B. with chocolate sauce",
+                    "C. and my sister wants her's with caramel sauce;",
+                    "D. but our parents were scolding us or being stubborn",
+                    "E. No error"
+                ],
+                correctIndex: 2,
+                explanation: "The error is in part C. The absolute possessive pronoun 'hers' never takes an apostrophe."
+            },
+
+    {
+        text: "Find the error: International branch campuses, (a)/ if allowed, could function as a (b)/ structurally different variant of (c)/ Indias' private university sector. (d)/ No Error.(e)/",
+        options: [
+            "(a) International branch campuses,",
+            "(b) if allowed, could function as a",
+            "(c) structurally different variant of",
+            "(d) Indias' private university sector.",
+            "(e) No error."
+        ],
+        correctIndex: 3,
+        explanation: "The error is in part (d). The possessive form of the singular proper noun 'India' is formed by adding an apostrophe before the 's', making it 'India's' rather than 'Indias''."
+    },
+    {
+        text: "Find the error: Indeed, the only (a)/ overarching guideline which the report does describe in some detail (b)/ is the commissions desire (c)/ to match the boundaries of Assembly and parliamentary constituencies. (d)/ No Error.(e)/",
+        options: [
+            "(a) Indeed, the only",
+            "(b) overarching guideline which the report does describe in some detail",
+            "(c) is the commissions desire",
+            "(d) to match the boundaries of Assembly and parliamentary constituencies.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). To show that the desire belongs to the commission, you must use the possessive form with an apostrophe: 'commission's desire'."
+    },
+    {
+        text: "Find the error: There is a less (a)/ optimism regarding the(b)/ next round (c)/ of negotiations. (d)/ No Error(e)/",
+        options: [
+            "(a) There is a less",
+            "(b) optimism regarding the",
+            "(c) next round",
+            "(d) of negotiations.",
+            "(e) No error."
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part (a). 'Optimism' is an uncountable abstract noun and should not be preceded by the indefinite article 'a'. It should simply be 'There is less optimism'."
+    },
+    {
+        text: "Find the error: Studies point (a)/ to waning immunity (b)/ after eight to nine month (c)/ of receiving the second shot. (d)/ No Error(e)/",
+        options: [
+            "(a) Studies point",
+            "(b) to waning immunity",
+            "(c) after eight to nine month",
+            "(d) of receiving the second shot.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). Since 'eight to nine' indicates a plural quantity, the noun must be pluralized to 'months'."
+    },
+    {
+        text: "Find the error: As of now, the ethical, scientifically sound (a)/ and wise decision ought to be stepwise lowering of age of (b)/ eligibility: first to above 12 years, then to above five years and eventually (c)/ to above two years, in rapid succession, ensuring safely in each age group. (d)/ No Error(e)/",
+        options: [
+            "(a) As of now, the ethical, scientifically sound",
+            "(b) and wise decision ought to be stepwise lowering of age of",
+            "(c) eligibility: first to above 12 years, then to above five years and eventually",
+            "(d) to above two years, in rapid succession, ensuring safely in each age group.",
+            "(e) No error."
+        ],
+        correctIndex: 3,
+        explanation: "The error is in part (d). 'Safely' is an adverb. The sentence requires a noun as the object of 'ensuring', so it should be the noun 'safety'."
+    },
+    {
+        text: "Find the error: The Tata Group's consummation of its acquisition of Air India last week marks both the culmination of the airline's (a)/ return back to its original founders after an almost seven decades hiatus, (b)/,as well as the start of an arduous long haul (c)/ flight for the loss making, formerly state owned flag carrier. (d)/.No Error(e).",
+        options: [
+            "(a) marks both the culmination of the airline's",
+            "(b) return back to its original founders after an almost seven decades hiatus",
+            "(c) as well as the start of an arduous long haul",
+            "(d) flight for the loss making, formerly state owned flag carrier.",
+            "(e) No error."
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part (b). A hyphenated compound noun acting as an adjective ('seven-decade') must be singular. Additionally, 'return back' is a redundant phrase; 'return' is sufficient."
+    },
+    {
+        text: "Find the error: This will be without reference to(a)/ a mandate from the people as elections will be held only in the coming future, after the (b)/ principles guiding Afghanistan's future constitutional and governing (c)/ arrangements are worked out.(d)/ No error",
+        options: [
+            "(a) This will be without reference to",
+            "(b) a mandate from the people as elections will be held only in the coming future",
+            "(c) principles guiding Afghanistan's future constitutional and governing",
+            "(d) arrangements are worked out.",
+            "(e) No error."
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part (b). The phrase 'coming future' is redundant because the future is inherently coming. It should simply be 'in the future'."
+    },
+    {
+        text: "Find the error: I will first shed light on the Biden (a)/ administration's proposal's relevance in fixing the H1B (b)/ programme and then describe (c)/ how WFA can mitigate immigration woes. (d)/ No error",
+        options: [
+            "(a) I will first shed light on the Biden",
+            "(b) administration's proposal's relevance in fixing the H1B",
+            "(c) programme and then describe",
+            "(d) how WFA can mitigate immigration woes.",
+            "(e) No error."
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part (b). Using double consecutive possessives makes the sentence clumsy. It should be rephrased to 'the relevance of the Biden administration's proposal'."
+    },
+    {
+        text: "Find the error: In recent research with coauthors (a)/ Dany Bahar and Britta Glennon, we find that (former) U.S. President Donald Trump’s June 2020 Executive Order limiting entry(b)/ of migrants to the U.S. during the COVID19 pandemic led to an estimated loss of around $100 (c)/ billions in valuation for publicly traded Fortune 500 companies. (d)/ No error",
+        options: [
+            "(a) In recent research with coauthors",
+            "(b) we find that (former) U.S. President Donald Trump’s June 2020 Executive Order limiting entry",
+            "(c) of migrants to the U.S. during the COVID19 pandemic led to an estimated loss of around $100",
+            "(d) billions in valuation for publicly traded Fortune 500 companies.",
+            "(e) No error."
+        ],
+        correctIndex: 3,
+        explanation: "The error is in part (d). When a specific number ('100') precedes words like dozen, hundred, thousand, million, or billion, the word remains singular. It should be '$100 billion'."
+    },
+    {
+        text: "Find the error: While information such as (a)/ dates, facts or events can be placed within the binary of right or wrong, the role of a higher(b)/ educational institution is not to list or reproduce informations, or to (c)/ train students to do so.(d)/ No Error.(e)/",
+        options: [
+            "(a) While information such as",
+            "(b) dates, facts or events can be placed within the binary of right or wrong, the role of a higher",
+            "(c) educational institution is not to list or reproduce informations, or to",
+            "(d) train students to do so.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). 'Information' is an uncountable noun and does not have a plural form ending in 's'. It should simply be 'reproduce information'."
+    },
+    {
+        text: "Find the error: Rafael and his wife desperately want / a weeks' vacation, / because they want to go to the lake / and fish to refresh. / No error",
+        options: [
+            "A. Rafael and his wife desperately want",
+            "B. a weeks' vacation,",
+            "C. because they want to go to the lake",
+            "D. and fish to refresh",
+            "E. No error"
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part B. Since 'a' indicates a single week, the possessive should be for a singular noun: 'a week's vacation'."
+    },
+    {
+        text: "Find the error: In the second act there was sceneries / representing tombstones,/ there was a round hole in the canvas to represent the moon,/ shades were raised over the footlights. / No error",
+        options: [
+            "A. In the second act there was sceneries",
+            "B. representing tombstones,",
+            "C. there was a round hole in the canvas to represent the moon,",
+            "D. shades were raised over the footlights.",
+            "E. No error"
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part A. 'Scenery' is an uncountable noun and does not have a plural form 'sceneries'. The correct usage is 'there was scenery'."
+    },
+    {
+        text: "Find the error: In not framing the matter(a)/ in the letter and spirit of its own order just (b)/ three years ago, and instead, trying to 'balance', the law and its interpreters (c)/ are enabling a significant and worrying change in India.(d)/ No Error.(e)/",
+        options: [
+            "(a) In not framing the matter",
+            "(b) in the letter and spirit of its own order just",
+            "(c) three years ago, and instead, trying to 'balance', the law and its interpreters",
+            "(d) are enabling a significant and worrying change in India.",
+            "(e) No error."
+        ],
+        correctIndex: 4,
+        explanation: "The error is (e) No error. The sentence is grammatically correct and the nouns are used properly."
+    },
+    {
+        text: "Find the error: (a) The teacher told/ (b) students that/ (c) radiuses of a circle / (d) are always equal./ (e) No error.",
+        options: [
+            "(a) The teacher told",
+            "(b) students that",
+            "(c) radiuses of a circle",
+            "(d) are always equal.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). The correct plural form of the noun 'radius' is 'radii', not 'radiuses'."
+    },
+    {
+        text: "Find the error: (a) He wears spectacle/ (b) and so he was / (c) unable to see the burglar / (d) that attacked him last month. / (e) No error.",
+        options: [
+            "(a) He wears spectacle",
+            "(b) and so he was",
+            "(c) unable to see the burglar",
+            "(d) that attacked him last month.",
+            "(e) No error."
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part (a). The noun 'spectacles' refers to glasses and is always used in its plural form."
+    },
+    {
+        text: "Find the error: (a) Most of the furnitures were/ (b) sold for a song/ (c) as the seller was in a hurry/ (d) to leave the town./ (e) No error.",
+        options: [
+            "(a) Most of the furnitures were",
+            "(b) sold for a song",
+            "(c) as the seller was in a hurry",
+            "(d) to leave the town.",
+            "(e) No error."
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part (a). 'Furniture' is an uncountable noun and does not have a plural form 'furnitures'. It should be 'Most of the furniture was'."
+    },
+    {
+        text: "Find the error: (a) She left/ (b) her luggages/ (c) at home by mistake and / (d) went to the railway station./ (e) No error.",
+        options: [
+            "(a) She left",
+            "(b) her luggages",
+            "(c) at home by mistake and",
+            "(d) went to the railway station.",
+            "(e) No error."
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part (b). 'Luggage' is an uncountable noun and does not take an 's'. It should simply be 'her luggage'."
+    },
+    {
+        text: "Find the error: (a) The police have received/ (b) three important informations/ (c) that helped them solve/ (d) the robbery case/ (e) No error.",
+        options: [
+            "(a) The police have received",
+            "(b) three important informations",
+            "(c) that helped them solve",
+            "(d) the robbery case",
+            "(e) No error."
+        ],
+        correctIndex: 1,
+        explanation: "The error is in part (b). 'Information' is an uncountable noun. To indicate a plural quantity, it should be phrased as 'three important pieces of information'."
+    },
+    {
+        text: "Find the error: (a) The sceneries/ (b) of Uttarakhand/ (c) is very / (d) charming/ (e) No error.",
+        options: [
+            "(a) The sceneries",
+            "(b) of Uttarakhand",
+            "(c) is very",
+            "(d) charming",
+            "(e) No error."
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part (a). 'Scenery' is an uncountable noun and has no plural form. It should be 'The scenery'."
+    },
+    {
+        text: "Find the error: (a) My friend's wife's brother / (b) came to me/ (c) last week and asked me for/ (d) some help./ (e) No error.",
+        options: [
+            "(a) My friend's wife's brother",
+            "(b) came to me",
+            "(c) last week and asked me for",
+            "(d) some help.",
+            "(e) No error."
+        ],
+        correctIndex: 0,
+        explanation: "The error is in part (a). The use of consecutive double possessives is grammatically incorrect. It should be rephrased as 'The brother of my friend's wife'."
+    },
+    {
+        text: "Find the error: While quotas have proven (a)/ to be an effective instrument of (b)/ empowerment and justice, competitive politics around them often lead to a (c)/ paralysis of politics and governance. (d)/ No Error.(e)/",
+        options: [
+            "(a) While quotas have proven",
+            "(b) to be an effective instrument of",
+            "(c) empowerment and justice, competitive politics around them often lead to a",
+            "(d) paralysis of politics and governance.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). 'Politics' is treated as a singular noun here, representing a field or concept. Therefore, the singular verb 'leads' should be used instead of 'lead'."
+    },
+    {
+        text: "Find the error: Working in hazardous (a)/ sites such as quarries, where explosives (b)/ and heavy machineries are (c)/ deployed, is fraught with risks. (d)/ No Error.(e)/",
+        options: [
+            "(a) Working in hazardous",
+            "(b) sites such as quarries, where explosives",
+            "(c) and heavy machineries are",
+            "(d) deployed, is fraught with risks.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). 'Machinery' is an uncountable noun and cannot be pluralized as 'machineries'. It should be 'heavy machinery is'."
+    },
+    {
+        text: "Find the error: There are several irritants that have (a)/ developed, straining this relationship, and for now there seems to be a concerted (b)/ attempt by both regimes to return back to bonhomie, with the Indian government (c)/ seeking to utilise \"religious diplomacy\" as a means to emphasise the special relationship.(d)/ No Error.(e)/",
+        options: [
+            "(a) There are several irritants that have",
+            "(b) developed, straining this relationship, and for now there seems to be a concerted",
+            "(c) attempt by both regimes to return back to bonhomie, with the Indian government",
+            "(d) seeking to utilise \"religious diplomacy\" as a means to emphasise the special relationship.",
+            "(e) No error."
+        ],
+        correctIndex: 2,
+        explanation: "The error is in part (c). The use of 'return back' is redundant. 'Return' already implies coming back. It should simply be 'return to bonhomie'."
+    }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = []; // Store user results for review
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options');
+        const progress = document.getElementById('progress');
+        const questionCounter = document.getElementById('question-counter');
+
+        function startQuiz() {
+            startScreen.classList.remove('active');
+            quizScreen.classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            // Reset options state
+            optionsContainer.innerHTML = '';
+            const q = questions[currentQuestion];
+            
+            questionText.textContent = q.text;
+            questionCounter.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            progress.style.width = `${((currentQuestion) / questions.length) * 100}%`;
+
+            q.options.forEach((opt, index) => {
+                const div = document.createElement('div');
+                div.classList.add('option');
+                div.textContent = opt;
+                div.onclick = () => selectOption(div, index);
+                optionsContainer.appendChild(div);
+            });
+        }
+
+        function selectOption(selectedElement, selectedIndex) {
+            // Prevent multiple clicks
+            const allOptions = optionsContainer.children;
+            for(let opt of allOptions) {
+                opt.onclick = null;
+                opt.style.cursor = 'default';
+            }
+
+            const q = questions[currentQuestion];
+            const isCorrect = selectedIndex === q.correctIndex;
+
+            // Save for review
+            userAnswers.push({
+                questionText: q.text,
+                selectedText: q.options[selectedIndex],
+                correctText: q.options[q.correctIndex],
+                explanation: q.explanation,
+                isCorrect: isCorrect
+            });
+
+            if (isCorrect) {
+                selectedElement.classList.add('correct');
+                score++;
+            } else {
+                selectedElement.classList.add('incorrect');
+                allOptions[q.correctIndex].classList.add('correct');
+            }
+
+            // Auto advance after 1.5 seconds
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < questions.length) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }, 500);
+        }
+
+        function showResults() {
+            quizScreen.classList.remove('active');
+            resultScreen.classList.add('active');
+            
+            document.getElementById('score-text').textContent = `You scored ${score} out of ${questions.length}!`;
+            
+            renderReview();
+        }
+
+        function renderReview() {
+            const reviewContainer = document.getElementById('review-section');
+            
+            const correctAnswers = userAnswers.filter(ans => ans.isCorrect);
+            const incorrectAnswers = userAnswers.filter(ans => !ans.isCorrect);
+
+            let reviewHTML = '';
+
+            // Incorrect Category
+            if (incorrectAnswers.length > 0) {
+                reviewHTML += `<div class="review-category">
+                                  <h3 class="incorrect-title">Needs Review (${incorrectAnswers.length})</h3>`;
+                incorrectAnswers.forEach(ans => {
+                    reviewHTML += `
+                        <div class="review-item is-incorrect">
+                            <div class="review-question">${ans.questionText}</div>
+                            <div class="review-explanation">
+                                <strong>You answered:</strong> <span style="color:var(--danger)">${ans.selectedText}</span><br>
+                                <strong>Correct answer:</strong> <span style="color:var(--success)">${ans.correctText}</span><br><br>
+                                <em>${ans.explanation}</em>
+                            </div>
+                        </div>
+                    `;
+                });
+                reviewHTML += `</div>`;
+            }
+
+            // Correct Category
+            if (correctAnswers.length > 0) {
+                reviewHTML += `<div class="review-category">
+                                  <h3 class="correct-title">Nailed It! (${correctAnswers.length})</h3>`;
+                correctAnswers.forEach(ans => {
+                    reviewHTML += `
+                        <div class="review-item is-correct">
+                            <div class="review-question">${ans.questionText}</div>
+                            <div class="review-explanation">
+                                <strong>Your answer:</strong> <span style="color:var(--success)">${ans.correctText}</span><br><br>
+                                <em>${ans.explanation}</em>
+                            </div>
+                        </div>
+                    `;
+                });
+                reviewHTML += `</div>`;
+            }
+
+            reviewContainer.innerHTML = reviewHTML;
+        }
+    </script>
+</body>
+</html>

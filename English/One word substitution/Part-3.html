@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC CGL Tier 2: Batch 3 Quiz</title>
+    <style>
+        :root {
+            --primary: #00BCD4; /* Cyan highlight for differentiation */
+            --dark: #263238;    /* Dark background */
+            --card: #ffffff;
+            --text: #333333;
+            --green: #2E7D32;
+            --red: #C62828;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .quiz-container {
+            background-color: var(--card);
+            width: 100%;
+            max-width: 700px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            color: #777;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .sno-badge {
+            background-color: var(--primary);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            line-height: 1.4;
+            color: #222;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .option-btn {
+            background-color: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #444;
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            background-color: #E0F7FA;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background-color: #e8f5e9;
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .option-btn.wrong {
+            background-color: #ffebee;
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .option-btn.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .next-btn {
+            margin-top: 25px;
+            padding: 12px 40px;
+            background-color: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+        }
+
+        .score-box {
+            display: none;
+        }
+
+        .score-number {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-shadow: 2px 2px 0px #000;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <span id="progress-text">Question 1 / 31</span>
+        <span>Batch 3 (234-310)</span>
+    </div>
+
+    <div id="quiz-content">
+        <div id="sno-display" class="sno-badge">#SNo</div>
+        <div class="question-text" id="question">Loading Question...</div>
+        
+        <div class="options-grid" id="options"></div>
+        
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+    </div>
+
+    <div id="score-box" class="score-box">
+        <h2>Batch Completed!</h2>
+        <div class="score-number" id="final-score">0</div>
+        <p>Review these 31 words in your material.</p>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">Restart Batch</button>
+    </div>
+</div>
+
+<script>
+    // Data for the 31 specific words requested
+    const quizData = [
+        { sno: 234, word: "Apathetic", meaning: "Showing or feeling no interest, enthusiasm, or concern" },
+        { sno: 235, word: "Apprentice", meaning: "A person who works for an expert to learn a trade" },
+        { sno: 238, word: "Articulate", meaning: "Good at expressing ideas/ feelings clearly in words (speech)" },
+        { sno: 246, word: "Bovine", meaning: "Connected with cows" },
+        { sno: 248, word: "Callous", meaning: "Not caring about other people's feelings or suffering" },
+        { sno: 258, word: "Cynosure", meaning: "Centre of attraction" },
+        { sno: 259, word: "Derelict", meaning: "A person without a home, a job or property" },
+        { sno: 262, word: "Dirge", meaning: "A song sung in the past at a funeral or for a dead person" },
+        { sno: 263, word: "Effaced", meaning: "Remove completely from recognition/memory // remove by or as if by rubbing / erasing" },
+        { sno: 266, word: "Emancipation", meaning: "Freeing someone from the control of another" },
+        { sno: 267, word: "Embezzlement", meaning: "The act of stealing money that you are responsible for or that belongs to your employer" },
+        { sno: 268, word: "Emeritus", meaning: "One who is honorably discharged from service" },
+        { sno: 269, word: "Ennui", meaning: "A state of mental weariness from lack of occupation" },
+        { sno: 274, word: "Epigram", meaning: "A short poem/phrase that expresses an idea in a clever/amusing way" },
+        { sno: 275, word: "Eulogy", meaning: "Speech/piece of writing praising somebody/something very much" },
+        { sno: 276, word: "Euphemism", meaning: "An indirect word/phrase that people often use to refer to something embarrassing or unpleasant" },
+        { sno: 278, word: "Fable", meaning: "A traditional short story that teaches a moral lesson (animals)" },
+        { sno: 280, word: "Fascist", meaning: "A person who supports an extreme political system in favour of strong central government" },
+        { sno: 282, word: "Feline", meaning: "Connected with an animal of the cat family" },
+        { sno: 285, word: "Genealogy", meaning: "The study of family history, including the study of who the ancestors of a particular person were" },
+        { sno: 291, word: "Homage", meaning: "Something that is said/done to show respect for somebody" },
+        { sno: 292, word: "Homogeneous", meaning: "All (things or people) of the same or similar kind or nature" },
+        { sno: 296, word: "Idiosyncrasy", meaning: "A person's particular way of behaving, thinking, etc., especially when it is unusual" },
+        { sno: 297, word: "Illicit", meaning: "Not allowed by law" },
+        { sno: 299, word: "Implorer", meaning: "A person who asks somebody to do something because he wants/ needs it very much" },
+        { sno: 303, word: "Indict", meaning: "Accuse formally of a crime" },
+        { sno: 305, word: "Inexorable", meaning: "That cannot be stopped or changed" },
+        { sno: 306, word: "Interment", meaning: "The act of burying a dead person" },
+        { sno: 307, word: "Internment", meaning: "The act of confining someone in a prison" },
+        { sno: 308, word: "Interregnum", meaning: "A period of time during which a country, an organization, etc. does not have a leader" },
+        { sno: 310, word: "Knell", meaning: "The sound of a bell sung slowly to announce a death/ a funeral" }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    // Shuffle questions
+    quizData.sort(() => Math.random() - 0.5);
+
+    // DOM Elements
+    const progressText = document.getElementById("progress-text");
+    const snoDisplay = document.getElementById("sno-display");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const nextBtn = document.getElementById("next-btn");
+    const quizContent = document.getElementById("quiz-content");
+    const scoreBox = document.getElementById("score-box");
+    const finalScore = document.getElementById("final-score");
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        
+        // Update UI
+        progressText.innerText = `Question ${currentIdx + 1} / ${quizData.length}`;
+        snoDisplay.innerText = `#${data.sno}`;
+        questionEl.innerText = data.meaning;
+        
+        // Reset state
+        optionsEl.innerHTML = "";
+        nextBtn.style.display = "none";
+
+        // Generate Options (1 Correct + 3 Random Distractors)
+        let options = [data.word];
+        let allWords = quizData.map(item => item.word); // Distractors from the same list
+        
+        while (options.length < 4) {
+            let randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+            if (!options.includes(randomWord)) {
+                options.push(randomWord);
+            }
+        }
+
+        // Shuffle options so answer isn't always first
+        options.sort(() => Math.random() - 0.5);
+
+        // Create Buttons
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, data.word);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        const buttons = document.querySelectorAll(".option-btn");
+        buttons.forEach(b => {
+            b.classList.add("disabled"); // Disable all
+            if (b.innerText === correct) {
+                b.classList.add("correct"); // Highlight correct
+            }
+        });
+
+        if (selected === correct) {
+            score++;
+        } else {
+            btn.classList.add("wrong"); // Highlight wrong
+        }
+
+        nextBtn.style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showScore();
+        }
+    }
+
+    function showScore() {
+        quizContent.style.display = "none";
+        scoreBox.style.display = "block";
+        progressText.style.display = "none";
+        finalScore.innerText = `${score} / ${quizData.length}`;
+    }
+
+    // Start Quiz
+    loadQuestion();
+
+</script>
+
+</body>
+</html>

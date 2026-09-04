@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Quiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --background: #EEF2FF;
+            --card-bg: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            padding: 40px;
+            /* Added smooth transition for the auto-advance fading */
+            transition: opacity 0.3s ease-in-out; 
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            margin-bottom: 20px;
+        }
+
+        /* --- Rules Area --- */
+        .rules-area {
+            background: linear-gradient(to right, #EEF2FF, #E0E7FF);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .rules-area h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .rules-area ul {
+            list-style-position: inside;
+            line-height: 1.8;
+            color: var(--text-dark);
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- Quiz Area --- */
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option {
+            background: white;
+            border: 2px solid var(--border);
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: #F8FAFC;
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: #EEF2FF;
+        }
+
+        .option.correct-reveal {
+            border-color: var(--secondary);
+            background: #ECFDF5;
+            color: #065F46;
+        }
+
+        .option.wrong-reveal {
+            border-color: var(--danger);
+            background: #FEF2F2;
+            color: #991B1B;
+        }
+
+        /* --- Explanation Area --- */
+        .explanation-area {
+            display: none;
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-left: 5px solid #F59E0B;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #92400E;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .explanation-area strong {
+            display: block;
+            color: #B45309;
+            margin-bottom: 5px;
+        }
+
+        /* --- Review Area --- */
+        .score-card {
+            text-align: center;
+            padding: 30px;
+            background: #F8FAFC;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-card h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .review-item {
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--border);
+            background: #F9FAFB;
+        }
+
+        .review-item.correct {
+            border-left-color: var(--secondary);
+        }
+
+        .review-item.incorrect {
+            border-left-color: var(--danger);
+        }
+
+        .review-question {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .review-status {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .text-correct { color: var(--secondary); }
+        .text-incorrect { color: var(--danger); }
+
+        .flex-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .flex-buttons .btn { width: 50%; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="rules-screen" class="screen active">
+            <h1>Grammar Mastery Quiz</h1>
+            
+            <div class="rules-area">
+                <h3>📋 Rules & Instructions</h3>
+                <ul>
+                    <li>Read each sentence carefully and identify the correct grammatical structure.</li>
+                    <li>You must select an answer before moving to the next question.</li>
+                    <li>If you answer <strong>correctly</strong>, you will automatically move to the next question.</li>
+                    <li>If you answer <strong>incorrectly</strong>, you will see a detailed explanation to help you learn.</li>
+                    <li>At the end of the quiz, you can review your performance.</li>
+                    <li>You will have the option to <strong>reattempt only the questions you got wrong</strong>.</li>
+                </ul>
+            </div>
+
+            <button class="btn" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <div id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            
+            <span id="question-counter" style="color: var(--text-light); font-size: 0.9rem; font-weight: 600;">Question 1 of 10</span>
+            
+            <div id="question-text" class="question-text">Question goes here?</div>
+            
+            <div id="options-container" class="options">
+                </div>
+
+            <div id="explanation-area" class="explanation-area">
+                <strong>💡 Explanation:</strong>
+                <span id="explanation-text">Explanation goes here.</span>
+            </div>
+
+            <button id="next-btn" class="btn" onclick="handleNextButton()" disabled>Submit Answer</button>
+        </div>
+
+        <div id="review-screen" class="screen">
+            <h1>Quiz Results</h1>
+            
+            <div class="score-card">
+                <h2 id="final-score">0/0</h2>
+                <p>Your Final Score</p>
+            </div>
+
+            <h3>Detailed Review</h3>
+            <div id="review-list" class="review-list">
+                </div>
+
+            <div class="flex-buttons">
+                <button id="reattempt-btn" class="btn" style="background: var(--danger);" onclick="reattemptWrongQuestions()">Reattempt Wrong</button>
+                <button class="btn" onclick="resetQuiz()">Restart Full Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ⬇️ PASTE YOUR QUIZ DATA HERE ⬇️
+        // ==========================================
+        const quizData = [
+    {
+        question: "Identify the part with the error:<br><br><em>'Rohit came with three cupsful of tea.'</em>",
+        options: ["Rohit came", "with three", "cupsful of tea", "no error"],
+        correct: 2,
+        explanation: "Replace 'cupsful' with 'cupfuls'.",
+        rule: "Nouns ending with 'ful' are made plural by putting 's' after 'ful'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Rahul has given her thirty five millions dollars to buy a new house.'</em>",
+        options: ["Rahul has given her", "thirty five millions dollars to", "buy a new house", "no error"],
+        correct: 1,
+        explanation: "Replace 'millions' with 'million'.",
+        rule: "The noun 'million' is used as singular when used after a numeral."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I gifted him many pair of shoes.'</em>",
+        options: ["I gifted him", "many pair", "of shoes", "no error"],
+        correct: 1,
+        explanation: "Replace 'pair' with 'pairs'.",
+        rule: "Pair, dozen, thousand etc. are written in plural form when these words are used with Indefinite countable nouns like dozens of men, thousands of people, many pairs of socks, etc."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Deaf are demanding reservations in jobs.'</em>",
+        options: ["Deaf are", "demanding", "reservations in jobs", "no error"],
+        correct: 0,
+        explanation: "Replace 'deaf' with 'the deaf'.",
+        rule: "'The deaf' represents the whole community of deafs."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The book's cover is highly glossy.'</em>",
+        options: ["The book's cover", "is highly", "glossy", "no error"],
+        correct: 0,
+        explanation: "Replace 'book's cover' with 'the cover of the book'.",
+        rule: "For non-living things, we use 'of' in place of apostrophe s."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The scissors which is lying on the table can't be used now.'</em>",
+        options: ["The scissors", "which is lying on the table", "can't be used now", "no error"],
+        correct: 1,
+        explanation: "Replace 'is' with 'are'.",
+        rule: "The noun 'scissors' is plural and a plural verb is used with it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Pair after pair of binoculars have been sent to Mr. Rajkumar.'</em>",
+        options: ["Pair after pair", "of binoculars have been", "sent to Mr. Rajkumar", "no error"],
+        correct: 1,
+        explanation: "Replace 'have' with 'has'.",
+        rule: "If we use a preposition after a noun and the same noun is repeated after the preposition, both the nouns should be in singular, and a singular verb will be used."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He received a summon to appear in court for the murder case.'</em>",
+        options: ["He received a", "summon to appear in court", "for the murder case", "no error"],
+        correct: 1,
+        explanation: "Replace 'summon' with 'summons'.",
+        rule: "'Summons' is a singular noun and a singular verb is used with it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Mathematics play a critical role in various fields like science, engineering, and finance.'</em>",
+        options: ["Mathematics play a critical", "role in various fields like", "science, engineering, and finance.", "no error"],
+        correct: 0,
+        explanation: "Replace 'play' with 'plays'.",
+        rule: "The name of the subject ending with 's' appears as plural but they are singular nouns and a singular verb is used with them."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'You will see that different people living in India have different cultures.'</em>",
+        options: ["You will see that different people", "living in India", "have different cultures", "no error"],
+        correct: 0,
+        explanation: "Replace 'people' with 'peoples'.",
+        rule: "'People' is a plural noun and never takes s/es. But when it describes the meaning of race, nation or tribes, the use of 'peoples' is absolutely correct. 'Peoples' is a countable noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Peoples toil and moil to earn their bread and butter.'</em>",
+        options: ["Peoples", "toil and moil to earn", "their bread and butter", "no error"],
+        correct: 0,
+        explanation: "Replace 'peoples' with 'people'.",
+        rule: "'People' is a plural noun and never takes s/es when used in the general sense."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Can you give me your half hour to finish this work?'</em>",
+        options: ["Can you give", "me your half hour", "to finish this work?", "no error"],
+        correct: 1,
+        explanation: "Replace 'half hour' with 'half an hour'.",
+        rule: "The noun 'half' is always written as 'half a/an noun' or 'a half noun'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Three hundred rupees are not a reasonable price for this book.'</em>",
+        options: ["Three hundred rupees", "are not a reasonable price", "for this book", "no error"],
+        correct: 1,
+        explanation: "Replace 'are' with 'is'.",
+        rule: "The amount of money, distance and time are considered as singular units and singular verbs are used with them."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Payal is going to buy a four rooms flat tomorrow.'</em>",
+        options: ["Payal is going", "to buy a four", "rooms flat tomorrow", "no error"],
+        correct: 2,
+        explanation: "Replace 'rooms' with 'room'.",
+        rule: "When a compound noun (four room) is used before another noun (flat) as an adjective, it is kept in singular form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Paramjeet respects a student in Karamveer.'</em>",
+        options: ["Paramjeet", "respects a student", "in Karamveer", "no error"],
+        correct: 1,
+        explanation: "Replace 'a' with 'the'.",
+        rule: "The use of 'the' with any common noun acts as the abstract noun and tells the quality of that noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'You should take care of the olds.'</em>",
+        options: ["You should", "take care of", "the olds", "no error"],
+        correct: 2,
+        explanation: "Replace 'olds' with 'old'.",
+        rule: "'The old' represents all the old people."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The police has arrived on the spot on time.'</em>",
+        options: ["The police", "has arrived on the spot", "on time", "no error"],
+        correct: 1,
+        explanation: "Replace 'has' with 'have'.",
+        rule: "Police is a plural noun and hence always takes a plural verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Rabies are a dangerous disease.'</em>",
+        options: ["Rabies are", "a dangerous", "disease", "no error"],
+        correct: 0,
+        explanation: "Replace 'are' with 'is'.",
+        rule: "The name of any disease is always a singular noun and hence takes a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Everything's beauty is difficult to define.'</em>",
+        options: ["Everything's beauty", "is difficult", "to define.", "no error"],
+        correct: 0,
+        explanation: "Replace 'everything's beauty' with 'The beauty of everything'.",
+        rule: "The words 'everything, nothing, something, anything' never takes apostrophes with them."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Poor are exploited by the rich.'</em>",
+        options: ["Poor are", "exploited by", "the rich", "no error"],
+        correct: 0,
+        explanation: "Replace 'poor' with 'the poor'.",
+        rule: "'The poor' represents the whole community of poors."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The brave is loved and respected all over the world.'</em>",
+        options: ["The brave", "is loved and respected all over", "the world", "no error"],
+        correct: 1,
+        explanation: "Replace 'is' with 'are'. 'The brave' represents the whole community of brave people.",
+        rule: "Adjectives used as nouns with 'the' to denote a class of persons take a plural verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Her knickers adorned with intricate lace patterns, was carefully folded in the drawer.'</em>",
+        options: ["Her knickers", "adorned with intricate lace patterns,", "was carefully folded in the drawer", "no error"],
+        correct: 2,
+        explanation: "Replace 'was' with 'were'. 'Knickers' is a plural noun and always takes a plural verb.",
+        rule: "Articles of dress consisting of two parts (like knickers, trousers, pants, shorts) are treated as plural nouns."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The news are broadcast daily to keep the public informed about current events.'</em>",
+        options: ["The news are", "broadcast daily to keep the public informed", "about current events", "no error"],
+        correct: 0,
+        explanation: "Replace 'are' with 'is'. 'News' is a singular noun and always takes a singular verb.",
+        rule: "Nouns plural in form but singular in meaning (like news, mathematics, physics) take a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Diabetes require careful management of blood sugar levels through medication and lifestyle changes.'</em>",
+        options: ["Diabetes require", "careful management of blood sugar levels", "through medication and lifestyle changes", "no error"],
+        correct: 0,
+        explanation: "Replace 'require' with 'requires'. The name of any disease is always a singular noun and hence takes a singular verb.",
+        rule: "Names of diseases ending in 's' (like diabetes, rabies, measles) are singular and take a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The gentry in the historic town have preserved their cultural heritage with great care.'</em>",
+        options: ["The gentry in the", "historic town have preserved their cultural", "heritage with great care", "no error"],
+        correct: 3,
+        explanation: "This sentence is grammatically correct. 'Gentry' is a plural noun and takes a plural verb ('have').",
+        rule: "Collective nouns like gentry, peasantry, poultry, and clergy are singular in form but plural in meaning and take plural verbs."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Cities after cities has witnessed significant development over the years.'</em>",
+        options: ["Cities after cities", "has witnessed significant development", "over the years", "no error"],
+        correct: 0,
+        explanation: "Replace 'Cities after cities' with 'City after city'. If we use a preposition after a noun and the same noun is repeated after the preposition, both the nouns should be in singular.",
+        rule: "The 'Noun + preposition + same noun' construction always uses singular nouns and takes a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The twenty-men committee, comprising dedicated individuals from various backgrounds, collaborated seamlessly to organize the community event.'</em>",
+        options: ["The twenty-men committee,", "comprising dedicated individuals from various backgrounds, collaborated seamlessly", "to organize the community event", "no error"],
+        correct: 0,
+        explanation: "Replace 'men' with 'man'. When a compound noun is used as an adjective, it is kept in singular form.",
+        rule: "Hyphenated nouns used as adjectives are never used in the plural form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The seven-feet-tall basketball player, known for his incredible slam dunks and defensive prowess, dominated the court during the championship game.'</em>",
+        options: ["The seven-feet-tall basketball player,", "known for his incredible slam dunks and defensive prowess, dominated", "the court during the championship game", "no error"],
+        correct: 0,
+        explanation: "Replace 'feet' with 'foot'. 'Feet' is the plural form of 'foot'. When a compound noun is used as an adjective, it is kept in singular form.",
+        rule: "Hyphenated compound adjectives must contain singular nouns (e.g., a seven-foot-tall player, a five-mile walk)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'All the informations imparted to me can't be used for this purpose.'</em>",
+        options: ["All the informations", "imparted to me can't be", "used for this purpose", "no error"],
+        correct: 0,
+        explanation: "Replace 'informations' with 'information'. 'Information' is an uncountable noun and hence does not have a plural form.",
+        rule: "Uncountable nouns like information, advice, luggage, and work cannot be pluralized with 's' or 'es'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I have not gone through this history book, so I can not tell you anything about its content.'</em>",
+        options: ["I have not gone through", "this history book, so I can not", "tell you anything about its content", "no error"],
+        correct: 2,
+        explanation: "Replace 'content' with 'contents'. 'Content' means satisfaction while 'contents' is related to subject matter.",
+        rule: "Some nouns change their meaning when pluralized. 'Contents' refers to the things contained in something, such as the chapters of a book."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Sweet voice is one of her beauty.'</em>",
+        options: ["Sweet voice", "is one of her", "beauty", "no error"],
+        correct: 2,
+        explanation: "Replace 'beauty' with 'beauties'. The noun 'beauty' is uncountable when it talks about the beauty of something or person, but it is a countable noun when it talks about the specific features of something or someone.",
+        rule: "Abstract nouns can sometimes be used as countable nouns when they refer to a specific instance or feature."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Take off your cloths and have a bath.'</em>",
+        options: ["Take off", "your cloths", "and have a bath", "no error"],
+        correct: 1,
+        explanation: "Replace 'cloths' with 'clothes'. 'Cloth' is a material noun and is uncountable. 'Cloths' refers to unstitched pieces of fabric, whereas 'clothes' means attire.",
+        rule: "'Cloths' refers to pieces of fabric used for cleaning or manufacturing, whereas 'clothes' refers to garments or apparel worn on the body."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I don't like the government's policies.'</em>",
+        options: ["I don't", "like the", "government's policies", "no error"],
+        correct: 3,
+        explanation: "This sentence is grammatically correct. We can use 's with certain non-living collective nouns.",
+        rule: "An apostrophe + s ('s) can be used with collective entities representing groups of people, like government, organization, or company."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Sapna is not beautiful, but her hair are straight.'</em>",
+        options: ["Sapna is not", "beautiful, but", "her hair are straight", "no error"],
+        correct: 2,
+        explanation: "Replace 'are' with 'is'. 'Hair' is an uncountable noun and hence takes a singular verb.",
+        rule: "'Hair' is treated as a singular uncountable noun when referring to a mass of hair on a person's head, and it takes a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'This pair of spectacles are highly expensive.'</em>",
+        options: ["This pair of", "spectacles", "are highly expensive", "no error"],
+        correct: 2,
+        explanation: "Replace 'are' with 'is'. 'Pair of spectacles' is a singular subject due to the word 'pair', so it takes a singular verb.",
+        rule: "While 'spectacles' takes a plural verb, 'a pair of spectacles' takes a singular verb because the subject of the sentence is the singular word 'pair'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Have you ever seen such a beautiful shoal of fishes.'</em>",
+        options: ["Have you ever", "seen such a beautiful", "shoal of fishes", "no error"],
+        correct: 2,
+        explanation: "Replace 'fishes' with 'fish'. The noun 'fish' is normally the same in singular and plural form. A 'shoal' is a group of the same fish.",
+        rule: "The plural of fish is usually 'fish'. The word 'fishes' is only used to describe multiple different species of fish."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I always have fruits in my breakfast.'</em>",
+        options: ["I always", "have fruits", "in my breakfast", "no error"],
+        correct: 1,
+        explanation: "Replace 'fruits' with 'fruit'. The noun 'fruit' is uncountable when it gives the meaning of food.",
+        rule: "Use 'fruit' as an uncountable noun when referring to the food in general. Use 'fruits' only to discuss distinct varieties or botanical types."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She has to appear before the metropolis magistrate.'</em>",
+        options: ["She has to appear", "before the", "metropolis magistrate", "no error"],
+        correct: 2,
+        explanation: "Replace 'metropolis' with 'metropolitan'. 'Metropolis' refers to the city itself, but 'metropolitan' is the correct adjective form.",
+        rule: "Use the adjective form 'metropolitan' rather than the noun 'metropolis' to modify another noun (like magistrate)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Pair after pair of shoes has been sent to him.'</em>",
+        options: ["Pair after pair", "of shoes has been", "sent to him", "no error"],
+        correct: 3,
+        explanation: "This sentence is grammatically correct. The construction uses singular nouns surrounding the preposition and takes a singular verb ('has').",
+        rule: "The structure 'Noun + Preposition + Same Noun' acts as a singular subject and takes a singular verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Are you talking about India and China's leaders?'</em>",
+        options: ["Are you talking", "about India", "and China's leaders?", "no error"],
+        correct: 1,
+        explanation: "Replace 'India' with 'India's'. To show different possession, 's is used with all the words.",
+        rule: "When indicating separate possession by two or more distinct entities, an apostrophe + s ('s) must be added to each noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Mr. Rajkumar has five wifes.'</em>",
+        options: ["Mr. Rajkumar", "has five", "wifes", "no error"],
+        correct: 2,
+        explanation: "Replace 'wifes' with 'wives'.",
+        rule: "The plural form of wife is wives."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I asked the address many passer-bys.'</em>",
+        options: ["I asked", "the address", "many passer-bys", "no error"],
+        correct: 2,
+        explanation: "Replace 'passer-bys' with 'passers-by'.",
+        rule: "In case of compound nouns, (except the nouns made with man/woman) use root or head word to make it plural."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Rachna has only five childs.'</em>",
+        options: ["Rachna has", "only five", "childs", "no error"],
+        correct: 2,
+        explanation: "Replace 'childs' with 'children'.",
+        rule: "The plural form of child is children."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I need two spoonsful of sugar.'</em>",
+        options: ["I need", "two spoonsful", "of sugar", "no error"],
+        correct: 1,
+        explanation: "Replace 'spoonsful' with 'spoonfuls'.",
+        rule: "Nouns ending with 'ful' are made plural by putting 's' after 'ful'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'There are only two women doctor in the hospital.'</em>",
+        options: ["There are only two", "women doctor", "in the hospital", "no error"],
+        correct: 1,
+        explanation: "Replace 'doctor' with 'doctors'.",
+        rule: "In case of compound nouns starting with man or woman, both the nouns are made plural."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Rachna's and Nancy's father is my uncle.'</em>",
+        options: ["Rachna's and Nancy's", "father is", "my uncle", "no error"],
+        correct: 0,
+        explanation: "Replace 'Rachna's' with 'Rachna'.",
+        rule: "For common possession, use 's with the final word."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I was carrying someone's else bag.'</em>",
+        options: ["I was carrying", "someone's else", "bag", "no error"],
+        correct: 1,
+        explanation: "Replace 'someone's else' with 'someone else's'.",
+        rule: "If else is used after 'someone', then 's will be used after else."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Have you heard about my sister's in law husband in the news?'</em>",
+        options: ["Have you heard about", "my sister's in law husband", "in the news?", "no error"],
+        correct: 1,
+        explanation: "Replace 'sister's in law' with 'sister in law's'.",
+        rule: "A singular compound noun shows possession with an apostrophe + s at the end of the word."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'All the peoples in North America are egoistic.'</em>",
+        options: ["All the peoples", "in North America", "are egoistic", "no error"],
+        correct: 0,
+        explanation: "Replace 'peoples' with 'people'.",
+        rule: "'People' refers to all the people in a region in the general sense. 'Peoples' is used when referring to different ethnic, cultural or national groups within a region."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The leader, in the midst of a heated debate, defended his proposal with passion and eloquence.'</em>",
+        options: ["The leader, in the midst", "of a heated debate, defended", "his proposal with passion and eloquence", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The noun 'leader' is used for both Male and Female Genders and is used as singular and generally: he/his/him are used after it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Keep your valuable secure in the hotel safe while exploring the vibrant city.'</em>",
+        options: ["Keep your valuable secure", "in the hotel safe while", "exploring the vibrant city", "no error"],
+        correct: 0,
+        explanation: "Replace 'valuable' with 'valuables'.",
+        rule: "'Valuable' is an adjective while 'valuables' refer to items such as money, jewelry or any important documents etc."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Amidst the bustling city, the police, equipped with state-of-the-art technology is tirelessly working to ensure the safety of the diverse population.'</em>",
+        options: ["Amidst the bustling city, the police,", "equipped with state-of-the-art technology", "is tirelessly working to ensure the safety of the diverse population.", "no error"],
+        correct: 2,
+        explanation: "Replace 'is' with 'are'.",
+        rule: "'Police' is a plural noun and hence always takes a plural verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She bought a beautiful handmade paper to write a letter to her friend.'</em>",
+        options: ["She bought", "a beautiful handmade paper", "to write a letter to her friend", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The structure is correct as written in the provided solution."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The artist carefully selected different types of papers for her origami creations.'</em>",
+        options: ["The artist carefully", "selected different types of", "papers for her origami creations", "no error"],
+        correct: 2,
+        explanation: "Replace 'papers' with 'paper'.",
+        rule: "Here, paper is a material noun, so it is treated as a singular noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The blacksmith forged intricate designs using irons in his workshop.'</em>",
+        options: ["The blacksmith", "forged intricate designs", "using irons in his workshop", "no error"],
+        correct: 2,
+        explanation: "Replace 'irons' with 'iron'.",
+        rule: "Here, 'iron' is a material noun while irons means a fetter or chain."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The archaeologists discovered ancient artifacts buried in the grounds during the excavation.'</em>",
+        options: ["The archaeologists discovered", "ancient artifacts buried", "in the grounds during the excavation", "no error"],
+        correct: 2,
+        explanation: "Replace 'grounds' with 'ground'.",
+        rule: "Ground means the solid surface of the earth while grounds means the basis for something."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Mary was at her wit end trying to fix the computer issue.'</em>",
+        options: ["Mary was at", "her wit end trying to fix", "the computer issue", "no error"],
+        correct: 1,
+        explanation: "Replace 'wit' with 'wit's'.",
+        rule: "'At one's wit's end' is an idiomatic phrase."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The two estranged friends kept each other at an arm length, reluctant to delve into the issues that had strained their relationship.'</em>",
+        options: ["The two estranged friends kept each other", "at an arm length, reluctant to delve into the issues", "that had strained their relationship", "no error"],
+        correct: 1,
+        explanation: "Replace 'arm' with 'arm's'.",
+        rule: "'At an arm's length' is an idiomatic phrase."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Northern Lights, a breathtaking natural light display in the polar regions, is a remarkable phenomena that attracts tourists from around the world.'</em>",
+        options: ["The Northern Lights, a breathtaking natural light", "display in the polar regions, is a remarkable", "phenomena that attracts tourists from around the world", "no error"],
+        correct: 2,
+        explanation: "Replace 'phenomena' with 'phenomenon'.",
+        rule: "'Phenomena' is the plural form of 'phenomenon'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Ram, Shyam and Rahim are the MP of these areas.'</em>",
+        options: ["Ram, Shyam and Rahim", "are the MP", "of these areas", "no error"],
+        correct: 1,
+        explanation: "Replace 'MP' with 'MPs'.",
+        rule: "The plural form of MP is MPs."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Wearing his round spectacle, the professor delivered an engaging lecture to the students.'</em>",
+        options: ["Wearing his round spectacle,", "the professor delivered an engaging", "lecture to the students", "no error"],
+        correct: 0,
+        explanation: "Replace 'spectacle' with 'spectacles'.",
+        rule: "Spectacles, goggles, binoculars, and eyeglasses are always plural and take a plural verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'A series of lecture on advanced topics will be delivered by renowned experts during the academic conference.'</em>",
+        options: ["A series of lecture on", "advanced topics will be delivered by", "renowned experts during the academic conference", "no error"],
+        correct: 0,
+        explanation: "Replace 'lecture' with 'lectures'.",
+        rule: "Here, the sentence talks about multiple lectures, so the plural form of lecture must be used."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'A teacher in him emerged when he saw the kids struggling, and he stepped in to offer guidance.'</em>",
+        options: ["A teacher in him emerged", "when he saw the kids struggling,", "and he stepped in to offer guidance.", "no error"],
+        correct: 0,
+        explanation: "Replace 'A' with 'The'.",
+        rule: "The use of 'the' with any common noun acts as an abstract noun and denotes that quality (i.e., 'the qualities of a teacher')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The soaps, infused with natural ingredients, left her skin feeling refreshed and nourished.'</em>",
+        options: ["The soaps, infused with", "natural ingredients, left her skin", "feeling refreshed and nourished", "no error"],
+        correct: 0,
+        explanation: "Replace 'soaps' with 'soap'.",
+        rule: "'Soap' is an uncountable noun and never takes s/es with it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She applied a thin layer of filths on the antique furniture to give it an aged appearance, a popular technique among restoration artists.'</em>",
+        options: ["She applied a thin layer of", "filths on the antique furniture to give it an aged appearance,", "a popular technique among restoration artists.", "no error"],
+        correct: 1,
+        explanation: "Replace 'filths' with 'filth'.",
+        rule: "'Filth' is an uncountable noun and never takes s/es with it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'His deep understanding of current event allowed him to navigate through the complex landscape of international politics.'</em>",
+        options: ["His deep understanding of current event", "allowed him to navigate through the complex", "landscape of international politics.", "no error"],
+        correct: 0,
+        explanation: "Replace 'event' with 'events'.",
+        rule: "'Current events' is a compound noun which is always used in the plural form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The three thousand hens lay about thirty dozens of eggs every month which I sell in the market to make a living.'</em>",
+        options: ["The three thousand hens lay about thirty", "dozens of eggs every month", "which I sell in the market to make a living.", "no error"],
+        correct: 1,
+        explanation: "Replace 'dozens of eggs' with 'dozen eggs'.",
+        rule: "When 'dozen' comes after a numeral noun it is always used as a singular noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I can do only your work, not somebody's else.'</em>",
+        options: ["I can do only", "your work,", "not somebody's else", "no error"],
+        correct: 2,
+        explanation: "Replace 'somebody\\'s else' with 'somebody else\\'s'.",
+        rule: "If 'else' is used after 'somebody', then the apostrophe + s ('s) will be used after 'else'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Earth's atmosphere protects us from harmful solar radiation.'</em>",
+        options: ["The Earth's atmosphere", "protects us from", "harmful solar radiation", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "Apostrophes can be used after heavenly or celestial bodies (e.g., Earth's, Moon's)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The good in the store ranged from clothing and electronics to household items.'</em>",
+        options: ["The good in the store", "ranged from clothing and electronics", "to household items", "no error"],
+        correct: 0,
+        explanation: "Replace 'good' with 'goods'.",
+        rule: "'Goods' means belongings or merchandise, while 'good' is related to something beneficial."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The sand of the Sahara stretch for miles, creating a vast desert landscape.'</em>",
+        options: ["The sand of the Sahara", "stretch for miles, creating a", "vast desert landscape.", "no error"],
+        correct: 0,
+        explanation: "Replace 'sand' with 'sands'.",
+        rule: "'Sands' means a small or large desert expanse, while 'sand' refers to the loose granular substance itself."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The cultural customs of exchanging gifts during festivals was deeply ingrained in their society.'</em>",
+        options: ["The cultural customs of", "exchanging gifts during festivals", "was deeply ingrained in their society", "no error"],
+        correct: 0,
+        explanation: "Replace 'customs' with 'custom'.",
+        rule: "'Custom' means tradition, while 'customs' refers to a tax imposed on imports and exports of goods."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Johnsons were seen at the local park, spending quality time together.'</em>",
+        options: ["The Johnsons", "were seen at the local park,", "spending quality time together", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "'The + plural surname' denotes a whole family and a plural verb is used with it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The scientist recorded a crucial data in the experiment, contributing valuable information...'</em>",
+        options: ["The scientist recorded a crucial", "data in the experiment, contributing valuable", "information...", "no error"],
+        correct: 1,
+        explanation: "Replace 'data' with 'datum'. 'Data' is the plural form of 'datum'.",
+        rule: "Because the article 'a' is singular, the singular noun 'datum' must be used instead of the plural 'data'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The meeting agenda outlined the key topics to be discussed, ensuring a focused and productive session.'</em>",
+        options: ["The meeting agenda outlined", "the key topics to be discussed, ensuring a", "focused and productive session", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The sentence is grammatically correct as written."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The advocate presented his case eloquently in the courtroom, persuading the jury.'</em>",
+        options: ["The advocate presented", "his case eloquently in the courtroom,", "persuading the jury", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The noun 'advocate' is used for both Male and Female Genders and is used as singular; generally, he/his/him are used after it."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The businesses of creating handcrafted chocolates turned into a sweet success, attracting customers from all over.'</em>",
+        options: ["The businesses of creating handcrafted", "chocolates turned into a sweet success,", "attracting customers from all over.", "no error"],
+        correct: 0,
+        explanation: "Replace 'businesses' with 'business'.",
+        rule: "Business is an uncountable noun and hence is written in the singular form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The cluster of kittens, with their playful antics, quickly became the center of attention.'</em>",
+        options: ["The cluster of kittens, with", "their playful antics, quickly became the", "center of attention", "no error"],
+        correct: 0,
+        explanation: "Replace 'cluster' with 'litter'.",
+        rule: "Group denoting words are fixed: use 'a litter of puppies/kittens/pigs', whereas 'a cluster' is used for stars or grapes."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She carefully arranged a bunch of flowers, selecting each bloom with artistic precision.'</em>",
+        options: ["She carefully arranged", "a bunch of flowers, selecting", "each bloom with artistic precision", "no error"],
+        correct: 1,
+        explanation: "Replace 'bunch' with 'bouquet'.",
+        rule: "A bouquet of flowers and a bunch of grapes or keys are fixed group denoting words."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She confidently walked into the room, wearing high heel that accentuated her posture and added a touch of elegance.'</em>",
+        options: ["She confidently walked into the room,", "wearing high heel that accentuated her posture and", "added a touch of elegance", "no error"],
+        correct: 1,
+        explanation: "Replace 'heel' with 'heels'.",
+        rule: "'High heels' is a compound noun which is always used in the plural form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The hurricane caused significant damage to the coastal areas, destroying homes and infrastructure.'</em>",
+        options: ["The hurricane caused significant", "damage to the coastal areas, destroying", "homes and infrastructure.", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The sentence is grammatically correct. 'Damage' is used correctly as an uncountable noun here."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The clerk diligently organized the files on their desk, ensuring efficiency in the office.'</em>",
+        options: ["The clerk diligently organized", "the files on their desk,", "ensuring efficiency in the office.", "no error"],
+        correct: 1,
+        explanation: "Replace 'their' with 'his'. The noun 'clerk' is used for both Male and Female Genders and is used as singular and generally: he/his/him are used after it.",
+        rule: "When referring to a singular common gender noun (like clerk, teacher, advocate), use singular masculine pronouns (he/his/him) as the default."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The teacher was impressed with the congregation of students who actively participated in the classroom'</em>",
+        options: ["The teacher was impressed with the", "congregation of students who actively", "participated in the classroom", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The collective noun is used appropriately in this context."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Brown always bring homemade treats to the community events'</em>",
+        options: ["The Brown always bring", "homemade treats to the", "community events", "no error"],
+        correct: 0,
+        explanation: "Replace 'Brown' with 'Browns'. 'The + plural surname' denotes a whole family and a plural verb is used with it.",
+        rule: "To refer to an entire family by their surname, make the surname plural and precede it with 'The' (e.g., The Smiths, The Browns)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Their lodging, nestled in the heart of the countryside, offered a peaceful retreat away from the bustling city'</em>",
+        options: ["Their lodging, nestled in the heart", "of the countryside, offered a peaceful retreat", "away from the bustling city", "no error"],
+        correct: 0,
+        explanation: "Replace 'lodging' with 'lodgings'. 'Lodgings' is always written in plural form and takes a plural verb with it.",
+        rule: "Certain nouns like 'lodgings', 'outskirts', and 'surroundings' are always used in the plural form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The archaeological site revealed the remain of an ancient civilization, offering insights into its culture and lifestyle'</em>",
+        options: ["The archaeological site revealed", "the remain of an ancient civilization, offering", "insights into its culture and lifestyle", "no error"],
+        correct: 1,
+        explanation: "Replace 'remain' with 'remains'. 'Remains' is always written in plural form and takes a plural verb with it.",
+        rule: "When referring to historical artifacts or surviving traces, the plural noun 'remains' must be used."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The school curriculum emphasizes the importance of social study, encouraging students to explore diverse cultures and societies.'</em>",
+        options: ["The school curriculum emphasizes the importance", "of social study, encouraging students to", "explore diverse cultures and societies.", "no error"],
+        correct: 1,
+        explanation: "Replace 'study' with 'studies'. 'Social studies' is a compound noun which is always used in the plural form.",
+        rule: "Academic disciplines like 'social studies', 'mathematics', and 'physics' have fixed forms."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The insurance company compensated the policyholder for the damage incurred during the incident.'</em>",
+        options: ["The insurance company", "compensated the policyholder for", "the damage incurred during the incident", "no error"],
+        correct: 2,
+        explanation: "Replace 'damage' with 'damages'. 'Damage' means physical harm while damages refers to a sum of money claimed or awarded in compensation for a loss or an injury.",
+        rule: "Use 'damages' specifically when referring to financial compensation."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The prisoner wore heavy irons on his wrists and ankles.'</em>",
+        options: ["The prisoner", "wore heavy irons", "on his wrists and ankles.", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error. Irons means fetters or chains.",
+        rule: "While 'iron' is an uncountable material noun, 'irons' is a countable noun meaning chains or restraints."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The chef skillfully prepared an omelet using a fresh ova, creating a delightful breakfast dish'</em>",
+        options: ["The chef skillfully prepared an omelet", "using a fresh ova, creating", "a delightful breakfast dish", "no error"],
+        correct: 1,
+        explanation: "Replace 'ova' with 'ovum'. The plural form of ovum is ova.",
+        rule: "Because the article 'a' is used, the singular Latin noun form ('ovum') must be used instead of the plural ('ova')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Wordsworth's poetries is characterized by his description of the beauty of nature.'</em>",
+        options: ["Wordsworth's poetries is characterized", "by his description of the beauty", "of nature.", "no error"],
+        correct: 0,
+        explanation: "Replace 'poetries' with 'poetry'. These nouns are used in singular form only and they are uncountable form only.",
+        rule: "Nouns like poetry, machinery, and scenery are uncountable and do not have a plural form."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'\"Please convey my best regard to the Boss\", the receptionist said to the peon'</em>",
+        options: ["\"Please convey my best", "regard to the Boss\", the receptionist said to the peon", "of the office.", "no error"],
+        correct: 1,
+        explanation: "Replace 'regard' with 'regards'. Regard is a verb and regards are best wishes used to express friendliness in greetings.",
+        rule: "Use the plural noun 'regards' when conveying greetings or best wishes."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'When he returned from Saudi Arab, he informed me that he had come here to do an urgent works.'</em>",
+        options: ["When he returned from Saudi Arab,", "he informed me that he had come here", "to do an urgent works.", "no error"],
+        correct: 2,
+        explanation: "Replace 'works' by 'work'. 'Works' means the compositions of a writer, painter etc.",
+        rule: "'Work' as a task or labor is uncountable and takes no article or plural. 'Works' refers to literary/artistic creations or a factory."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'This type of exercise is very helpful to the students preparing for the SSC CGL Examination'</em>",
+        options: ["This type of exercise", "is very helpful to the students preparing for the SSC CGL", "Examination at...", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "The phrasing 'type of exercise' is grammatically correct."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'\"There are only certain boy that are sincere and they can do well in the examinations.\" said the class teacher.'</em>",
+        options: ["\"There are only certain boy", "that are sincere and they can do well in the examinations.\"", "said the class teacher.", "no error"],
+        correct: 0,
+        explanation: "\"There are\" indicates that it is plural, so \"boys\" will be used instead of \"boy\".",
+        rule: "The adjective 'certain' followed by a plural verb ('are') requires a plural noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'\"I have never seen such a lovely spectacles ever before\", said the passer-by.'</em>",
+        options: ["\"I have never seen such a lovely spectacles", "ever before\", said", "the passer-by.", "no error"],
+        correct: 0,
+        explanation: "Replace 'spectacles' with 'spectacle'. Here, we are talking about the view/event which the speaker is looking at. Therefore, spectacle will be used.",
+        rule: "A 'spectacle' is a visually striking performance or display. 'Spectacles' refers to eyeglasses."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I do my best but I don't know why I do not get the desired mark in the examination'</em>",
+        options: ["I do my best but I don't know why", "I do not get the desired", "mark in the examination", "no error"],
+        correct: 2,
+        explanation: "Replace 'mark' with 'marks'. Mark means to note something. Marks is what one scores in an exam.",
+        rule: "When referring to grades or points in a test, use the plural form 'marks'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'You are among those luckiest man who get name and fame not by labour but by chance.'</em>",
+        options: ["You are among those luckiest man who", "get name and fame not by", "labour but by chance.", "no error"],
+        correct: 0,
+        explanation: "Replace 'man' with 'men'. 'Those' will be followed by a plural noun/pronoun.",
+        rule: "The phrase 'among those' indicates a group, which requires a plural noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Not to speak of failure even an accident could not affect his high spirits.'</em>",
+        options: ["Not to speak of failure", "even an accident", "could not affect his high spirits.", "no error"],
+        correct: 2,
+        explanation: "Replace 'spirits' with 'spirit'. Spirit means enthusiasm.",
+        rule: "In the context of personal enthusiasm or mood, 'spirit' is often used in the singular when denoting a specific quality."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'\"I don't know about his whereabout, do you?\" he said to me.'</em>",
+        options: ["\"I don't know about his whereabout,", "do you?\"", "he said to me.", "no error"],
+        correct: 0,
+        explanation: "Replace 'whereabout' with 'whereabouts'. 'Whereabouts' means the place where someone or something is.",
+        rule: "The noun 'whereabouts' always ends in 's', whether it takes a singular or plural verb."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is harmful to take cupsful of coffee five times a day.'</em>",
+        options: ["It is harmful to take cupsful", "of coffee", "five times a day.", "no error"],
+        correct: 0,
+        explanation: "Replace 'cupsful' with 'cupfuls'.",
+        rule: "Nouns ending with 'ful' are made plural by putting 's' after 'ful'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The present datas show that the birth rate has fallen down but not to the level of expectations.'</em>",
+        options: ["The present datas show that the birth rate", "has fallen down but not", "to the level of expectations.", "no error"],
+        correct: 0,
+        explanation: "Replace 'datas' with 'data'. The correct plural form of the word is data.",
+        rule: "The word 'data' is already the plural form of 'datum', so 'datas' is incorrect."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He said that he always kept in his pocket a bundle of one hundred rupees notes.'</em>",
+        options: ["He said that he always kept in his pocket", "a bundle of one hundred", "rupees notes.", "no error"],
+        correct: 2,
+        explanation: "Replace 'one hundred rupees notes' with 'one hundred rupee notes'.",
+        rule: "Words like dozen, score, pair, hundred, million when used after a numeral are used as singular."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Running a five-stars hotel requires more money than what we have in our bank.'</em>",
+        options: ["Running a five-stars hotel requires more", "money than what we have in", "our bank.", "no error"],
+        correct: 0,
+        explanation: "Replace 'five-stars' with 'five-star'.",
+        rule: "Hyphenated noun expressions such as a ten-rupee note, a two-mile walk, or a five-star hotel are treated as singular."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She gave me some informations I had been waiting for for the previous two days.'</em>",
+        options: ["She gave me some informations", "I had been waiting for", "for the previous two days.", "no error"],
+        correct: 0,
+        explanation: "Replace 'informations' with 'information'.",
+        rule: "Information is used in the singular form only and is an uncountable noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Your advices are the sign of your dirty mind and unacceptable approach.'</em>",
+        options: ["Your advices are the sign of your", "dirty mind and", "unacceptable approach.", "no error"],
+        correct: 0,
+        explanation: "Replace 'advices' with 'advice'. Advice does not have a plural.",
+        rule: "Advice is used in the singular form only and is an uncountable noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Cyclone is a natural phenomenon and nobody can stop it.'</em>",
+        options: ["Cyclone is a natural phenomenon", "and nobody can", "stop it.", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "'Phenomenon' is the correct singular form, and the sentence is structurally sound."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'My uncle gave him a home work and advised him to read it.'</em>",
+        options: ["My uncle gave him a home work", "and advised him to read it", "at home.", "no error"],
+        correct: 0,
+        explanation: "Remove 'a' before homework.",
+        rule: "Homework is an uncountable noun and cannot take the indefinite article 'a'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The sheafs of the plants were too heavy for me to carry on the head.'</em>",
+        options: ["The sheafs of the plants were too heavy", "for me to", "carry on the head.", "no error"],
+        correct: 0,
+        explanation: "Replace 'sheafs' with 'sheaves'.",
+        rule: "The correct plural of 'sheaf' is 'sheaves'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'All the Chiefs Ministers are responsible for the miserable condition of their states.'</em>",
+        options: ["All the Chiefs Ministers are responsible for the", "miserable condition of their", "states.", "no error"],
+        correct: 0,
+        explanation: "Replace 'Chiefs Ministers' with 'Chief Ministers'.",
+        rule: "To make plural forms of compound words, we add '-s' after the main word."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Three dozens bananas have been sold by me.'</em>",
+        options: ["Three dozens bananas", "have been", "sold by me.", "no error"],
+        correct: 0,
+        explanation: "Replace 'dozens' with 'dozen'.",
+        rule: "Words like dozen, score, pair, hundred, million when used after a numeral are used as singular."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'We believe that a two-miles walk always keeps us healthy.'</em>",
+        options: ["We believe that a two-miles walk", "always keeps us", "healthy.", "no error"],
+        correct: 0,
+        explanation: "Replace 'a two-miles walk' with 'a two-mile walk'.",
+        rule: "Hyphenated expressions used as adjectives (like a two-mile walk) are treated as singular."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'\"Language consists of several stratums\", said the teacher in his lecture.'</em>",
+        options: ["\"Language consists of several stratums\",", "said the teacher in his lecture", "on Language.", "no error"],
+        correct: 0,
+        explanation: "Replace 'stratums' with 'strata'.",
+        rule: "The correct plural form of the word 'stratum' is 'strata'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'All his sister-in-laws are invited to attend the party on the eve of new year.'</em>",
+        options: ["All his sister-in-laws are invited", "to attend the party", "on the eve of new year.", "no error"],
+        correct: 0,
+        explanation: "Replace 'sister-in-laws' with 'sisters-in-law'.",
+        rule: "To make plural forms of compound words, add '-s' to the main root word (sister)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'A readymade cloths shop has opened in the locality near the crossroads.'</em>",
+        options: ["A readymade cloths shop", "has opened in the locality", "near the crossroads.", "no error"],
+        correct: 0,
+        explanation: "Replace 'cloths' with 'clothes'.",
+        rule: "'Cloth' is unstitched fabric, whereas 'clothes' refers to stitched garments that are worn."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The wall of this building is fifty foot high and its paintings are very nice.'</em>",
+        options: ["The wall of this building is", "fifty foot high and its paintings", "are very nice.", "no error"],
+        correct: 1,
+        explanation: "Replace 'fifty foot' with 'fifty feet'.",
+        rule: "Because fifty is plural and it is not acting as a hyphenated adjective here, the plural form 'feet' must be used."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'If a student needs advice about carrier, he should visit Pinnacle Institute.'</em>",
+        options: ["If a student needs advice about carrier,", "he should visit", "Pinnacle Institute.", "no error"],
+        correct: 0,
+        explanation: "Replace 'carrier' with 'career'.",
+        rule: "A 'career' is an occupation undertaken for a significant period of a person's life; a 'carrier' is something that transports."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The beautiful surrounding of the fort attracted a large number of tourists.'</em>",
+        options: ["The beautiful surrounding of the fort", "attracted a large number of tourists", "coming from afar.", "no error"],
+        correct: 0,
+        explanation: "Replace 'surrounding' with 'surroundings'.",
+        rule: "Surrounding is a verb or adjective, while surroundings is a plural noun referring to the area around a place."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'His means are very limited even then we have seen him happy.'</em>",
+        options: ["His means are very limited", "even then", "we have seen him happy.", "no error"],
+        correct: 3,
+        explanation: "This sentence contains no error.",
+        rule: "When 'means' refers to wealth or income, it is treated as plural."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He uses a fine quality of oil so his hairs are black and attractive.'</em>",
+        options: ["He uses a fine quality of oil", "so his hairs are", "black and attractive.", "no error"],
+        correct: 1,
+        explanation: "Replace 'hairs' with 'hair'.",
+        rule: "Hair is used in singular form only as an uncountable noun when referring to a full head of hair."
+    }
+        ];
+        // ==========================================
+        // ⬆️ PASTE YOUR QUIZ DATA HERE ⬆️
+        // ==========================================
+
+        // --- Application State ---
+        let currentQueue = []; 
+        let currentQueueIndex = 0; 
+        let score = 0;
+        let wrongQuestions = []; 
+        let userAnswers = {}; 
+        let hasAnsweredCurrent = false;
+
+        // --- DOM Elements ---
+        const rulesScreen = document.getElementById('rules-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const progressFill = document.getElementById('progress-fill');
+        const questionCounter = document.getElementById('question-counter');
+        
+        const explanationArea = document.getElementById('explanation-area');
+        const explanationText = document.getElementById('explanation-text');
+
+        // --- Functions ---
+
+        function startQuiz() {
+            if (quizData.length === 0) {
+                alert("Quiz data is empty! Please add questions to the javascript array.");
+                return;
+            }
+            currentQueue = Array.from({length: quizData.length}, (_, i) => i);
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function resetQuiz() {
+            currentQueue = Array.from({length: quizData.length}, (_, i) => i);
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function reattemptWrongQuestions() {
+            if (wrongQuestions.length === 0) return;
+            currentQueue = [...wrongQuestions]; 
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function resetStateVariables() {
+            currentQueueIndex = 0;
+            score = 0;
+            wrongQuestions = [];
+            userAnswers = {};
+        }
+
+        function loadQuestion() {
+            hasAnsweredCurrent = false;
+            explanationArea.style.display = 'none';
+            nextBtn.style.display = 'none'; // Completely hide the button initially
+
+            const actualQuestionIndex = currentQueue[currentQueueIndex];
+            const currentQData = quizData[actualQuestionIndex];
+
+            const progressPercentage = ((currentQueueIndex) / currentQueue.length) * 100;
+            progressFill.style.width = `${progressPercentage}%`;
+            questionCounter.innerText = `Question ${currentQueueIndex + 1} of ${currentQueue.length}`;
+
+            questionText.innerHTML = currentQData.question;
+            optionsContainer.innerHTML = '';
+
+            currentQData.options.forEach((option, index) => {
+                const optDiv = document.createElement('div');
+                optDiv.classList.add('option');
+                optDiv.innerHTML = option; 
+                optDiv.onclick = () => selectOption(index, optDiv);
+                optionsContainer.appendChild(optDiv);
+            });
+        }
+
+        // 🟢 THIS IS WHERE THE MAGIC HAPPENS NOW 🟢
+        function selectOption(selectedIndex, optionElement) {
+            if (hasAnsweredCurrent) return; // Prevent double clicking
+            hasAnsweredCurrent = true; // Lock in answer immediately
+            
+            userAnswers[currentQueue[currentQueueIndex]] = selectedIndex; 
+            
+            const actualQuestionIndex = currentQueue[currentQueueIndex];
+            const currentQData = quizData[actualQuestionIndex];
+            const options = document.querySelectorAll('.option');
+
+            // Highlight chosen option
+            optionElement.classList.add('selected');
+
+            // Check if correct
+            if (selectedIndex === currentQData.correct) {
+                score++;
+                optionElement.classList.add('correct-reveal');
+                
+                // ⏱️ AUTO MOVE FUNCTION (Fires after 500ms)
+                setTimeout(() => {
+                    moveToNextQuestion();
+                }, 500); 
+
+            } else {
+                // If wrong, show the correct answer, explanation, and the "Next" button
+                wrongQuestions.push(actualQuestionIndex);
+                optionElement.classList.add('wrong-reveal');
+                options[currentQData.correct].classList.add('correct-reveal');
+
+                let fullExplanation = currentQData.explanation || "No explanation provided.";
+                if (currentQData.rule) {
+                    fullExplanation += `<br><br><strong style="color: #047857;">📌 Grammar Rule:</strong> <span style="color: var(--text-dark);">${currentQData.rule}</span>`;
+                }
+                
+                explanationText.innerHTML = fullExplanation;
+                explanationArea.style.display = 'block';
+
+                // Show the next button so you can manually advance after reading
+                nextBtn.style.display = 'block';
+                nextBtn.disabled = false;
+                if (currentQueueIndex === currentQueue.length - 1) {
+                    nextBtn.innerText = "Finish Quiz";
+                } else {
+                    nextBtn.innerText = "Next Question";
+                }
+            }
+        }
+
+        // This button now ONLY handles moving forward after reading an explanation
+        function handleNextButton() {
+            moveToNextQuestion();
+        }
+
+        function moveToNextQuestion() {
+            quizScreen.style.opacity = 0; // Smooth fade out
+
+            setTimeout(() => {
+                currentQueueIndex++;
+                if (currentQueueIndex < currentQueue.length) {
+                    loadQuestion();
+                } else {
+                    showReview();
+                }
+                quizScreen.style.opacity = 1; // Smooth fade in
+            }, 300); 
+        }
+
+        function showReview() {
+            showScreen(reviewScreen);
+            
+            document.getElementById('final-score').innerText = `${score} / ${currentQueue.length}`;
+            
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '';
+
+            currentQueue.forEach((actualIndex) => {
+                const qData = quizData[actualIndex];
+                const selectedAns = userAnswers[actualIndex];
+                const isCorrect = selectedAns === qData.correct;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('review-item', isCorrect ? 'correct' : 'incorrect');
+
+                itemDiv.innerHTML = `
+                    <div class="review-question">${qData.question}</div>
+                    <div class="review-status ${isCorrect ? 'text-correct' : 'text-incorrect'}">
+                        ${isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                    </div>
+                    <div style="font-size: 0.9rem; margin-top: 5px; color: var(--text-light);">
+                        Your answer: <strong>${qData.options[selectedAns] || 'None'}</strong><br>
+                        Correct answer: <strong>${qData.options[qData.correct]}</strong>
+                    </div>
+                `;
+                reviewList.appendChild(itemDiv);
+            });
+
+            const reattemptBtn = document.getElementById('reattempt-btn');
+            if (wrongQuestions.length > 0) {
+                reattemptBtn.style.display = 'block';
+                reattemptBtn.innerText = `Reattempt Wrong (${wrongQuestions.length})`;
+            } else {
+                reattemptBtn.style.display = 'none';
+            }
+        }
+
+        function showScreen(screenElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screenElement.classList.add('active');
+        }
+    </script>
+</body>
+</html>

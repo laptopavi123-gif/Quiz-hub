@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set 8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Passage Panel (Left) */
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 65px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        /* Question Panel (Right) */
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Review Section */
+        .review-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .review-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-review-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .review-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .review-q-text { font-weight: 600; margin-bottom: 8px; font-size: 1.05rem; }
+        .review-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 500; }
+        .text-wrong { color: #b91c1c; font-weight: 500; }
+        .review-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Practice Set 8 - Cloze Test</h1>
+    <button class="btn-finish" onclick="showReview()">Finish & Review Test</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">Passage 1</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Passage 2</button>
+    <button class="tab-btn" onclick="switchPassage('p3', this)">Passage 3</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="welcomeMessage" style="text-align: center; color: var(--text-light); margin-top: 50px;">
+            <svg style="width: 64px; height: 64px; color: #cbd5e1; margin-bottom: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+            <h2>Select a blank in the passage</h2>
+            <p>Click on any numbered blank on the left to view its options here.</p>
+        </div>
+
+        <div id="questionArea" style="display: none;">
+            <div class="q-header" id="questionTitle">Select the appropriate word:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="review-section" id="reviewSection">
+    <div class="review-container" id="reviewContainer">
+        <!-- Review Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p1: {
+            title: "Passage 1",
+            text: "The feeling of insecurity among the people has increased even though there is <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ 1 ]</span> use of the para-military and the military. The excess <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ 2 ]</span> by the two forces, particularly by the first, do not <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ 3 ]</span> the type of anger it should because they are seen <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ 4 ]</span> those who are trying to disintegrate the country. Even a <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ 5 ]</span> for more say in the administration is shouted down. Human rights organisations and Civil liberty activists are considered a <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ 6 ]</span>, if not unpatriotic. Even the <span class='blank' id='b-p1-6' onclick='loadQuestion(\"p1\", 6)'>[ 7 ]</span> cases of cruelty are not pursued by the government <span class='blank' id='b-p1-7' onclick='loadQuestion(\"p1\", 7)'>[ 8 ]</span> the inquiry should <span class='blank' id='b-p1-8' onclick='loadQuestion(\"p1\", 8)'>[ 9 ]</span> the forces and <span class='blank' id='b-p1-9' onclick='loadQuestion(\"p1\", 9)'>[ 10 ]</span> the instrument on which it has come to depend.",
+            questions: [
+                { num: 1, opts: {a: "free", b: "reduced", c: "little", d: "liberal"}, ans: "d", expl: "<strong>(d) liberal:</strong> 'Liberal' means abundant or extensive. The sentence contrasts increased insecurity with the 'liberal' (heavy) use of forces. 'Reduced' or 'little' would contradict the 'even though' structure. 'Free' implies costless, which doesn't fit the context of military deployment." },
+                { num: 2, opts: {a: "cleared", b: "committed", c: "condoned", d: "displayed"}, ans: "b", expl: "<strong>(b) committed:</strong> 'Excesses' (wrongdoings or crimes) are 'committed' by forces. They are not 'cleared' or 'displayed' in this context. While they might be 'condoned' by others, the phrasing 'excesses... by the two forces' requires a verb of action done by the forces." },
+                { num: 3, opts: {a: "resist", b: "evoke", c: "convey", d: "suppress"}, ans: "b", expl: "<strong>(b) evoke:</strong> Actions generally 'evoke' (bring out or produce) an emotional response like anger. The excesses do not 'evoke' the anger they should. They wouldn't 'suppress' or 'resist' their own resultant anger." },
+                { num: 4, opts: {a: "obeying", b: "ignoring", c: "supporting", d: "fighting"}, ans: "d", expl: "<strong>(d) fighting:</strong> The forces are seen 'fighting' those trying to disintegrate the country. This explains why people don't get angry at the forces—they view them as protectors. 'Supporting' or 'obeying' insurgents would logically cause massive public anger." },
+                { num: 5, opts: {a: "demand", b: "desire", c: "prayer", d: "plea"}, ans: "a", expl: "<strong>(a) demand:</strong> A 'demand' for more say is what typically gets 'shouted down' in heavily militarized or strict administrations. A 'desire' is internal and can't be shouted down; a 'prayer' is too religious/passive for political administration." },
+                { num: 6, opts: {a: "nuisance", b: "help", c: "threat", d: "boon"}, ans: "a", expl: "<strong>(a) nuisance:</strong> The phrase 'a nuisance, if not unpatriotic' shows a progression of negativity. They are seen as annoying (a nuisance) or even traitorous. 'Help' or 'boon' are positive and contradict 'unpatriotic'. 'Threat' could work, but 'nuisance' pairs better grammatically with 'a' in this specific idiomatic structure." },
+                { num: 7, opts: {a: "minor", b: "blatant", c: "new", d: "concealed"}, ans: "b", expl: "<strong>(b) blatant:</strong> 'Blatant' means obvious or open. 'Even the blatant cases' implies that even the most undeniable instances of cruelty are ignored. 'Concealed' or 'minor' cases would naturally be harder to pursue, losing the emphasis of 'Even the...'." },
+                { num: 8, opts: {a: "because", b: "for", c: "till", d: "lest"}, ans: "d", expl: "<strong>(d) lest:</strong> 'Lest' means 'for fear that'. The government doesn't pursue cases *for fear that* (lest) the inquiry might harm the forces. 'Because' would require different phrasing ('because it fears the inquiry would...')." },
+                { num: 9, opts: {a: "disperse", b: "derail", c: "demoralise", d: "degrade"}, ans: "c", expl: "<strong>(c) demoralise:</strong> An inquiry into the forces' cruelty would 'demoralise' (lower the morale of) the troops. It wouldn't 'disperse' (scatter) or 'derail' (throw off track) the forces themselves as a military unit." },
+                { num: 10, opts: {a: "blunt", b: "raise", c: "change", d: "lose"}, ans: "a", expl: "<strong>(a) blunt:</strong> The military is metaphorically called an 'instrument'. Inquiries would 'blunt' (make less effective) this instrument. 'Raise' or 'change' don't carry the negative consequence the government fears." }
+            ],
+            answers: []
+        },
+        p2: {
+            title: "Passage 2",
+            text: "Political parties have a right to <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ 11 ]</span> the electorate but when wooing <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ 12 ]</span> into bribing, the very <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ 13 ]</span> of democracy is defeated. Although it is illegal to buy votes, parties in power often <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ 14 ]</span> to unhealthy tactics to keep sections of the electorate happy. Not only do they make <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ 15 ]</span> promise but they announce various <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ 16 ]</span> and relief to <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ 17 ]</span> sections on the eve of an election. The people still <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ 18 ]</span> the way in which Prime Minister Indira Gandhi tried to <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ 19 ]</span> votes for her party by laying <span class='blank' id='b-p2-9' onclick='loadQuestion(\"p2\", 9)'>[ 20 ]</span> for various projects just before a general election. Over the years, the <span class='blank' id='b-p2-10' onclick='loadQuestion(\"p2\", 10)'>[ 21 ]</span> of the ruling party towards the electorate has not changed.",
+            questions: [
+                { num: 11, opts: {a: "win", b: "woo", c: "obviate", d: "conquer", e: "overcome"}, ans: "b", expl: "<strong>(b) woo:</strong> To 'woo' means to seek the favor or support of. The text immediately follows up with 'but when wooing...', signaling that 'woo' was the intended initial action. 'Win' or 'conquer' are end results, not the act of persuasion." },
+                { num: 12, opts: {a: "revives", b: "dangles", c: "regenerates", d: "degenerates", e: "reverberates"}, ans: "d", expl: "<strong>(d) degenerates:</strong> 'Degenerates into' means to deteriorate or decline into something worse. Wooing (persuasion) declining into bribing (corruption) perfectly fits this. The other words do not mean to decline." },
+                { num: 13, opts: {a: "reason", b: "view", c: "outcome", d: "purpose", e: "reverence"}, ans: "d", expl: "<strong>(d) purpose:</strong> The 'very purpose' of democracy (free and fair choice) is defeated by bribery. 'Outcome' or 'view' don't carry the foundational meaning that 'purpose' does here." },
+                { num: 14, opts: {a: "resort", b: "restore", c: "revert", d: "render", e: "reciprocate"}, ans: "a", expl: "<strong>(a) resort:</strong> 'Resort to' means to turn to a poor or negative strategy when other means fail. Parties 'resort to' unhealthy tactics. 'Revert' means to go back to a previous state, which doesn't fit the phrase." },
+                { num: 15, opts: {a: "furious", b: "lavish", c: "luxurious", d: "affirmative", e: "rejuvinating"}, ans: "b", expl: "<strong>(b) lavish:</strong> 'Lavish promises' are extravagant or generous promises meant to buy favor. 'Furious' or 'luxurious' make no sense modifying 'promise' in a political context." },
+                { num: 16, opts: {a: "bribes", b: "facilities", c: "assurances", d: "concessions", e: "opportunities"}, ans: "d", expl: "<strong>(d) concessions:</strong> In political terms, announcing 'concessions and relief' (tax breaks, freebies) just before an election is standard phrasing. 'Bribes' wouldn't be 'announced' publicly as official policy." },
+                { num: 17, opts: {a: "varying", b: "every", c: "hitherto", d: "different", e: "differentiating"}, ans: "d", expl: "<strong>(d) different:</strong> They announce relief to 'different sections' (various demographic groups) of the electorate. 'Varying' is awkwardly placed here, and 'every' would imply the whole electorate uniformly, which contradicts targeting 'sections'." },
+                { num: 18, opts: {a: "remember", b: "commend", c: "brandish", d: "exonerate", e: "commemorate"}, ans: "a", expl: "<strong>(a) remember:</strong> The people still 'remember' the past historical event mentioned (Indira Gandhi's actions). They wouldn't 'commend' (praise) it since the passage views it as a negative tactic." },
+                { num: 19, opts: {a: "gain", b: "collect", c: "secure", d: "gather", e: "manage"}, ans: "c", expl: "<strong>(c) secure:</strong> Politicians try to 'secure votes' (lock them in firmly). 'Collect' or 'gather' are too literal (like gathering apples), while 'secure' is standard political terminology." },
+                { num: 20, opts: {a: "stepping", b: "beginning", c: "basis", d: "foundation"}, ans: "d", expl: "<strong>(d) foundation:</strong> 'Laying foundation' (foundation stones) for projects right before an election is a well-known political trope in India to show progress. You don't lay a 'basis' or 'stepping' for physical projects." },
+                { num: 21, opts: {a: "bent", b: "shift", c: "aspect", d: "attitude", e: "inclination"}, ans: "d", expl: "<strong>(d) attitude:</strong> The 'attitude' (behavior or approach) of the ruling party towards the electorate remains unchanged. 'Bent' or 'aspect' do not correctly describe a party's behavioral stance." }
+            ],
+            answers: []
+        },
+        p3: {
+            title: "Passage 3",
+            text: "To the curious and the <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ 22 ]</span> the sea still presents the challenge of the unknown, for ignorance is still the <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ 23 ]</span> characteristic of man's relation to the sea. But now, more than ever, necessity <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ 24 ]</span> us onward in our exploration of the sea. We now have submarines capable of <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ 25 ]</span> submergence for many months <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ 26 ]</span> missiles capable of <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ 27 ]</span> many times greater than that <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ 28 ]</span> by World War II. For <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ 29 ]</span> reasons, therefore, we need <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ 30 ]</span> to learn more about deep ocean currents, temperature, density and so on. Another necessity <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ 32 ]</span> us to learn to master the sea. That necessity is food. The lives of two-third of the world's people are wholly <span class='blank' id='b-p3-10' onclick='loadQuestion(\"p3\", 10)'>[ 33 ]</span> by that basic necessity; they are <span class='blank' id='b-p3-11' onclick='loadQuestion(\"p3\", 11)'>[ 34 ]</span> by hunger and by the weakness and disease which hunger generates.",
+            questions: [
+                { num: 22, opts: {a: "outgoing", b: "watchful", c: "intelligent", d: "courageous", e: "formidable"}, ans: "d", expl: "<strong>(d) courageous:</strong> Exploring the unknown challenges of the sea requires bravery. Therefore, 'courageous' pairs perfectly with 'curious'. 'Outgoing' or 'watchful' lack the element of facing a dangerous challenge." },
+                { num: 23, opts: {a: "critical", b: "valuable", c: "remarkable", d: "outstanding", e: "distinguishing"}, ans: "e", expl: "<strong>(e) distinguishing:</strong> Ignorance is the primary or 'distinguishing' characteristic defining man's current relationship with the sea (we know very little). 'Valuable' or 'outstanding' are too positive for 'ignorance'." },
+                { num: 24, opts: {a: "makes", b: "goads", c: "excites", d: "propels", e: "projects"}, ans: "d", expl: "<strong>(d) propels:</strong> Necessity 'propels' (drives or pushes) us onward. While 'goads' also means to push, it carries a negative connotation of annoyance, whereas 'propels' fits the momentum of exploration." },
+                { num: 25, opts: {a: "steady", b: "deadly", c: "durable", d: "turbulent", e: "provocative"}, ans: "a", expl: "<strong>(a) steady:</strong> Submarines capable of 'steady' (continuous, uninterrupted) submergence for months. 'Durable' applies to objects resisting wear, not to the act of submerging." },
+                { num: 26, opts: {a: "guiding", b: "directing", c: "holding", d: "providing", e: "subjecting"}, ans: "c", expl: "<strong>(c) holding:</strong> The submarines are 'holding' (carrying/containing) missiles. 'Guiding' or 'directing' applies to the navigation systems, not the carrying capacity of the submarine itself in this phrasing." },
+                { num: 27, opts: {a: "expansion", b: "projection", c: "domination", d: "aggression", e: "destruction"}, ans: "e", expl: "<strong>(e) destruction:</strong> Missiles are weapons measured by their capacity for 'destruction'. The text contrasts this capacity with World War II's destructiveness." },
+                { num: 28, opts: {a: "forced", b: "witnessed", c: "wrought", d: "conceived", e: "experienced"}, ans: "c", expl: "<strong>(c) wrought:</strong> 'Wrought' means caused or brought about (especially concerning damage). Destruction 'wrought by' World War II is the correct idiomatic phrase. 'Witnessed' would require 'in' rather than 'by'." },
+                { num: 29, opts: {a: "strategic", b: "historical", c: "academic", d: "deliberate", e: "traditional"}, ans: "a", expl: "<strong>(a) strategic:</strong> Given the military context of submarines and missiles, the reasons for needing to learn about the ocean are 'strategic' (military/tactical). 'Academic' reasons wouldn't be immediately tied to missile submarines." },
+                { num: 30, opts: {a: "wilfully", b: "cautiously", c: "urgently", d: "judiciously", e: "drastically"}, ans: "c", expl: "<strong>(c) urgently:</strong> Because of these pressing military and strategic factors, we need 'urgently' (quickly and with great importance) to learn more. 'Wilfully' implies stubbornness, which doesn't fit." },
+                { num: 32, opts: {a: "wants", b: "presses", c: "involves", d: "provides", e: "threatens"}, ans: "b", expl: "<strong>(b) presses:</strong> Another necessity 'presses' (forces or urges firmly) us to master the sea. 'Wants' requires an object ('wants us to' is okay but weak), whereas 'presses' implies the intense pressure of human survival." },
+                { num: 33, opts: {a: "dictated", b: "projected", c: "developed", d: "challenged", e: "galvanised"}, ans: "a", expl: "<strong>(a) dictated:</strong> Lives are 'dictated' (controlled or entirely determined) by the basic necessity of food. 'Challenged' or 'developed' don't convey the absolute dependency meant by 'wholly...'." },
+                { num: 34, opts: {a: "salvaged", b: "governed", c: "oppressed", d: "perturbed", e: "controlled"}, ans: "c", expl: "<strong>(c) oppressed:</strong> People are 'oppressed' (weighed down, severely burdened) by hunger, weakness, and disease. 'Perturbed' (mildly anxious) is much too weak for the suffering of starvation." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = 'p1';
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        document.getElementById('passageContent').innerHTML = clozeData['p1'].text;
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        document.getElementById('questionArea').style.display = 'none';
+        document.getElementById('welcomeMessage').style.display = 'block';
+        currentBlankIndex = null;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+        const displayQuestionNum = qData.num;
+
+        document.getElementById('welcomeMessage').style.display = 'none';
+        document.getElementById('questionArea').style.display = 'block';
+        
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        document.getElementById(`b-${passageId}-${qIndex}`).classList.add('active');
+
+        document.getElementById('questionTitle').innerText = `Select the word for Blank [ ${displayQuestionNum} ]:`;
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function showReview() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        const reviewSection = document.getElementById('reviewSection');
+        const reviewContainer = document.getElementById('reviewContainer');
+        
+        reviewSection.style.display = 'block';
+        
+        let score = 0;
+        let reviewHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            reviewHTML += `<div class="passage-review-title">${passage.title} Review</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const displayNum = q.num;
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `Your Answer: (${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+
+                reviewHTML += `
+                    <div class="review-item">
+                        <div class="review-q-text">Blank [ ${displayNum} ]</div>
+                        <div class="review-ans ${statusClass}">${statusText}</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="review-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="review-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        reviewContainer.innerHTML = scoreCard + reviewHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>

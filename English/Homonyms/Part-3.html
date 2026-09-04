@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Day 3 Homonyms Quiz (108 Qs Per Level)</title>
+  <style>
+    /* Floating Back Button Style */
+    .app-back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000; /* Ensures it stays on top */
+        transition: transform 0.2s;
+        text-decoration: none; /* In case you use <a> tag */
+    }
+    
+    .app-back-btn:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+</style>
+  <style>
+    :root{
+      --primary:#007bff;
+      --bg:#f4f4f9;
+      --card:#ffffff;
+      --text:#333;
+      --correct-bg: #28a745; 
+      --wrong-bg: #dc3545; 
+      --timer-color: #ffc107;
+    }
+    body{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      display:flex;justify-content:center;align-items:center;
+      min-height:100vh;margin:0;padding:20px;
+    }
+    .quiz-container{
+      background: var(--card);
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      width:100%;max-width:900px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header{
+      display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;
+    }
+    .score-board{font-weight:bold;color:var(--primary); font-size: 1.1em;}
+    h2{color:var(--text);margin:10px 0 4px;}
+    .question{font-size:1.2em;color:#222;margin:0 0 20px; line-height: 1.5;}
+    .controls{
+      display:flex;gap:15px;align-items:center;flex-wrap:wrap;
+      background:#f0f2f5; padding:10px 15px; border-radius:10px; margin-bottom: 15px;
+    }
+    .control-group{display:flex;align-items:center;gap:6px;}
+    select { padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff; font-size:14px; }
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media (max-width:560px){ .options{grid-template-columns:1fr;} }
+    button.option{
+      padding:15px 12px;font-size:16px;cursor:pointer;
+      border:2px solid #ddd;border-radius:8px;background:#fff;transition:0.2s; text-align:left;
+      font-weight: 500; color: #444;
+    }
+    button.option:hover{background-color:#eef; border-color:#bbb;}
+    button.option:disabled{cursor: not-allowed; opacity: 1;}
+    .correct { background-color: var(--correct-bg) !important; border-color: #1e7e34 !important; color: white !important; }
+    .wrong { background-color: var(--wrong-bg) !important; border-color: #bd2130 !important; color: white !important; }
+    .feedback{ margin-top:25px; display:none; animation: fadeIn 0.4s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .feedback h4 { text-align: center; margin: 0 0 15px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9em; }
+    .comparison-container {
+      display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+      background: #fff; border: 2px solid #eef0f3; border-radius: 12px; padding: 20px;
+    }
+    .comparison-card {
+      flex: 1; min-width: 160px; max-width: 240px;
+      background: #fdfdfd; border: 1px solid #e0e0e0; border-radius: 10px;
+      padding: 10px; text-align: center; display: flex; flex-direction: column;
+    }
+    .is-correct-card { border: 2px solid #28a745; background: #f0fff4; transform: scale(1.02); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15); }
+    .is-correct-card .word-title { background: #d4edda; color: #155724; }
+    .word-title {
+      display: block; font-size: 1.1em; font-weight: 800; text-transform: uppercase;
+      color: #333; margin-bottom: 8px; letter-spacing: 0.5px;
+      background: #f0f2f5; padding: 6px; border-radius: 6px;
+    }
+    .img-container {
+      width: 100%; height: 140px; background: #eee; border-radius: 8px; margin-bottom: 10px;
+      overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .img-container:hover { transform: scale(1.02); border: 2px solid var(--primary); }
+    .img-container:active { transform: scale(0.98); }
+    .comparison-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
+    .comparison-img.loaded { opacity: 1; }
+    .loader {
+      border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%;
+      width: 20px; height: 20px; animation: spin 1s linear infinite; position: absolute;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .word-def { font-size: 0.9em; color: #555; line-height: 1.4; flex-grow: 1; }
+    .next-btn {
+      margin-top:20px; background-color:var(--primary); color:white; border:none;
+      padding:12px 24px; border-radius:30px; cursor:pointer; display:none; 
+      font-size:16px; font-weight:bold; width: 100%;
+    }
+    .next-btn:hover{background-color:#0056b3;}
+    .timer-container { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin: 10px 0 20px; overflow: hidden; display: none; }
+    .timer-bar { height: 100%; background-color: var(--timer-color); width: 100%; transition: width 1s linear; }
+    .top-notification {
+      position: fixed; top: -80px; left: 0; width: 100%; padding: 16px; text-align: center;
+      font-size: 1.1rem; font-weight: bold; color: white; z-index: 9999; transition: top 0.3s;
+      background-color: #dc3545; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .top-notification.show { top: 0; }
+    #review-area { text-align: center; }
+    .stat-box { display: inline-block; padding: 10px 20px; margin: 5px; border-radius: 8px; font-weight: bold; background: #eee;}
+    .stat-correct { background: #d4edda; color: #155724; }
+    .stat-wrong { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  
+<button class="app-back-btn" onclick="history.back()">❮ Back to Menu</button>
+
+  <div id="top-notification" class="top-notification"></div>
+  <div class="quiz-container" id="quiz-app">
+    <div class="header">
+      <div class="score-board">Score: <span id="score">0</span></div>
+      <div class="progress">Question <span id="current">1</span> / <span id="total">0</span></div>
+      <div class="controls">
+        <div class="control-group">
+          <label><b>Level:</b></label>
+          <select id="level" onchange="startQuiz()">
+            <option value="1">Level 1: Easy (PDF)</option>
+            <option value="2">Level 2: Moderate</option>
+            <option value="3">Level 3: Hard</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label><b>Timer:</b></label>
+          <select id="timer" onchange="startQuiz()">
+            <option value="10">10 Sec</option>
+            <option value="15">15 Sec</option>
+            <option value="0">No Limit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="timer-container" id="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+    <div id="game-area">
+      <h2 id="question-number">Question 1</h2>
+      <p class="question" id="question-text">Loading...</p>
+      <div class="options" id="options-container"></div>
+      <div class="feedback" id="feedback-box"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question ➝</button>
+    </div>
+    <div id="review-area" style="display:none;">
+      <h2>Quiz Complete!</h2>
+      <div id="result-summary" style="margin-bottom:20px;"></div>
+      <button class="next-btn" style="display:inline-block; width:auto;" onclick="startQuiz()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const D = {
+      defect: [{w:"Defective", d:"Having a defect", img:"broken toy"}, {w:"Deficient", d:"Lacking", img:"empty battery"}],
+      divers: [{w:"Diverse", d:"Different / Various", img:"diverse group"}, {w:"Divers", d:"Several / Sundry", img:"pile of items"}],
+      deduce: [{w:"Deduce", d:"Infer", img:"detective thinking"}, {w:"Deduct", d:"Subtract", img:"calculator minus"}],
+      delivery: [{w:"Deliverance", d:"Rescue/Freedom", img:"bird leaving cage"}, {w:"Delivery", d:"Handing over", img:"mailman"}],
+      decry: [{w:"Decry", d:"Criticize", img:"thumbs down"}, {w:"Descry", d:"See dimly", img:"looking through fog"}],
+      defy: [{w:"Defy", d:"Violate/Resist", img:"person resisting wind"}, {w:"Deify", d:"Worship", img:"statue worship"}],
+      dose: [{w:"Doze", d:"Sleep lightly", img:"sleeping at desk"}, {w:"Dose", d:"Amount of medicine", img:"medicine spoon"}],
+      dam: [{w:"Dam", d:"Water barrier", img:"river dam"}, {w:"Damn", d:"Condemn", img:"angry shouting"}],
+      diversion: [{w:"Diversion", d:"Detour", img:"road sign detour"}, {w:"Diversity", d:"Variety", img:"fruit basket"}],
+      envy: [{w:"Enviable", d:"Desirable", img:"trophy"}, {w:"Envious", d:"Jealous", img:"green jealous face"}],
+      exception: [{w:"Exception", d:"Exclusion", img:"red ball among blue"}, {w:"Exceptional", d:"Outstanding", img:"shining star"}, {w:"Exceptionable", d:"Objectionable", img:"judge gavel"}],
+      eminent: [{w:"Eminent", d:"Famous", img:"famous scientist"}, {w:"Imminent", d:"Impending", img:"storm clouds"}, {w:"Immanent", d:"Inherent", img:"glowing energy"}],
+      eligible: [{w:"Eligible", d:"Qualified", img:"green checkmark"}, {w:"Illegible", d:"Unreadable", img:"scribbled text"}],
+      excess: [{w:"Exceedingly", d:"Very (Good)", img:"thermometer high"}, {w:"Excessively", d:"Too much (Bad)", img:"overflowing plate"}],
+      exhaust: [{w:"Exhausting", d:"Tiring", img:"runner panting"}, {w:"Exhaustive", d:"Detailed", img:"thick book"}, {w:"Exhausted", d:"Tired", img:"sleeping person"}],
+      economy: [{w:"Economical", d:"Money-saving", img:"piggy bank"}, {w:"Economic", d:"Of economy", img:"money graph"}, {w:"Economics", d:"Subject", img:"textbook"}],
+      elude: [{w:"Elude", d:"Escape", img:"thief running"}, {w:"Allude", d:"Refer to", img:"pointing finger"}],
+      excite: [{w:"Excite", d:"Thrill", img:"happy cheering"}, {w:"Incite", d:"Provoke", img:"angry mob"}, {w:"Insight", d:"Understanding", img:"lightbulb idea"}],
+      envelop: [{w:"Envelop", d:"Cover", img:"fog covering city"}, {w:"Envelope", d:"Letter cover", img:"white envelope"}],
+      expedition: [{w:"Expeditious", d:"Quick", img:"fast runner"}, {w:"Expedient", d:"Practical/Selfish", img:"shortcut"}, {w:"Expedition", d:"Journey", img:"hikers"}],
+      esteem: [{w:"Esteem", d:"Respect", img:"handshake"}, {w:"Estimate", d:"Cost calc", img:"calculator"}, {w:"Estimation", d:"Opinion", img:"thought bubble"}],
+      exposure: [{w:"Exposure", d:"Risk/Elements", img:"cold wind"}, {w:"Exposition", d:"Explanation", img:"teacher explaining"}],
+      ego: [{w:"Egotist", d:"Boaster", img:"mirror selfie"}, {w:"Egoist", d:"Self-interested", img:"hugging money"}],
+      emerge: [{w:"Emerge", d:"Come out", img:"submarine surfacing"}, {w:"Immerse", d:"Dip/Absorb", img:"tea bag"}],
+      eruption: [{w:"Eruption", d:"Burst out", img:"volcano"}, {w:"Irruption", d:"Burst in/Invasion", img:"breaking door"}],
+      element: [{w:"Elemental", d:"Of nature", img:"fire water earth"}, {w:"Elementary", d:"Basic", img:"ABC blocks"}],
+      excursion: [{w:"Excursion", d:"Trip", img:"picnic bus"}, {w:"Incursion", d:"Attack", img:"arrows on map"}],
+      entry: [{w:"Entrance", d:"Gate", img:"golden gate"}, {w:"Entry", d:"Entering", img:"writing in log"}],
+      value: [{w:"Expensive", d:"Costly", img:"diamond"}, {w:"Valuable", d:"Useful", img:"antique watch"}],
+      fatal: [{w:"Fatal", d:"Deadly", img:"skull"}, {w:"Fateful", d:"Significant", img:"treaty signing"}, {w:"Fatalist", d:"Believer in fate", img:"horoscope"}],
+      force: [{w:"Forceful", d:"Strong personality", img:"speaker"}, {w:"Forcible", d:"Physical force", img:"battering ram"}],
+      feign: [{w:"Feign", d:"Pretend", img:"theatre mask"}, {w:"Fain", d:"Gladly", img:"smiling face"}],
+      forgo: [{w:"Forgo", d:"Give up", img:"refusing food"}, {w:"Forego", d:"Precede", img:"line of people"}],
+      facility: [{w:"Facility", d:"Convenience", img:"gym"}, {w:"Felicity", d:"Happiness", img:"sunshine"}, {w:"Facilitate", d:"Make easy", img:"gears"}, {w:"Felicitate", d:"Congratulate", img:"medal"}],
+      fair: [{w:"Fair", d:"Show/Just", img:"carnival"}, {w:"Fare", d:"Cost/Food", img:"ticket"}],
+      formal: [{w:"Formality", d:"Ceremony", img:"bowing"}, {w:"Formalism", d:"Strict rules", img:"rulebook"}],
+      fiscal: [{w:"Fiscal", d:"Public money", img:"govt budget"}, {w:"Financial", d:"Monetary", img:"wallet"}],
+      gentle: [{w:"Gentle", d:"Kind", img:"holding chick"}, {w:"Genteel", d:"Refined", img:"tea party"}],
+      gamble: [{w:"Gamble", d:"Bet", img:"dice"}, {w:"Gambol", d:"Skip/Play", img:"lamb skipping"}],
+      grace: [{w:"Graceful", d:"Elegant", img:"dancer"}, {w:"Gracious", d:"Merciful", img:"queen"}],
+      gate: [{w:"Gate", d:"Door", img:"iron gate"}, {w:"Gait", d:"Walk style", img:"walking stick figure"}],
+      gravity: [{w:"Gravitation", d:"Attraction", img:"falling apple"}, {w:"Gravity", d:"Seriousness", img:"serious face"}],
+      hoard: [{w:"Hoard", d:"Store", img:"dragon gold"}, {w:"Horde", d:"Crowd", img:"zombies"}],
+      history: [{w:"Historic", d:"Momentous", img:"moon landing"}, {w:"Histrionic", d:"Dramatic", img:"drama masks"}, {w:"Historical", d:"Of past", img:"old book"}],
+      humble: [{w:"Humility", d:"Modesty", img:"bowing"}, {w:"Humiliation", d:"Disgrace", img:"shame"}],
+      honor: [{w:"Honorary", d:"Unpaid title", img:"certificate"}, {w:"Honourable", d:"Respectable", img:"judge"}],
+      human: [{w:"Human", d:"Person", img:"person silhouette"}, {w:"Humane", d:"Compassionate", img:"feeding dog"}],
+      health: [{w:"Hail", d:"Greet/Ice", img:"hailstorm"}, {w:"Hale", d:"Strong", img:"flexing arm"}, {w:"Healthy", d:"Good health", img:"jogging"}]
+    };
+
+    const Q = [
+      // ================= LEVEL 1 (EXACT PDF CONTENT - 109 Questions) =================
+      { l:1, t:'"As he met with a severe accident last year, one of his legs is ________."', o:["Defective","Deficient","Effective","Defeated"], c:0, v:D.defect },
+      { l:1, t:'"Though young he is ________ in common sense."', o:["Deficient","Defective","Efficient","Sufficient"], c:0, v:D.defect },
+      { l:1, t:'"The two children of one family may have ________ temperaments."', o:["Diverse","Divers","Diverted","Divine"], c:0, v:D.divers },
+      { l:1, t:'"He has consulted ________ doctors about his disease."', o:["Divers","Diverse","Drivers","Divest"], c:0, v:D.divers },
+      { l:1, t:'"Those, who dive into river/sea, are ________."', o:["Divers","Diverse","Drivers","Divest"], c:0, v:D.divers },
+      { l:1, t:'"It is difficult to ________ any conclusion from your ambiguous remarks."', o:["Deduce","Deduct","Reduce","Induce"], c:0, v:D.deduce },
+      { l:1, t:'"Two days\' wages will be ________ from your monthly salary."', o:["Deducted","Deduced","Reducted","Conducted"], c:0, v:D.deduce },
+      { l:1, t:'"Lord Buddha preached eight fold path to attain ________ from sorrows of life."', o:["Deliverance","Delivery","Deliberation","Delineation"], c:0, v:D.delivery },
+      { l:1, t:'"The ________ of the letter was just in time."', o:["Delivery","Deliverance","Deliberation","Discovery"], c:0, v:D.delivery },
+      { l:1, t:'"The foreign policy of the Congress party has always been ________."', o:["Decried","Descried","Decreed","Decayed"], c:0, v:D.decry },
+      { l:1, t:'"We could ________ only a traveller in the bleak evening."', o:["Descry","Decry","Describe","Descend"], c:0, v:D.decry },
+      { l:1, t:'"How dare you ________ my orders?"', o:["Defy","Deify","Define","Defer"], c:0, v:D.defy },
+      { l:1, t:'"Swami Vivekananda is ________ by every Indian."', o:["Deified","Defied","Defined","Defiled"], c:0, v:D.defy },
+      { l:1, t:'"The teacher caught him ________ in the class."', o:["Dozing","Dosing","Dousing","Closing"], c:0, v:D.dose },
+      { l:1, t:'"You should not take heavy ________ of medicine."', o:["Dose","Doze","Dozen","Douse"], c:0, v:D.dose },
+      { l:1, t:'"A ________ has been built on the river."', o:["Dam","Damn","Dome","Dame"], c:0, v:D.dam },
+      { l:1, t:'"The book was ________ by the critics."', o:["Damned","Dammed","Dampened","Damaged"], c:0, v:D.dam },
+      { l:1, t:'"There is a ________ on the road ahead."', o:["Diversion","Diversity","Division","Derivation"], c:0, v:D.diversion },
+      { l:1, t:'"________ is the chief feature of our civilisation."', o:["Diversity","Diversion","Divinity","Density"], c:0, v:D.diversion },
+      { l:1, t:'"All the people are jealous because of his ________ position in the society."', o:["Enviable","Envious","Environment","Enable"], c:0, v:D.envy },
+      { l:1, t:'"Her friends were ________ of her success in the medical entrance examination."', o:["Envious","Enviable","Obvious","Previous"], c:0, v:D.envy },
+      { l:1, t:'"There are always ________ to rules in every language."', o:["Exceptions","Exceptionals","Expectations","Acceptance"], c:0, v:D.exception },
+      { l:1, t:'"In his own class Rohit is a boy of ________ abilities."', o:["Exceptional","Exception","Exceptionable","Acceptable"], c:0, v:D.exception },
+      { l:1, t:'"I objected to her ________ remarks against my parents."', o:["Exceptionable","Exceptional","Exceptions","Actionable"], c:0, v:D.exception },
+      { l:1, t:'"Shakespeare was an ________ playwright."', o:["Eminent","Imminent","Immanent","Element"], c:0, v:D.eminent },
+      { l:1, t:'"Third world war is ________."', o:["Imminent","Eminent","Immanent","Immediate"], c:0, v:D.eminent },
+      { l:1, t:'"Divine force is ________ in universe."', o:["Immanent","Imminent","Eminent","Permanent"], c:0, v:D.eminent },
+      { l:1, t:'"Untrustworthy people are not ________ for responsible posts."', o:["Eligible","Illegible","Legible","Elective"], c:0, v:D.eligible },
+      { l:1, t:'"I can\'t read this letter as her handwriting is ________."', o:["Illegible","Eligible","Logical","Legal"], c:0, v:D.eligible },
+      { l:1, t:'"One of my cousins is an ________ rich person."', o:["Exceedingly","Excessively","Excitingly","Excellently"], c:0, v:D.excess },
+      { l:1, t:'"They spent money on the feast lavishly and ________."', o:["Excessively","Exceedingly","Extensively","Expressively"], c:0, v:D.excess },
+      { l:1, t:'"Teaching nursery classes is a very ________ job."', o:["Exhausting","Exhaustive","Exhausted","Exhibit"], c:0, v:D.exhaust },
+      { l:1, t:'"The teacher gave to the students ________ notes on English Grammar."', o:["Exhaustive","Exhausting","Exhausted","Existential"], c:0, v:D.exhaust },
+      { l:1, t:'"He was ________ and went to bed immediately."', o:["Exhausted","Exhausting","Exhaustive","Exhaled"], c:0, v:D.exhaust },
+      { l:1, t:'"A housewife should always be ________ if she wants to run her house smoothly."', o:["Economical","Economic","Economics","Ecological"], c:0, v:D.economy },
+      { l:1, t:'"India is yet to cross many hurdles to overcome ________ crisis."', o:["Economic","Economical","Economics","Economy"], c:0, v:D.economy },
+      { l:1, t:'"________ is an interesting subject."', o:["Economics","Economic","Economical","Economist"], c:0, v:D.economy },
+      { l:1, t:'"Sohan was so clever that he ________ the police and escaped from the prison."', o:["Eluded","Alluded","Deluded","Excluded"], c:0, v:D.elude },
+      { l:1, t:'"The speaker ________ to many examples from the Gita."', o:["Alluded","Eluded","Deluded","Included"], c:0, v:D.elude },
+      { l:1, t:'"The people got very ________ when the police refused to take any action against the culprits."', o:["Excited","Incited","Insight","Exited"], c:0, v:D.excite },
+      { l:1, t:'"The communal speech of the leader ________ the mob to violence."', o:["Incited","Excited","Invited","Indicted"], c:0, v:D.excite },
+      { l:1, t:'"India needs leaders of great ________."', o:["Insight","Incite","Excite","Eyesight"], c:0, v:D.excite },
+      { l:1, t:'"As the dark clouds covered the sky, the whole town was ________ in darkness."', o:["Enveloped","Envelopes","Developed","Enveloped"], c:0, v:D.envelop },
+      { l:1, t:'"Please put the letter in the ________."', o:["Envelope","Envelop","Antelope","Elopement"], c:0, v:D.envelop },
+      { l:1, t:'"Dattu is very ________ in answering letters."', o:["Expeditious","Expedient","Expedition","Expected"], c:0, v:D.expedition },
+      { l:1, t:'"Selfish persons are always ________ in their approach to life."', o:["Expedient","Expeditious","Expedition","Experienced"], c:0, v:D.expedition },
+      { l:1, t:'"They will go on an ________ to Everest."', o:["Expedition","Expedient","Expeditious","Expectation"], c:0, v:D.expedition },
+      { l:1, t:'"As Mahesh is very sociable, he is held in high ________ by his friends."', o:["Esteem","Estimate","Estimation","Estate"], c:0, v:D.esteem },
+      { l:1, t:'"Can you give me the ________ of the cost of the house?"', o:["Estimate","Esteem","Estimation","Establishment"], c:0, v:D.esteem },
+      { l:1, t:'"In my ________ he is the fool of the first water."', o:["Estimation","Estimate","Esteem","Establishment"], c:0, v:D.esteem },
+      { l:1, t:'"She will not attend office today as she is suffering from ________."', o:["Exposure","Exposition","Explosion","Export"], c:0, v:D.exposure },
+      { l:1, t:'"Tilak\'s ________ of the Gita is remarkable."', o:["Exposition","Exposure","Imposition","Composition"], c:0, v:D.exposure },
+      { l:1, t:'"It is difficult to stand the company of an ________."', o:["Egotist","Egoist","Economist","Artist"], c:0, v:D.ego },
+      { l:1, t:'"An ________ is moved only by self-interest while helping others."', o:["Egoist","Egotist","Eulogist","Activist"], c:0, v:D.ego },
+      { l:1, t:'"It is hoped that he will ________ successful out of these trying conditions."', o:["Emerge","Immerse","Merge","Urge"], c:0, v:D.emerge },
+      { l:1, t:'"Being a man of contemplative nature, he is always ________ in pensive mood."', o:["Immersed","Emerged","Amassed","Impressed"], c:0, v:D.emerge },
+      { l:1, t:'"The ________ of volcano caused heavy destruction on the island."', o:["Eruption","Irruption","Corruption","Interruption"], c:0, v:D.eruption },
+      { l:1, t:'"The ________ of Pakistan Army was successfully repulsed."', o:["Irruption","Eruption","Interruption","Corruption"], c:0, v:D.eruption },
+      { l:1, t:'"Inspite of ________ hardships Columbus discovered America."', o:["Elemental","Elementary","Fundamental","Mental"], c:0, v:D.element },
+      { l:1, t:'"You must have ________ knowledge of science."', o:["Elementary","Elemental","Element","Entry"], c:0, v:D.element },
+      { l:1, t:'"The students will go on ________ tomorrow."', o:["Excursion","Incursion","Exclusion","Inclusion"], c:0, v:D.excursion },
+      { l:1, t:'"________ by Pakistan and China into our borders speak of our weakness."', o:["Incursions","Excursions","Incisions","Exertions"], c:0, v:D.excursion },
+      { l:1, t:'"The ________ to the fair by this route has been blocked up."', o:["Entrance","Entry","Entrails","Entire"], c:0, v:D.entry },
+      { l:1, t:'"The ________ of student leaders into college premises is banned."', o:["Entry","Entrance","Entity","Enmity"], c:0, v:D.entry },
+      { l:1, t:'"She bought a less ________ dress."', o:["Expensive","Valuable","Expansive","Extensive"], c:0, v:D.value },
+      { l:1, t:'"The book provides ________ data for further study."', o:["Valuable","Expensive","Voluble","Variable"], c:0, v:D.value },
+      { l:1, t:'"On his way to school, he met with an accident and received a ________ wound in the leg."', o:["Fatal","Fateful","Fatalist","Final"], c:0, v:D.fatal },
+      { l:1, t:'"The formation of l.N.A. was a ________ event."', o:["Fateful","Fatal","Faithful","Fruitful"], c:0, v:D.fatal },
+      { l:1, t:'"Indians are ________ by nature."', o:["Fatalists","Fateful","Fatal","Fearless"], c:0, v:D.fatal },
+      { l:1, t:'"Netaji had a ________ personality."', o:["Forceful","Forcible","Forced","Fierce"], c:0, v:D.force },
+      { l:1, t:'"He was evicted from the house ________."', o:["Forcibly","Forcefully","Forced","Fiercely"], c:0, v:D.force },
+      { l:1, t:'"In order to save himself the accused ________ madness in the court."', o:["Feigned","Fained","Fainted","Fined"], c:0, v:D.feign },
+      { l:1, t:'"She would ________ do anything for her friends."', o:["Fain","Feign","Feint","Fan"], c:0, v:D.feign },
+      { l:1, t:'"Parents ________ their own comforts for the sake of their children."', o:["Forgo","Forego","Forget","Forgive"], c:0, v:D.forgo },
+      { l:1, t:'"This point has been dealt with in detail in the ________ passage."', o:["Foregoing","Forgoing","Forgiving","Forgetting"], c:0, v:D.forgo },
+      { l:1, t:'"The hotel provides all kinds of ________ to its customers."', o:["Facilities","Felicities","Faculties","Festivities"], c:0, v:D.facility },
+      { l:1, t:'"May God bless you with ________!"', o:["Felicity","Facility","Faculty","Fidelity"], c:0, v:D.facility },
+      { l:1, t:'"The new agreement will ________ the development of the trade."', o:["Facilitate","Felicitate","Fascinate","Fabricate"], c:0, v:D.facility },
+      { l:1, t:'"I ________ him on his success."', o:["Felicitated","Facilitated","Fascinated","Fabricated"], c:0, v:D.facility },
+      { l:1, t:'"Let us go to Nauchandi ________."', o:["Fair","Fare","Fear","Fire"], c:0, v:D.fair },
+      { l:1, t:'"There is a steep rise in railway ________."', o:["Fare","Fair","Fear","Fire"], c:0, v:D.fair },
+      { l:1, t:'"True friends never observe ________ with each other."', o:["Formality","Formalism","Formation","Formula"], c:0, v:D.formal },
+      { l:1, t:'"Swami Dayanand taught the Hindus to shun ________ in religion."', o:["Formalism","Formality","Formation","Formula"], c:0, v:D.formal },
+      { l:1, t:'"Government is trying to bring down the ________ deficit in the next budget."', o:["Fiscal","Financial","Physical","Final"], c:0, v:D.fiscal },
+      { l:1, t:'"He suffered huge ________ loss in the business."', o:["Financial","Fiscal","Physical","Final"], c:0, v:D.fiscal },
+      { l:1, t:'"We should be ________ and polite to our elders."', o:["Gentle","Genteel","Gentile","General"], c:0, v:D.gentle },
+      { l:1, t:'"People belonging to middle class try to maintain the style of ________ class of society."', o:["Genteel","Gentle","Gentile","General"], c:0, v:D.gentle },
+      { l:1, t:'"On the occasion of Diwali people ________ and are ruined."', o:["Gamble","Gambol","Grumble","Gravel"], c:0, v:D.gamble },
+      { l:1, t:'"It is a beautiful sight to see a deer ________ in a forest."', o:["Gamboling","Gambling","Grumbling","Garbling"], c:0, v:D.gamble },
+      { l:1, t:'"She has a ________ gait."', o:["Graceful","Gracious","Grateful","Greedy"], c:0, v:D.grace },
+      { l:1, t:'"God is ________."', o:["Gracious","Graceful","Grateful","Glacial"], c:0, v:D.grace },
+      { l:1, t:'"The dacoits entered the house through the main ________."', o:["Gate","Gait","Grate","Great"], c:0, v:D.gate },
+      { l:1, t:'"Her ________ is graceful."', o:["Gait","Gate","Grate","Great"], c:0, v:D.gate },
+      { l:1, t:'"Theory of ________ was invented by Newton."', o:["Gravitation","Gravity","Gradation","Gratification"], c:0, v:D.gravity },
+      { l:1, t:'"One must observe ________ on solemn occasions."', o:["Gravity","Gravitation","Gratitude","Gravel"], c:0, v:D.gravity },
+      { l:1, t:'"As he is a smuggler, he has a ________ of gold and silver in his house."', o:["Hoard","Horde","Herd","Heard"], c:0, v:D.hoard },
+      { l:1, t:'"A ________ of militants intruded into Indian territory."', o:["Horde","Hoard","Herd","Hard"], c:0, v:D.hoard },
+      { l:1, t:'"Kapil Dev scored ________ victory by winning the World Cup in 1983."', o:["Historic","Histrionic","Historical","History"], c:0, v:D.history },
+      { l:1, t:'"Rekha is known for her ________ talents."', o:["Histrionic","Historic","Historical","Hysterical"], c:0, v:D.history },
+      { l:1, t:'"I visited many ________ buildings in Delhi while I was in school."', o:["Historical","Historic","Histrionic","Hysterical"], c:0, v:D.history },
+      { l:1, t:'"________ in victory is a rare virtue."', o:["Humility","Humiliation","Humidity","Humanity"], c:0, v:D.humble },
+      { l:1, t:'"All respectable persons prefer death to ________."', o:["Humiliation","Humility","Humidity","Humanity"], c:0, v:D.humble },
+      { l:1, t:'"My sister taught in a college as an ________ tutor."', o:["Honorary","Honourable","Honest","Onerous"], c:0, v:D.honor },
+      { l:1, t:'"He is regarded ________ member of the club."', o:["Honourable","Honorary","Honest","Onerous"], c:0, v:D.honor },
+      { l:1, t:'"On account of ecological disturbances, the existence of ________ beings is endangered."', o:["Human","Humane","Humus","Hymen"], c:0, v:D.human },
+      { l:1, t:'"Doctors are supposed to be considerate and ________."', o:["Humane","Human","Humorous","Humanist"], c:0, v:D.human },
+      { l:1, t:'"Those ________ from Bangladesh are living illegally in this country."', o:["Hailing","Haling","Healing","Howling"], c:0, v:D.health },
+      { l:1, t:'"He is ________ and hearty and enjoys life to his fill."', o:["Hale","Hail","Hell","Heal"], c:0, v:D.health },
+      { l:1, t:'"In spite of his old age he is quite ________."', o:["Healthy","Healthful","Heal","Hail"], c:0, v:D.health },
+
+      // ================= LEVEL 2 (MODERATE - 108 Questions) =================
+      { l:2, t:'"The machine was ________ and stopped working."', o:["Defective","Deficient","Effective","Deceptive"], c:0, v:D.defect },
+      { l:2, t:'"His diet is ________ in iron."', o:["Deficient","Defective","Different","Difficult"], c:0, v:D.defect },
+      { l:2, t:'"The shop sold ________ goods and sundries."', o:["Divers","Diverse","Divested","Directed"], c:0, v:D.divers },
+      { l:2, t:'"We live in a culturally ________ city."', o:["Diverse","Divers","Divest","Direct"], c:0, v:D.divers },
+      { l:2, t:'"Sherlock could ________ the answer from a single clue."', o:["Deduce","Deduct","Induce","Reduce"], c:0, v:D.deduce },
+      { l:2, t:'"The bank will ________ the fee automatically."', o:["Deduct","Deduce","Conduct","Product"], c:0, v:D.deduce },
+      { l:2, t:'"The refugees sought ________ from the war zone."', o:["Deliverance","Delivery","Deliberance","Diligence"], c:0, v:D.delivery },
+      { l:2, t:'"The grocery ________ arrived late."', o:["Delivery","Deliverance","Discovery","Recovery"], c:0, v:D.delivery },
+      { l:2, t:'"Critics ________ the waste of public funds."', o:["Decried","Descried","Decreed","Decayed"], c:0, v:D.decry },
+      { l:2, t:'"She could just ________ the ship on the horizon."', o:["Descry","Decry","Describe","Discard"], c:0, v:D.decry },
+      { l:2, t:'"Do not ________ the laws of physics."', o:["Defy","Deify","Define","Defer"], c:0, v:D.defy },
+      { l:2, t:'"Some fans ________ their idols."', o:["Deify","Defy","Defile","Define"], c:0, v:D.defy },
+      { l:2, t:'"He began to ________ off during the movie."', o:["Doze","Dose","Douse","Daze"], c:0, v:D.dose },
+      { l:2, t:'"Take one ________ of cough syrup."', o:["Dose","Doze","Dozen","Douse"], c:0, v:D.dose },
+      { l:2, t:'"Beavers built a ________ across the stream."', o:["Dam","Damn","Dome","Dim"], c:0, v:D.dam },
+      { l:2, t:'"He didn\'t give a ________ about the result."', o:["Damn","Dam","Dame","Dome"], c:0, v:D.dam },
+      { l:2, t:'"The magician created a ________ to trick the audience."', o:["Diversion","Diversity","Division","Derision"], c:0, v:D.diversion },
+      { l:2, t:'"The rainforest has great biological ________."', o:["Diversity","Diversion","Adversity","University"], c:0, v:D.diversion },
+      { l:2, t:'"He has an ________ record of straight As."', o:["Enviable","Envious","Inevitable","Variable"], c:0, v:D.envy },
+      { l:2, t:'"Don\'t be ________ of your neighbor\'s success."', o:["Envious","Enviable","Obvious","Previous"], c:0, v:D.envy },
+      { l:2, t:'"Everyone went except for one ________."', o:["Exception","Exceptional","Acceptance","Exemption"], c:0, v:D.exception },
+      { l:2, t:'"She showed ________ talent in music."', o:["Exceptional","Exception","Exceptionable","Acceptable"], c:0, v:D.exception },
+      { l:2, t:'"His rude behavior was ________."', o:["Exceptionable","Exceptional","Exceptions","Actionable"], c:0, v:D.exception },
+      { l:2, t:'"He is an ________ scientist in his field."', o:["Eminent","Imminent","Immanent","Element"], c:0, v:D.eminent },
+      { l:2, t:'"The storm is ________; take cover!"', o:["Imminent","Eminent","Immanent","Immense"], c:0, v:D.eminent },
+      { l:2, t:'"Spirituality focuses on the ________ divinity."', o:["Immanent","Imminent","Eminent","Permanent"], c:0, v:D.eminent },
+      { l:2, t:'"You are ________ to vote at age 18."', o:["Eligible","Illegible","Legible","Legal"], c:0, v:D.eligible },
+      { l:2, t:'"The doctor\'s note was completely ________."', o:["Illegible","Eligible","Logical","Legal"], c:0, v:D.eligible },
+      { l:2, t:'"She was ________ polite to the guests."', o:["Exceedingly","Excessively","Excitingly","Exactingly"], c:0, v:D.excess },
+      { l:2, t:'"He drinks coffee ________."', o:["Excessively","Exceedingly","Expressively","Extensively"], c:0, v:D.excess },
+      { l:2, t:'"The marathon was ________."', o:["Exhausting","Exhaustive","Exhausted","Exhaling"], c:0, v:D.exhaust },
+      { l:2, t:'"The police did an ________ search."', o:["Exhaustive","Exhausting","Exhausted","Exhibit"], c:0, v:D.exhaust },
+      { l:2, t:'"I am too ________ to work anymore."', o:["Exhausted","Exhausting","Exhaustive","Exhaled"], c:0, v:D.exhaust },
+      { l:2, t:'"Buying in bulk is usually ________."', o:["Economical","Economic","Economics","Ecological"], c:0, v:D.economy },
+      { l:2, t:'"The country is facing an ________ recession."', o:["Economic","Economical","Economics","Economy"], c:0, v:D.economy },
+      { l:2, t:'"He is studying ________ at university."', o:["Economics","Economic","Economical","Economist"], c:0, v:D.economy },
+      { l:2, t:'"The answer seemed to ________ him."', o:["Elude","Allude","Include","Delude"], c:0, v:D.elude },
+      { l:2, t:'"He didn\'t ________ to the incident directly."', o:["Allude","Elude","Include","Illude"], c:0, v:D.elude },
+      { l:2, t:'"The news will ________ the fans."', o:["Excite","Incite","Insight","Exit"], c:0, v:D.excite },
+      { l:2, t:'"Do not ________ the dog by poking it."', o:["Incite","Excite","Insight","Invite"], c:0, v:D.excite },
+      { l:2, t:'"She has deep ________ into the problem."', o:["Insight","Incite","Excite","Eyesight"], c:0, v:D.excite },
+      { l:2, t:'"Fog began to ________ the mountain."', o:["Envelop","Envelope","Develop","Gallop"], c:0, v:D.envelop },
+      { l:2, t:'"Lick the ________ to seal it."', o:["Envelope","Envelop","Antelope","Slope"], c:0, v:D.envelop },
+      { l:2, t:'"Please make an ________ delivery."', o:["Expeditious","Expedient","Expedition","Expected"], c:0, v:D.expedition },
+      { l:2, t:'"It was politically ________ to ignore the issue."', o:["Expedient","Expeditious","Expedition","Experienced"], c:0, v:D.expedition },
+      { l:2, t:'"They planned an ________ to the jungle."', o:["Expedition","Expedient","Expeditious","Exhibition"], c:0, v:D.expedition },
+      { l:2, t:'"I hold my teacher in high ________."', o:["Esteem","Estimate","Estimation","Steam"], c:0, v:D.esteem },
+      { l:2, t:'"Get a cost ________ for the repair."', o:["Estimate","Esteem","Estimation","Testament"], c:0, v:D.esteem },
+      { l:2, t:'"In my ________, it is a bad idea."', o:["Estimation","Estimate","Esteem","Establishment"], c:0, v:D.esteem },
+      { l:2, t:'"Avoid prolonged ________ to the sun."', o:["Exposure","Exposition","Explosion","Export"], c:0, v:D.exposure },
+      { l:2, t:'"The museum had an ________ on modern art."', o:["Exposition","Exposure","Imposition","Composition"], c:0, v:D.exposure },
+      { l:2, t:'"He is such an ________; he loves talking about himself."', o:["Egotist","Egoist","Economist","Tourist"], c:0, v:D.ego },
+      { l:2, t:'"An ________ puts himself first."', o:["Egoist","Egotist","Eulogist","Activist"], c:0, v:D.ego },
+      { l:2, t:'"The sun will ________ from the clouds."', o:["Emerge","Immerse","Merge","Emergency"], c:0, v:D.emerge },
+      { l:2, t:'"________ the brush in paint."', o:["Immerse","Emerge","Amass","Disperse"], c:0, v:D.emerge },
+      { l:2, t:'"The volcano ________ was loud."', o:["Eruption","Irruption","Corruption","Disruption"], c:0, v:D.eruption },
+      { l:2, t:'"The sudden ________ of the crowd scared us."', o:["Irruption","Eruption","Interruption","Corruption"], c:0, v:D.eruption },
+      { l:2, t:'"Wind is an ________ force."', o:["Elemental","Elementary","Fundamental","Sentimental"], c:0, v:D.element },
+      { l:2, t:'"It is ________, my dear Watson."', o:["Elementary","Elemental","Element","Entry"], c:0, v:D.element },
+      { l:2, t:'"We went on a class ________."', o:["Excursion","Incursion","Exclusion","Version"], c:0, v:D.excursion },
+      { l:2, t:'"The army made an ________ into enemy land."', o:["Incursion","Excursion","Incision","Exertion"], c:0, v:D.excursion },
+      { l:2, t:'"Use the back ________."', o:["Entrance","Entry","Entrails","Entire"], c:0, v:D.entry },
+      { l:2, t:'"He made a diary ________."', o:["Entry","Entrance","Entity","Entire"], c:0, v:D.entry },
+      { l:2, t:'"The car is too ________."', o:["Expensive","Valuable","Expansive","Pensive"], c:0, v:D.value },
+      { l:2, t:'"Your advice is ________."', o:["Valuable","Expensive","Voluble","Available"], c:0, v:D.value },
+      { l:2, t:'"The poison was ________."', o:["Fatal","Fateful","Fatalist","Final"], c:0, v:D.fatal },
+      { l:2, t:'"It was a ________ day in history."', o:["Fateful","Fatal","Faithful","Fruitful"], c:0, v:D.fatal },
+      { l:2, t:'"He is a ________; what will be, will be."', o:["Fatalist","Fatal","Fateful","Fearless"], c:0, v:D.fatal },
+      { l:2, t:'"She gave a ________ speech."', o:["Forceful","Forcible","Forced","Fierce"], c:0, v:D.force },
+      { l:2, t:'"There was no sign of ________ entry."', o:["Forcible","Forceful","Forced","Fierce"], c:0, v:D.force },
+      { l:2, t:'"He tried to ________ sleep."', o:["Feign","Fain","Feint","Fine"], c:0, v:D.feign },
+      { l:2, t:'"I would ________ help if I could."', o:["Fain","Feign","Feint","Fan"], c:0, v:D.feign },
+      { l:2, t:'"I will ________ dessert."', o:["Forgo","Forego","Forget","Forgive"], c:0, v:D.forgo },
+      { l:2, t:'"See the ________ chapter."', o:["Foregoing","Forgoing","Forgiving","Forgetting"], c:0, v:D.forgo },
+      { l:2, t:'"The gym is a great ________."', o:["Facility","Felicity","Faculty","Fact"], c:0, v:D.facility },
+      { l:2, t:'"She spoke with ________."', o:["Felicity","Facility","Faculty","Fidelity"], c:0, v:D.facility },
+      { l:2, t:'"Teachers ________ learning."', o:["Facilitate","Felicitate","Fascinate","Fabricate"], c:0, v:D.facility },
+      { l:2, t:'"We ________ the winner."', o:["Felicitated","Facilitated","Fascinated","Fabricated"], c:0, v:D.facility },
+      { l:2, t:'"All is ________ in love and war."', o:["Fair","Fare","Fear","Far"], c:0, v:D.fair },
+      { l:2, t:'"Pay the bus ________."', o:["Fare","Fair","Fear","Fire"], c:0, v:D.fair },
+      { l:2, t:'"We exchanged ________."', o:["Formalities","Formalisms","Formations","Formulas"], c:0, v:D.formal },
+      { l:2, t:'"He dislikes empty ________."', o:["Formalism","Formality","Formation","Formula"], c:0, v:D.formal },
+      { l:2, t:'"The ________ year ends in March."', o:["Fiscal","Financial","Physical","Final"], c:0, v:D.fiscal },
+      { l:2, t:'"He has ________ troubles."', o:["Financial","Fiscal","Physical","Final"], c:0, v:D.fiscal },
+      { l:2, t:'"Be ________ with the baby."', o:["Gentle","Genteel","Gentile","General"], c:0, v:D.gentle },
+      { l:2, t:'"They put on ________ airs."', o:["Genteel","Gentle","Gentile","General"], c:0, v:D.gentle },
+      { l:2, t:'"Do not ________ your savings."', o:["Gamble","Gambol","Grumble","Ramble"], c:0, v:D.gamble },
+      { l:2, t:'"Lambs ________ in the field."', o:["Gambol","Gamble","Grumble","Ramble"], c:0, v:D.gamble },
+      { l:2, t:'"The swan is ________."', o:["Graceful","Gracious","Grateful","Glacial"], c:0, v:D.grace },
+      { l:2, t:'"She is a ________ host."', o:["Gracious","Graceful","Grateful","Glacial"], c:0, v:D.grace },
+      { l:2, t:'"Close the garden ________."', o:["Gate","Gait","Grate","Great"], c:0, v:D.gate },
+      { l:2, t:'"He walks with a limp ________."', o:["Gait","Gate","Grate","Great"], c:0, v:D.gate },
+      { l:2, t:'"Zero ________ in space."', o:["Gravity","Gravitation","Gratitude","Gravel"], c:0, v:D.gravity },
+      { l:2, t:'"Newton studied ________."', o:["Gravitation","Gravity","Gradation","Gravel"], c:0, v:D.gravity },
+      { l:2, t:'"Squirrels ________ nuts."', o:["Hoard","Horde","Herd","Hard"], c:0, v:D.hoard },
+      { l:2, t:'"A ________ of tourists."', o:["Horde","Hoard","Herd","Hard"], c:0, v:D.hoard },
+      { l:2, t:'"It was a ________ event."', o:["Historic","Histrionic","Historical","History"], c:0, v:D.history },
+      { l:2, t:'"Stop the ________ drama!"', o:["Histrionic","Historic","Historical","Hysterical"], c:0, v:D.history },
+      { l:2, t:'"I read a ________ novel."', o:["Historical","Historic","Histrionic","Hysterical"], c:0, v:D.history },
+      { l:2, t:'"He showed great ________."', o:["Humility","Humiliation","Humidity","Humanity"], c:0, v:D.humble },
+      { l:2, t:'"Defeat was a ________."', o:["Humiliation","Humility","Humidity","Humanity"], c:0, v:D.humble },
+      { l:2, t:'"She is an ________ member."', o:["Honorary","Honourable","Honest","Hourly"], c:0, v:D.honor },
+      { l:2, t:'"He is an ________ judge."', o:["Honourable","Honorary","Honest","Hourly"], c:0, v:D.honor },
+      { l:2, t:'"To err is ________."', o:["Human","Humane","Humus","Hymen"], c:0, v:D.human },
+      { l:2, t:'"Be ________ to animals."', o:["Humane","Human","Humorous","Humanist"], c:0, v:D.human },
+      { l:2, t:'"The king is ________ and hearty."', o:["Hale","Hail","Heal","Hell"], c:0, v:D.health },
+      { l:2, t:'"________ fell from the sky."', o:["Hail","Hale","Heal","Hell"], c:0, v:D.health },
+      { l:2, t:'"Eat ________ food."', o:["Healthy","Healthful","Heal","Hail"], c:0, v:D.health },
+      { l:2, t:'"The repair was ________."', o:["Effective","Defective","Efficient","Effectual"], c:0, v:D.defect },
+      { l:2, t:'"Many ________ interests."', o:["Diverse","Divers","Divest","Direct"], c:0, v:D.divers },
+      { l:2, t:'"Logic helps to ________."', o:["Deduce","Deduct","Induce","Reduce"], c:0, v:D.deduce },
+      { l:2, t:'"Sign for the ________."', o:["Delivery","Deliverance","Deliberance","Dilution"], c:0, v:D.delivery },
+      { l:2, t:'"I ________ the violence."', o:["Decry","Descry","Describe","Decree"], c:0, v:D.decry },
+      { l:2, t:'"________ expectations."', o:["Defy","Deify","Define","Defer"], c:0, v:D.defy },
+      { l:2, t:'"Don\'t ________ off."', o:["Doze","Dose","Douse","Daze"], c:0, v:D.dose },
+      { l:2, t:'"Build a ________."', o:["Dam","Damn","Dome","Dim"], c:0, v:D.dam },
+      { l:2, t:'"Create a ________."', o:["Diversion","Diversity","Division","Derision"], c:0, v:D.diversion },
+      { l:2, t:'"An ________ talent."', o:["Enviable","Envious","Inevitable","Variable"], c:0, v:D.envy },
+      { l:2, t:'"No ________ allowed."', o:["Exceptions","Exceptionals","Expectations","Acceptance"], c:0, v:D.exception },
+      { l:2, t:'"________ scholars."', o:["Eminent","Imminent","Immanent","Element"], c:0, v:D.eminent },
+
+      // ================= LEVEL 3 (HARD - 108 Questions) =================
+      { l:3, t:'"The logic in his argument was ________."', o:["Defective","Deficient","Effective","Deceptive"], c:0, v:D.defect },
+      { l:3, t:'"The diet was ________ in essential amino acids."', o:["Deficient","Defective","Different","Efficient"], c:0, v:D.defect },
+      { l:3, t:'"The shop sold ________ sundries and knick-knacks."', o:["Divers","Diverse","Divest","Direct"], c:0, v:D.divers },
+      { l:3, t:'"The portfolio should be ________ to reduce risk."', o:["Diverse","Divers","Divest","Direct"], c:0, v:D.divers },
+      { l:3, t:'"From the footprints, we can ________ the animal\'s size."', o:["Deduce","Deduct","Induce","Reduce"], c:0, v:D.deduce },
+      { l:3, t:'"They will ________ the cost from your account."', o:["Deduct","Deduce","Conduct","Product"], c:0, v:D.deduce },
+      { l:3, t:'"The film was a ________ from boredom."', o:["Deliverance","Delivery","Deliberance","Diligence"], c:0, v:D.delivery },
+      { l:3, t:'"His ________ of the speech was flawless."', o:["Delivery","Deliverance","Discovery","Recovery"], c:0, v:D.delivery },
+      { l:3, t:'"The editorial ________ the corruption."', o:["Decried","Descried","Decreed","Decayed"], c:0, v:D.decry },
+      { l:3, t:'"From the crow\'s nest, he ________ land."', o:["Descried","Decried","Described","Discarded"], c:0, v:D.decry },
+      { l:3, t:'"Gravity ________ him to stay grounded."', o:["Defies","Deifies","Defines","Defers"], c:0, v:D.defy },
+      { l:3, t:'"Ancient Romans used to ________ their emperors."', o:["Deify","Defy","Defile","Define"], c:0, v:D.defy },
+      { l:3, t:'"He fell into a light ________."', o:["Doze","Dose","Douse","Daze"], c:0, v:D.dose },
+      { l:3, t:'"A heavy ________ of reality checked his ego."', o:["Dose","Doze","Dozen","Douse"], c:0, v:D.dose },
+      { l:3, t:'"The beaver ________ stopped the flow."', o:["Dam","Damn","Dome","Dim"], c:0, v:D.dam },
+      { l:3, t:'"He didn\'t give a ________ about the rules."', o:["Damn","Dam","Dame","Dome"], c:0, v:D.dam },
+      { l:3, t:'"Chess is a pleasant ________."', o:["Diversion","Diversity","Division","Derision"], c:0, v:D.diversion },
+      { l:3, t:'"There is strength in ________."', o:["Diversity","Diversion","Adversity","University"], c:0, v:D.diversion },
+      { l:3, t:'"His calm in crisis is ________."', o:["Enviable","Envious","Inevitable","Variable"], c:0, v:D.envy },
+      { l:3, t:'"She cast an ________ glance at the jewel."', o:["Envious","Enviable","Obvious","Previous"], c:0, v:D.envy },
+      { l:3, t:'"I take ________ to that statement."', o:["Exception","Exceptional","Acceptance","Exemption"], c:0, v:D.exception },
+      { l:3, t:'"Her wit is ________."', o:["Exceptional","Exception","Exceptionable","Acceptable"], c:0, v:D.exception },
+      { l:3, t:'"His conduct was highly ________."', o:["Exceptionable","Exceptional","Exceptions","Actionable"], c:0, v:D.exception },
+      { l:3, t:'"He is an ________ jurist."', o:["Eminent","Imminent","Immanent","Element"], c:0, v:D.eminent },
+      { l:3, t:'"Danger is ________."', o:["Imminent","Eminent","Immanent","Immense"], c:0, v:D.eminent },
+      { l:3, t:'"God is ________ in creation."', o:["Immanent","Imminent","Eminent","Permanent"], c:0, v:D.eminent },
+      { l:3, t:'"He is ________ for parole."', o:["Eligible","Illegible","Legible","Legal"], c:0, v:D.eligible },
+      { l:3, t:'"The manuscript is ________."', o:["Illegible","Eligible","Logical","Legal"], c:0, v:D.eligible },
+      { l:3, t:'"The view was ________ beautiful."', o:["Exceedingly","Excessively","Excitingly","Exactingly"], c:0, v:D.excess },
+      { l:3, t:'"He worries ________."', o:["Excessively","Exceedingly","Expressively","Extensively"], c:0, v:D.excess },
+      { l:3, t:'"The climb was ________."', o:["Exhausting","Exhaustive","Exhausted","Exhaling"], c:0, v:D.exhaust },
+      { l:3, t:'"The study was ________."', o:["Exhaustive","Exhausting","Exhausted","Exhibit"], c:0, v:D.exhaust },
+      { l:3, t:'"The supply is ________."', o:["Exhausted","Exhausting","Exhaustive","Exhaled"], c:0, v:D.exhaust },
+      { l:3, t:'"Be ________ with your words."', o:["Economical","Economic","Economics","Ecological"], c:0, v:D.economy },
+      { l:3, t:'"The ________ outlook is bleak."', o:["Economic","Economical","Economics","Economy"], c:0, v:D.economy },
+      { l:3, t:'"Keynesian ________ is complex."', o:["Economics","Economic","Economical","Economist"], c:0, v:D.economy },
+      { l:3, t:'"Success seems to ________ him."', o:["Elude","Allude","Include","Delude"], c:0, v:D.elude },
+      { l:3, t:'"Do not ________ to the past."', o:["Allude","Elude","Include","Illude"], c:0, v:D.elude },
+      { l:3, t:'"The electrons ________ the atoms."', o:["Excite","Incite","Insight","Exit"], c:0, v:D.excite },
+      { l:3, t:'"Words can ________ a riot."', o:["Incite","Excite","Insight","Invite"], c:0, v:D.excite },
+      { l:3, t:'"A flash of ________ solved it."', o:["Insight","Incite","Excite","Eyesight"], c:0, v:D.excite },
+      { l:3, t:'"Darkness will ________ the earth."', o:["Envelop","Envelope","Develop","Gallop"], c:0, v:D.envelop },
+      { l:3, t:'"Push the ________ too far."', o:["Envelope","Envelop","Antelope","Slope"], c:0, v:D.envelop },
+      { l:3, t:'"We need ________ action."', o:["Expeditious","Expedient","Expedition","Expected"], c:0, v:D.expedition },
+      { l:3, t:'"Lying is ________ but wrong."', o:["Expedient","Expeditious","Expedition","Experienced"], c:0, v:D.expedition },
+      { l:3, t:'"The arctic ________ failed."', o:["Expedition","Expedient","Expeditious","Exhibition"], c:0, v:D.expedition },
+      { l:3, t:'"Self-________ is crucial."', o:["Esteem","Estimate","Estimation","Steam"], c:0, v:D.esteem },
+      { l:3, t:'"It is a rough ________."', o:["Estimate","Esteem","Estimation","Testament"], c:0, v:D.esteem },
+      { l:3, t:'"It rose in my ________."', o:["Estimation","Estimate","Esteem","Establishment"], c:0, v:D.esteem },
+      { l:3, t:'"He died of ________."', o:["Exposure","Exposition","Explosion","Export"], c:0, v:D.exposure },
+      { l:3, t:'"The ________ of the theme was clear."', o:["Exposition","Exposure","Imposition","Composition"], c:0, v:D.exposure },
+      { l:3, t:'"The ________ talked only of himself."', o:["Egotist","Egoist","Economist","Tourist"], c:0, v:D.ego },
+      { l:3, t:'"The rational ________ seeks gain."', o:["Egoist","Egotist","Eulogist","Activist"], c:0, v:D.ego },
+      { l:3, t:'"Truth will ________."', o:["Emerge","Immerse","Merge","Emergency"], c:0, v:D.emerge },
+      { l:3, t:'"________ yourself in the culture."', o:["Immerse","Emerge","Amass","Disperse"], c:0, v:D.emerge },
+      { l:3, t:'"Skin ________ is painful."', o:["Eruption","Irruption","Corruption","Disruption"], c:0, v:D.eruption },
+      { l:3, t:'"The barbarian ________."', o:["Irruption","Eruption","Interruption","Corruption"], c:0, v:D.eruption },
+      { l:3, t:'"It is an ________ truth."', o:["Elemental","Elementary","Fundamental","Sentimental"], c:0, v:D.element },
+      { l:3, t:'"The mistake was ________."', o:["Elementary","Elemental","Element","Entry"], c:0, v:D.element },
+      { l:3, t:'"A brief mental ________."', o:["Excursion","Incursion","Exclusion","Version"], c:0, v:D.excursion },
+      { l:3, t:'"An ________ into privacy."', o:["Incursion","Excursion","Incision","Exertion"], c:0, v:D.excursion },
+      { l:3, t:'"Make a grand ________."', o:["Entrance","Entry","Entrails","Entire"], c:0, v:D.entry },
+      { l:3, t:'"Data ________ is tedious."', o:["Entry","Entrance","Entity","Entire"], c:0, v:D.entry },
+      { l:3, t:'"War is ________."', o:["Expensive","Valuable","Expansive","Pensive"], c:0, v:D.value },
+      { l:3, t:'"Time is ________."', o:["Valuable","Expensive","Voluble","Available"], c:0, v:D.value },
+      { l:3, t:'"The error proved ________."', o:["Fatal","Fateful","Fatalist","Final"], c:0, v:D.fatal },
+      { l:3, t:'"A ________ decision."', o:["Fateful","Fatal","Faithful","Fruitful"], c:0, v:D.fatal },
+      { l:3, t:'"The ________ accepts destiny."', o:["Fatalist","Fatal","Fateful","Fearless"], c:0, v:D.fatal },
+      { l:3, t:'"A ________ argument."', o:["Forceful","Forcible","Forced","Fierce"], c:0, v:D.force },
+      { l:3, t:'"________ repatriation."', o:["Forcible","Forceful","Forced","Fierce"], c:0, v:D.force },
+      { l:3, t:'"Do not ________ ignorance."', o:["Feign","Fain","Feint","Fine"], c:0, v:D.feign },
+      { l:3, t:'"I would ________ stay."', o:["Fain","Feign","Feint","Fan"], c:0, v:D.feign },
+      { l:3, t:'"I must ________ this pleasure."', o:["Forgo","Forego","Forget","Forgive"], c:0, v:D.forgo },
+      { l:3, t:'"The ________ conclusion."', o:["Foregoing","Forgoing","Forgiving","Forgetting"], c:0, v:D.forgo },
+      { l:3, t:'"A ________ for languages."', o:["Facility","Felicity","Faculty","Fact"], c:0, v:D.facility },
+      { l:3, t:'"Phrase it with ________."', o:["Felicity","Facility","Faculty","Fidelity"], c:0, v:D.facility },
+      { l:3, t:'"We ________ the process."', o:["Facilitate","Felicitate","Fascinate","Fabricate"], c:0, v:D.facility },
+      { l:3, t:'"We ________ the graduate."', o:["Felicitated","Facilitated","Fascinated","Fabricated"], c:0, v:D.facility },
+      { l:3, t:'"All is ________ in love and war."', o:["Fair","Fare","Fear","Far"], c:0, v:D.fair },
+      { l:3, t:'"How did you ________?"', o:["Fare","Fair","Fear","Fire"], c:0, v:D.fair },
+      { l:3, t:'"It is a mere ________."', o:["Formality","Formalism","Formation","Formula"], c:0, v:D.formal },
+      { l:3, t:'"Legal ________ is strict."', o:["Formalism","Formality","Formation","Formula"], c:0, v:D.formal },
+      { l:3, t:'"________ policy is key."', o:["Fiscal","Financial","Physical","Final"], c:0, v:D.fiscal },
+      { l:3, t:'"________ ruin awaits."', o:["Financial","Fiscal","Physical","Final"], c:0, v:D.fiscal },
+      { l:3, t:'"A ________ breeze."', o:["Gentle","Genteel","Gentile","General"], c:0, v:D.gentle },
+      { l:3, t:'"________ poverty."', o:["Genteel","Gentle","Gentile","General"], c:0, v:D.gentle },
+      { l:3, t:'"Life is a ________."', o:["Gamble","Gambol","Grumble","Ramble"], c:0, v:D.gamble },
+      { l:3, t:'"Children ________ outside."', o:["Gambol","Gamble","Grumble","Ramble"], c:0, v:D.gamble },
+      { l:3, t:'"A ________ exit."', o:["Graceful","Gracious","Grateful","Glacial"], c:0, v:D.grace },
+      { l:3, t:'"________ living."', o:["Gracious","Graceful","Grateful","Glacial"], c:0, v:D.grace },
+      { l:3, t:'"The flood ________."', o:["Gate","Gait","Grate","Great"], c:0, v:D.gate },
+      { l:3, t:'"An awkward ________."', o:["Gait","Gate","Grate","Great"], c:0, v:D.gate },
+      { l:3, t:'"Zero ________."', o:["Gravity","Gravitation","Gratitude","Gravel"], c:0, v:D.gravity },
+      { l:3, t:'"Universal ________."', o:["Gravitation","Gravity","Gradation","Gravel"], c:0, v:D.gravity },
+      { l:3, t:'"A ________ of cash."', o:["Hoard","Horde","Herd","Hard"], c:0, v:D.hoard },
+      { l:3, t:'"The Mongol ________."', o:["Horde","Hoard","Herd","Hard"], c:0, v:D.hoard },
+      { l:3, t:'"A ________ occasion."', o:["Historic","Histrionic","Historical","History"], c:0, v:D.history },
+      { l:3, t:'"________ behavior."', o:["Histrionic","Historic","Historical","Hysterical"], c:0, v:D.history },
+      { l:3, t:'"________ data."', o:["Historical","Historic","Histrionic","Hysterical"], c:0, v:D.history },
+      { l:3, t:'"He bowed in ________."', o:["Humility","Humiliation","Humidity","Humanity"], c:0, v:D.humble },
+      { l:3, t:'"Public ________."', o:["Humiliation","Humility","Humidity","Humanity"], c:0, v:D.humble },
+      { l:3, t:'"________ consul."', o:["Honorary","Honourable","Honest","Hourly"], c:0, v:D.honor },
+      { l:3, t:'"________ intentions."', o:["Honourable","Honorary","Honest","Hourly"], c:0, v:D.honor },
+      { l:3, t:'"________ error."', o:["Human","Humane","Humus","Hymen"], c:0, v:D.human },
+      { l:3, t:'"________ treatment."', o:["Humane","Human","Humorous","Humanist"], c:0, v:D.human },
+      { l:3, t:'"________ and hearty."', o:["Hale","Hail","Heal","Hell"], c:0, v:D.health },
+      { l:3, t:'"________ to the chief."', o:["Hail","Hale","Heal","Hell"], c:0, v:D.health },
+      { l:3, t:'"A ________ appetite."', o:["Healthy","Healthful","Heal","Hail"], c:0, v:D.health },
+      { l:3, t:'"He was ________."', o:["Deficient","Defective","Different","Efficient"], c:0, v:D.defect },
+      { l:3, t:'"A ________ approach."', o:["Diverse","Divers","Divest","Direct"], c:0, v:D.divers },
+      { l:3, t:'"He could ________ it."', o:["Deduce","Deduct","Induce","Reduce"], c:0, v:D.deduce },
+      { l:3, t:'"A speedy ________."', o:["Delivery","Deliverance","Discovery","Recovery"], c:0, v:D.delivery },
+      { l:3, t:'"They ________ it."', o:["Decried","Descried","Decreed","Decayed"], c:0, v:D.decry },
+      { l:3, t:'"He will ________ it."', o:["Defy","Deify","Define","Defer"], c:0, v:D.defy },
+      { l:3, t:'"A small ________."', o:["Dose","Doze","Dozen","Douse"], c:0, v:D.dose },
+      { l:3, t:'"The huge ________."', o:["Dam","Damn","Dome","Dim"], c:0, v:D.dam },
+      { l:3, t:'"A clever ________."', o:["Diversion","Diversity","Division","Derision"], c:0, v:D.diversion },
+      { l:3, t:'"________ position."', o:["Enviable","Envious","Inevitable","Variable"], c:0, v:D.envy },
+      { l:3, t:'"With no ________."', o:["Exception","Exceptional","Acceptance","Exemption"], c:0, v:D.exception },
+      { l:3, t:'"An ________ domain."', o:["Eminent","Imminent","Immanent","Element"], c:0, v:D.eminent }
+    ];
+
+    let activeQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timerInterval = null;
+    let timeLimit = 0;
+    let userResults = [];
+
+    startQuiz(); 
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function speakWord(word) {
+      if(window.event) window.event.stopPropagation();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US'; 
+        utterance.rate = 0.9; 
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("Audio playback is not supported.");
+      }
+    }
+
+    function startQuiz() {
+      const level = document.getElementById('level').value;
+      const timerVal = document.getElementById('timer').value;
+      const lvlNum = parseInt(level);
+      timeLimit = parseInt(timerVal);
+
+      let rawData = Q.filter(q => q.l === lvlNum);
+      activeQuestions = JSON.parse(JSON.stringify(rawData));
+      
+      activeQuestions.forEach(q => {
+        const correctText = q.o[q.c];
+        shuffleArray(q.o);
+        q.c = q.o.indexOf(correctText);
+      });
+      shuffleArray(activeQuestions);
+
+      currentQuestionIndex = 0;
+      score = 0;
+      userResults = [];
+      document.getElementById('score').innerText = score;
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('review-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = (timeLimit > 0) ? 'block' : 'none';
+      document.getElementById('timer-bar').style.width = '100%';
+      document.getElementById('top-notification').classList.remove('show');
+
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if(timerInterval) clearInterval(timerInterval);
+      const q = activeQuestions[currentQuestionIndex];
+      document.getElementById('total').innerText = activeQuestions.length;
+      document.getElementById('current').innerText = currentQuestionIndex + 1;
+      document.getElementById('question-number').innerText = `Question ${currentQuestionIndex + 1}`;
+      document.getElementById('question-text').innerText = q.t;
+      
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      document.getElementById('feedback-box').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
+
+      q.o.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(index, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      if(timeLimit > 0) runTimer(timeLimit);
+    }
+
+    function runTimer(seconds) {
+      let timeLeft = seconds;
+      const bar = document.getElementById('timer-bar');
+      bar.style.width = '100%';
+      bar.style.backgroundColor = 'var(--timer-color)';
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const percentage = (timeLeft / seconds) * 100;
+        bar.style.width = percentage + '%';
+        if(percentage < 30) bar.style.backgroundColor = '#dc3545';
+        if(timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function showTopBanner(text) {
+      const banner = document.getElementById('top-notification');
+      banner.innerText = text;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 2500);
+    }
+
+    function handleTimeOut() {
+      const q = activeQuestions[currentQuestionIndex];
+      showTopBanner(`Time's Up! Answer: ${q.o[q.c]}`);
+      userResults.push({ qIndex: currentQuestionIndex, status: 'skipped', userAnswer: null });
+      disableOptions(q.c);
+      showFeedback(q, true);
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+      if(timerInterval) clearInterval(timerInterval);
+      const q = activeQuestions[currentQuestionIndex];
+      const isCorrect = (selectedIndex === q.c);
+      userResults.push({ qIndex: currentQuestionIndex, status: isCorrect ? 'correct' : 'wrong', userAnswer: q.o[selectedIndex] });
+      if (isCorrect) {
+        score++;
+        document.getElementById('score').innerText = score;
+        nextQuestion(); 
+      } else {
+        btnElement.classList.add('wrong');
+        showTopBanner(`Wrong! Answer: ${q.o[q.c]}`);
+        disableOptions(q.c);
+        showFeedback(q, true); 
+      }
+    }
+
+    function disableOptions(correctIndex) {
+      const btns = document.querySelectorAll('.option');
+      btns.forEach((b, idx) => {
+        b.disabled = true;
+        if(idx === correctIndex) b.classList.add('correct');
+      });
+    }
+
+    function showFeedback(questionData, showVisuals) {
+      if(!showVisuals) return;
+      const feedbackBox = document.getElementById('feedback-box');
+      feedbackBox.innerHTML = `<h4>Visual Comparison</h4><div class="comparison-container" id="cards-container"></div>`;
+      const container = document.getElementById('cards-container');
+      const correctWord = questionData.o[questionData.c];
+
+      questionData.v.forEach(v => {
+        const seed = Math.floor(Math.random() * 9000) + 1000;
+        const prompt = encodeURIComponent(`${v.img} cartoon vector flat illustration minimalist`);
+        const imgSrc = `https://image.pollinations.ai/prompt/${prompt}?width=240&height=140&nologo=true&seed=${seed}`;
+        const isCorrectCard = (correctWord.includes(v.w)) ? 'is-correct-card' : '';
+        
+        const card = document.createElement('div');
+        card.className = `comparison-card ${isCorrectCard}`;
+        card.innerHTML = `
+          <div class="word-title">${v.w}</div>
+          <div class="img-container" onclick="speakWord('${v.w}')">
+            <div class="loader"></div>
+            <img class="comparison-img" src="${imgSrc}" alt="${v.w}" onload="this.classList.add('loaded'); this.parentElement.querySelector('.loader').style.display='none';">
+          </div>
+          <div class="word-def">${v.d}</div>
+        `;
+        container.appendChild(card);
+      });
+      feedbackBox.style.display = 'block';
+      document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < activeQuestions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = 'none';
+      document.getElementById('top-notification').classList.remove('show');
+      document.getElementById('review-area').style.display = 'block';
+      const skipped = userResults.filter(r => r.status === 'skipped').length;
+      const wrong = userResults.filter(r => r.status === 'wrong').length;
+      const correct = userResults.filter(r => r.status === 'correct').length;
+      document.getElementById('result-summary').innerHTML = `
+        <div class="stat-box stat-correct">Correct: ${correct}</div>
+        <div class="stat-box stat-wrong">Wrong: ${wrong}</div>
+        <div class="stat-box" style="background:#e2e3e5;">Timeouts: ${skipped}</div>
+        <h3>Total Score: ${score} / ${activeQuestions.length}</h3>
+      `;
+    }
+  </script>
+</body>
+</html>

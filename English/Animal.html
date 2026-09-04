@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animal Idioms Master Quiz</title>
+<style>
+    :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #2c3e50;
+        --accent-color: #f39c12;
+        --success-color: #27ae60;
+        --error-color: #e74c3c;
+        --bg-color: #eef2f3;
+        --card-bg: #ffffff;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+    }
+
+    .quiz-wrapper {
+        width: 100%;
+        max-width: 700px;
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Header Section */
+    .quiz-header {
+        background: linear-gradient(135deg, var(--secondary-color), #34495e);
+        color: white;
+        padding: 25px;
+        text-align: center;
+        position: relative;
+    }
+
+    .quiz-header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .quiz-header p {
+        margin: 5px 0 0;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        width: 100%;
+        height: 6px;
+        background-color: rgba(255,255,255,0.2);
+        margin-top: 15px;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: var(--accent-color);
+        width: 0%;
+        transition: width 0.4s ease;
+    }
+
+    /* Content Area */
+    .quiz-content {
+        padding: 30px;
+    }
+
+    .stats-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #7f8c8d;
+    }
+
+    .question-card {
+        text-align: center;
+        margin-bottom: 30px;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .idiom-text {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--secondary-color);
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+
+    .instruction {
+        color: #95a5a6;
+        font-style: italic;
+        font-size: 15px;
+    }
+
+    /* Options Grid */
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .option-btn {
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: #444;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        position: relative;
+        font-weight: 500;
+    }
+
+    .option-btn:hover:not(:disabled) {
+        border-color: var(--primary-color);
+        background-color: #f0f8ff;
+        transform: translateY(-2px);
+    }
+
+    /* State Classes */
+    .option-btn.correct {
+        background-color: #d4edda;
+        border-color: var(--success-color);
+        color: #155724;
+    }
+
+    .option-btn.wrong {
+        background-color: #f8d7da;
+        border-color: var(--error-color);
+        color: #721c24;
+        opacity: 0.7;
+    }
+
+    .option-btn:disabled {
+        cursor: default;
+        transform: none;
+    }
+
+    /* Feedback Section */
+    .feedback-box {
+        margin-top: 25px;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #fff3cd;
+        border-left: 5px solid var(--accent-color);
+        display: none; /* Hidden by default */
+        text-align: left;
+        animation: slideUp 0.3s ease;
+    }
+
+    .feedback-title {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+        color: #856404;
+    }
+
+    .feedback-text {
+        color: #333;
+        font-size: 16px;
+    }
+
+    /* Controls */
+    .controls {
+        margin-top: 30px;
+        text-align: right;
+        min-height: 50px;
+    }
+
+    .btn-next {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: none; /* Hidden initially */
+        box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+    }
+
+    .btn-next:hover {
+        background-color: #357abd;
+    }
+
+    /* Results Screen */
+    .results-screen {
+        text-align: center;
+        padding: 40px;
+        display: none;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 36px;
+        font-weight: bold;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 20px rgba(74, 144, 226, 0.3);
+    }
+
+    .btn-restart {
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+        .idiom-text { font-size: 22px; }
+        .quiz-content { padding: 20px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="quiz-wrapper">
+    <div class="quiz-header">
+        <h1>Animal Idioms Challenge</h1>
+        <p>Test your knowledge of English expressions</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="quiz-content" id="quizScreen">
+        <div class="stats-bar">
+            <span id="questionCounter">Question 1</span>
+            <span id="scoreCounter">Score: 0</span>
+        </div>
+
+        <div class="question-card">
+            <div class="idiom-text" id="idiomText">Loading...</div>
+            <div class="instruction">Choose the correct meaning</div>
+        </div>
+
+        <div class="options-grid" id="optionsGrid">
+            </div>
+
+        <div class="feedback-box" id="feedbackBox">
+            <span class="feedback-title" id="feedbackTitle"></span>
+            <span class="feedback-text" id="feedbackContent"></span>
+        </div>
+
+        <div class="controls">
+            <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next Idiom ➜</button>
+        </div>
+    </div>
+
+    <div class="results-screen" id="resultScreen">
+        <div class="score-circle" id="finalScoreCircle">0%</div>
+        <h2>Quiz Completed!</h2>
+        <p>You scored <strong id="finalScoreText">0</strong> out of <strong id="totalQuestionsText">0</strong></p>
+        <p id="resultMessage"></p>
+        <button class="btn-restart" onclick="restartQuiz()">Try Again</button>
+    </div>
+</div>
+
+<script>
+    // Merged Dataset from your provided HTML
+    const idiomsData = [
+        { i: "A bird's eye view", m: "An overview" },
+        { i: "A cock and bull story", m: "An implausible story used as an excuse" },
+        { i: "A dark horse", m: "An unforeseen competitor" },
+        { i: "A fish out of water", m: "In uncomfortable situation" },
+        { i: "A snake in the grass", m: "A secret enemy" },
+        { i: "A white elephant", m: "Costly or troublesome possession" },
+        { i: "A wild goose chase", m: "Futile search / Fruitless pursuit" },
+        { i: "Ants in your pants", m: "Restless; cannot keep still" },
+        { i: "As the crow flies", m: "In a straight line" },
+        { i: "At snail's pace", m: "To do things very slowly" },
+        { i: "Barking up the wrong tree", m: "Trying to find someone at the wrong place; mistake" },
+        { i: "Bee in one's bonnet", m: "To be preoccupied or obsessed with something" },
+        { i: "Bell the cat", m: "To take a personal risk" },
+        { i: "Bird-brain", m: "Someone stupid with a brain as small as a bird" },
+        { i: "Birds of the same feather", m: "Persons of same character" },
+        { i: "Bite the hand that feeds you", m: "Harm your own benefactor" },
+        { i: "Bull in a China shop", m: "A clumsy person" },
+        { i: "Butterflies in your stomach", m: "A state of uneasiness/anxiety" },
+        { i: "Casting pearls before swine", m: "Offering good things to undeserving people" },
+        { i: "Cat's Whiskers", m: "To be highly impressive" },
+        { i: "Chicken out", m: "Withdraw because you are afraid" },
+        { i: "Crocodile tears", m: "To pretend grief" },
+        { i: "Dog eat dog world", m: "An uncivilized world" },
+        { i: "Dog in the manger", m: "A person who prevents others from enjoying what he cannot" },
+        { i: "Dog's life", m: "Very miserable life" },
+        { i: "Donkey's years", m: "A long time" },
+        { i: "Drink like a fish", m: "Be an alcoholic" },
+        { i: "Dropping like flies", m: "Collapsing in large numbers" },
+        { i: "Eagle-eyed", m: "With eyes as sharp as those of an eagle" },
+        { i: "Early bird", m: "Someone who catches the first opportunity" },
+        { i: "Feed to the wolves", m: "Allow a person to be open to attack from his enemies" },
+        { i: "Fish in troubled water", m: "To make a profit out of a troubled situation" },
+        { i: "Flogging a dead horse", m: "Wasting time in useless effort" },
+        { i: "Go the whole hog", m: "To do it completely" },
+        { i: "Hawk-eyed", m: "With sharp eyes like a hawk" },
+        { i: "Hold one's horses", m: "To keep waiting" },
+        { i: "Hornet's nest", m: "Open up a sensitive issue or topic" },
+        { i: "Horse around", m: "Fooling around" },
+        { i: "Keep the wolf from the door", m: "Escape starvation" },
+        { i: "Kill two birds with one stone", m: "Solve two problems with one action" },
+        { i: "Let sleeping dogs lie", m: "Not to bring up an old controversial issue" },
+        { i: "Let the cat out of the bag", m: "To utter a secret carelessly or by mistake" },
+        { i: "Like water off a duck’s back", m: "Impervious to water/criticism" },
+        { i: "Lion's share", m: "Best and most of the lot" },
+        { i: "Make a beeline for", m: "To head directly and quickly toward something" },
+        { i: "Make ducks and drakes of", m: "Squander" },
+        { i: "Not to look a gift horse in the mouth", m: "Not to find fault with the gift received" },
+        { i: "Paper tiger", m: "Appears strong but is not" },
+        { i: "Parrot someone’s words", m: "Repeat everything someone says word for word" },
+        { i: "Pig-headed", m: "Stubborn" },
+        { i: "Poor as a church mouse", m: "Very poor" },
+        { i: "Pour cats and dogs", m: "Rain heavily" },
+        { i: "Putting the cart before the horse", m: "Doing things in the wrong way" },
+        { i: "Rat race", m: "Fierce competition for power" },
+        { i: "Red herrings", m: "Clues intended to distract or mislead" },
+        { i: "Scapegoat", m: "Person blamed for the wrongdoings of others" },
+        { i: "Sitting duck", m: "An open target/easy prey" },
+        { i: "Smell a rat", m: "To suspect a trick" },
+        { i: "Straight from the horse's mouth", m: "From the person who has direct personal knowledge" },
+        { i: "Swan song", m: "Last prayer/performance (at funeral or farewell)" },
+        { i: "Take the bull by the horns", m: "To face danger boldly" },
+        { i: "Take to something like a duck to water", m: "To be very comfortable doing something" },
+        { i: "Till the cows come home", m: "For a very long time" },
+        { i: "Watch like a hawk", m: "Observe sharply and closely" },
+        { i: "When pigs fly", m: "A time that will never come" },
+        { i: "Wolf in sheep's clothing", m: "A malicious person in harmless disguise" },
+        // Table 2 Data
+        { i: "A bee hive", m: "A busy place" },
+        { i: "A bird of passage", m: "One who comes sometimes only" },
+        { i: "A black sheep", m: "A person with bad reputation" },
+        { i: "A cuckoo in the nest", m: "An unwelcome intruder" },
+        { i: "A dog's breakfast", m: "A total mess / A thing that has been done badly" },
+        { i: "A leopard can't change its spots", m: "Some people are so fixed in their ways that they cannot change" },
+        { i: "A sacred cow", m: "A person never to be criticized" },
+        { i: "A whale of a time", m: "A whole lot of fun" },
+        { i: "Backbiting-bitch", m: "A quarrelsome woman" },
+        { i: "Batten down the hatches", m: "Prepare for a difficult situation" },
+        { i: "Beat about the bush", m: "Speak in a roundabout manner / Avoid the topic" },
+        { i: "Beef-up", m: "Strengthen; build-up; make stronger" },
+        { i: "Belly-up", m: "A venture/business investment goes belly-up when it fails to achieve success" },
+        { i: "Bone of contention", m: "Matter of dispute / Cause of Quarrel" },
+        { i: "Bone to pick", m: "Cause of Quarrel / Bone of contention" },
+        { i: "Buck the system", m: "Go against the overall system which controls you" },
+        { i: "Bucket of worms", m: "Taking over an unpleasant situation that no one else wants to solve" },
+        { i: "Buzzing with activity", m: "Busy, with people moving about; like bees in a beehive" },
+        { i: "Carrot and stick", m: "Reward and punishment policy" },
+        { i: "Cat and dog life", m: "Troublesome life" },
+        { i: "Cat-nap", m: "Short sleep" },
+        { i: "Change colours", m: "To turn pale" },
+        { i: "Cock a snook", m: "To show impudent contempt" },
+        { i: "Cold fish", m: "Someone with no warmth and no emotion" },
+        { i: "Come out of one's shell", m: "To appear suddenly / Emerge from being shy" },
+        { i: "Dead heat", m: "Close contest that ends in a tie" },
+        { i: "Died in harness", m: "To die at one's work / Die while working" },
+        { i: "Do a roaring trade", m: "Highly successful" },
+        { i: "Dog-eared", m: "When the corners of pages of books have often been folded" },
+        { i: "Dog's years", m: "A long time" },
+        { i: "Don't badger me", m: "Stop bothering again and again with the same thing" },
+        { i: "Don't count your chickens before they hatch", m: "Do not count on a good thing that has not yet happened" },
+        { i: "Eat like a horse", m: "Eat a lot" },
+        { i: "Feather in one's cap", m: "An achievement / A new and additional distinction" },
+        { i: "Feather one's own nest", m: "Make money in an improper way / Enrich oneself by dishonest means" },
+        { i: "Fly in the face of", m: "To oppose or defy" },
+        { i: "Go to the dogs", m: "To be ruined / Ruin to go to in very bad situation" },
+        { i: "Halcyon days", m: "Peaceful days" },
+        { i: "Handle with kid gloves", m: "To treat someone with great care" },
+        { i: "Happy as a lark", m: "As happy as a bird singing in a tree" },
+        { i: "Hit the bull's eye", m: "Hit the center of the target with the arrow" },
+        { i: "Hive of activity", m: "Too much activity" },
+        { i: "Horse sense", m: "Basic common sense" },
+        { i: "In a goldfish bowl", m: "In a situation where one has no privacy" },
+        { i: "In the swim", m: "Well informed and up-to-date" },
+        { i: "Jailbird", m: "A person who is or has been confined to jail" },
+        { i: "Live in an ivory tower", m: "Live in a world of Illusions / Secluded from the real world" },
+        { i: "Lock horns with", m: "To get into a dispute" },
+        { i: "Mad as a march hare", m: "Crazy and insane" },
+        { i: "Mad as a wet hen", m: "Very angry" },
+        { i: "Make a beeline", m: "To go straight towards something as Quick as you can" },
+        { i: "Mare's nest", m: "Worthless thing" },
+        { i: "Monkeying around", m: "Playing around and fooling about" },
+        { i: "Neck and neck", m: "Competing equally" },
+        { i: "On shank's mare", m: "Bare Foot" },
+        { i: "On the horns of dilemma", m: "In a situation where you have to make a choice between things that are equally unpleasant" },
+        { i: "Once bitten twice shy", m: "A person who has suffered once will be alert in the future" },
+        { i: "Other fish to fry", m: "Some important work to attend to" },
+        { i: "Out of the woods", m: "Out of danger" },
+        { i: "Over the moon", m: "So elated / Very happy" },
+        { i: "Pass the buck", m: "Shift responsibility to another person" },
+        { i: "Pour cats and dogs / Rain cats and dogs", m: "Rain heavily" },
+        { i: "Pull the wool over somebody's eye", m: "To mislead" },
+        { i: "Put the cat among the pigeons", m: "To do something that causes trouble" },
+        { i: "Quack doctor", m: "Someone who practices medicine without proper knowledge" },
+        { i: "Quiet as a mouse", m: "Very quiet" },
+        { i: "Rides the high horse", m: "Feel superior" },
+        { i: "Rise like a phoenix from the ashes", m: "With a new life-rebirth-reincarnation / Rise from destruction" },
+        { i: "Rise with the lark", m: "Get up early" },
+        { i: "Rub up the wrong way", m: "To irk or irritate someone" },
+        { i: "Rule the roost", m: "Exercise authority / To be the most powerful member in the group" },
+        { i: "Silly goose", m: "Silly fool" },
+        { i: "Stir up a Hornet's nest", m: "To create a lot of trouble" },
+        { i: "Stop hounding me", m: "Stop bullying me" },
+        { i: "Take the bait", m: "Fall in the trap" },
+        { i: "The bee's knees", m: "Extraordinary" },
+        { i: "The birds and the bees", m: "Sex and reproduction" },
+        { i: "To angle", m: "To get something in a roundabout way" },
+        { i: "To clip one's wings", m: "To deprive one of power" },
+        { i: "To go to the whole hog", m: "To do it completely" },
+        { i: "To keep the wolf from the door", m: "Escape starvation / Avoid starvation" },
+        { i: "To make a mountain of a molehill", m: "To give great importance to little things" },
+        { i: "To pigeonhole", m: "To typecast someone" },
+        { i: "Turn-turtle", m: "Complete over-turn of a situation" },
+        { i: "Under your wing", m: "Under your protection" },
+        { i: "Wet behind the ears", m: "Young and without experience" },
+        { i: "Yellow-bellied", m: "Cowardly" },
+        { i: "A dead duck", m: "Totally useless" },
+        { i: "A mare's nest", m: "A confused situation" },
+        { i: "An elephant in the room", m: "There is an obvious problem" },
+        { i: "Beast of burden", m: "An animal that carries luggage / A person who works hard" },
+        { i: "Bull market", m: "Market where prices are rising" },
+        { i: "Cat's paw", m: "A person used as a tool by another" },
+        { i: "Chewing the cud", m: "To think slowly and carefully about something" },
+        { i: "Cooked your goose", m: "To interfere with, disrupt or ruin something for someone" },
+        { i: "Die a dog's death", m: "Die a shameful death" },
+        { i: "Every dog has his day", m: "Everyone has good luck or success at a point of time" },
+        { i: "Have egg on your face", m: "To be made to look foolish or embarrassed" },
+        { i: "Have a whale of a time", m: "Have an exceptionally fun or exciting experience" },
+        { i: "Henpecked husbands", m: "Oppressed husband" },
+        { i: "Like a bat out of hell", m: "Very fast and wildly" },
+        { i: "Like a cat on a hot tin roof", m: "Being in a state of agitation" },
+        { i: "Like a dying duck in a thunderstorm", m: "Dejected or hopeless" },
+        { i: "Loaves and fishes", m: "Material benefits" },
+        { i: "No spring chicken", m: "A person who is no longer young" },
+        { i: "One swallow does not make a summer", m: "A single fortunate event does not mean final success" },
+        { i: "Pig in a poke", m: "Something that is bought without examining properly" },
+        { i: "Queer fish", m: "A strange person" },
+        { i: "Ruffle someone's feathers", m: "Make someone annoyed" },
+        { i: "Run around like a headless chicken", m: "To do many things in a disorganized manner" },
+        { i: "Shooting fish in a barrel", m: "Exceptionally easy to do" },
+        { i: "Show the white feather", m: "To act cowardly" },
+        { i: "Sleep like a dog", m: "To sleep soundly" },
+        { i: "Sly as a fox", m: "Smart and clever" },
+        { i: "The world is your oyster", m: "Having many opportunities available" },
+        { i: "With his tail between his legs", m: "Feeling ashamed or embarrassed about something" }
+    ];
+
+    let quizQueue = [];
+    let currentIndex = 0;
+    let score = 0;
+    let currentQuestionData = null;
+
+    // Initialize Quiz
+    function initQuiz() {
+        // Shuffle the entire dataset
+        quizQueue = [...idiomsData].sort(() => Math.random() - 0.5);
+        currentIndex = 0;
+        score = 0;
+        
+        document.getElementById('quizScreen').style.display = 'block';
+        document.getElementById('resultScreen').style.display = 'none';
+        updateStats();
+        loadQuestion();
+    }
+
+    // Load a single question
+    function loadQuestion() {
+        if (currentIndex >= quizQueue.length) {
+            showResults();
+            return;
+        }
+
+        currentQuestionData = quizQueue[currentIndex];
+        
+        // Update UI Text
+        document.getElementById('idiomText').innerText = currentQuestionData.i;
+        
+        // Reset state
+        document.getElementById('feedbackBox').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
+        
+        // Generate Options (1 correct + 3 wrong)
+        const correctMeaning = currentQuestionData.m;
+        
+        // Get 3 random wrong meanings
+        const otherIdioms = idiomsData.filter(item => item.i !== currentQuestionData.i);
+        const shuffledOthers = otherIdioms.sort(() => Math.random() - 0.5);
+        const wrongMeanings = shuffledOthers.slice(0, 3).map(item => item.m);
+        
+        const allOptions = [correctMeaning, ...wrongMeanings];
+        // Shuffle options
+        allOptions.sort(() => Math.random() - 0.5);
+
+        // Render Buttons
+        const grid = document.getElementById('optionsGrid');
+        grid.innerHTML = '';
+        
+        allOptions.forEach(optText => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => handleAnswer(btn, optText === correctMeaning);
+            grid.appendChild(btn);
+        });
+
+        updateProgress();
+    }
+
+    // Handle User Click
+    function handleAnswer(selectedBtn, isCorrect) {
+        // Disable all buttons
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach(btn => btn.disabled = true);
+
+        const feedbackBox = document.getElementById('feedbackBox');
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const feedbackContent = document.getElementById('feedbackContent');
+
+        if (isCorrect) {
+            score++;
+            selectedBtn.classList.add('correct');
+            feedbackBox.style.display = 'block';
+            feedbackBox.style.backgroundColor = '#d4edda';
+            feedbackBox.style.borderLeftColor = '#28a745';
+            feedbackTitle.style.color = '#155724';
+            feedbackTitle.innerText = "Correct!";
+            feedbackContent.innerText = "Great job! That is the correct meaning.";
+        } else {
+            selectedBtn.classList.add('wrong');
+            // Highlight the correct one
+            buttons.forEach(btn => {
+                if (btn.innerText === currentQuestionData.m) {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            // Show Feedback (Correct Meaning)
+            feedbackBox.style.display = 'block';
+            feedbackBox.style.backgroundColor = '#fff3cd';
+            feedbackBox.style.borderLeftColor = '#ffc107';
+            feedbackTitle.style.color = '#856404';
+            feedbackTitle.innerText = "Incorrect.";
+            feedbackContent.innerHTML = `The correct meaning is:<br><strong>${currentQuestionData.m}</strong>`;
+        }
+
+        updateStats();
+        document.getElementById('nextBtn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        loadQuestion();
+    }
+
+    function updateStats() {
+        document.getElementById('questionCounter').innerText = `Question ${currentIndex + 1} / ${quizQueue.length}`;
+        document.getElementById('scoreCounter').innerText = `Score: ${score}`;
+    }
+
+    function updateProgress() {
+        const percentage = ((currentIndex) / quizQueue.length) * 100;
+        document.getElementById('progressBar').style.width = percentage + '%';
+    }
+
+    function showResults() {
+        document.getElementById('quizScreen').style.display = 'none';
+        document.getElementById('resultScreen').style.display = 'block';
+        
+        const finalPercent = Math.round((score / quizQueue.length) * 100);
+        document.getElementById('finalScoreText').innerText = score;
+        document.getElementById('totalQuestionsText').innerText = quizQueue.length;
+        document.getElementById('finalScoreCircle').innerText = finalPercent + '%';
+
+        const msg = document.getElementById('resultMessage');
+        if (finalPercent >= 90) msg.innerText = "Outstanding! You're an idiom expert.";
+        else if (finalPercent >= 70) msg.innerText = "Great job! Keep practicing.";
+        else msg.innerText = "Good effort. Review the meanings and try again!";
+    }
+
+    function restartQuiz() {
+        initQuiz();
+    }
+
+    // Start on load
+    window.onload = initQuiz;
+
+</script>
+
+</body>
+</html>

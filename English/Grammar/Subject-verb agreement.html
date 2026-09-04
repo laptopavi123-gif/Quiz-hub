@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Grammar Mastery Quiz</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .quiz-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .quiz-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .score-board {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Content Area */
+        .quiz-body {
+            padding: 30px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Options */
+        .options-list {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: #fff;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: #eef2ff;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* Answer States */
+        .option-btn.correct {
+            border-color: var(--success-color);
+            background-color: #dcfce7;
+            color: #14532d;
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            border-color: var(--error-color);
+            background-color: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        /* Explanation / Rules Box */
+        .explanation-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            border-left: 5px solid var(--primary-color);
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .explanation-box h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .rule-highlight {
+            font-weight: bold;
+            color: #be185d;
+        }
+
+        /* Navigation */
+        .quiz-footer {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            background-color: #f9fafb;
+        }
+
+        .next-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: none; /* Hidden until answer selected */
+        }
+
+        .next-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    
+    <div class="quiz-header">
+        <h2 id="quiz-title">Grammar Quiz</h2>
+        <div class="score-board">
+            Question <span id="current-q">1</span> / <span id="total-q">5</span>
+        </div>
+    </div>
+
+    <div class="quiz-body" id="quiz-content">
+        <div class="question-text" id="question">
+            </div>
+
+        <div class="options-list" id="options">
+            </div>
+
+        <div class="explanation-box" id="explanation">
+            <h4 id="feedback-title">Feedback</h4>
+            <p id="feedback-text"></p>
+            <div id="rule-content" style="margin-top:10px; font-size: 0.9em; color: #555;"></div>
+        </div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h2>Quiz Completed!</h2>
+        <p>Your Score: <strong id="final-score" style="font-size: 1.5em; color: var(--primary-color);">0</strong></p>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">Restart Quiz</button>
+    </div>
+
+    <div class="quiz-footer">
+        <button class="next-btn" id="next-btn">Next Question</button>
+    </div>
+
+</div>
+
+<script>
+const quizData = [
+    // --- RULE: Singular Subject takes Singular Verb ---
+    {
+        question: "The quality of the apples ______ not good.",
+        options: [
+            "are",       // Trap: matches 'apples'
+            "were",      // Trap: matches 'apples' (past)
+            "is",        // Correct
+            "have been"  // Plural distractor
+        ],
+        correct: 2,
+        explanation: "The subject is 'quality' (singular), not 'apples'. Therefore, the verb must be singular ('is').",
+        rule: "<strong>Rule:</strong> The verb agrees with the main subject, not the noun in the prepositional phrase closest to it."
+    },
+    // --- RULE: Two Singular Nouns joined by 'And' take Plural Verb ---
+    {
+        question: "Ram and Shyam ______ coming to the party.",
+        options: [
+            "is",   // Singular trap
+            "are",  // Correct
+            "has",  // Singular trap
+            "was"   // Singular trap
+        ],
+        correct: 1,
+        explanation: "Two distinct subjects joined by 'and' require a plural verb.",
+        rule: "<strong>Rule:</strong> When two or more singular nouns are joined by 'and', they usually take a plural verb."
+    },
+    // --- RULE: Two Nouns representing one idea (Pair Words) ---
+    {
+        question: "Bread and butter ______ my favorite breakfast.",
+        options: [
+            "are",  // Plural trap
+            "is",   // Correct
+            "were", // Plural trap
+            "have been" // Plural trap
+        ],
+        correct: 1,
+        explanation: "Bread and butter is treated as a single unit/dish here.",
+        rule: "<strong>Rule:</strong> If two nouns joined by 'and' suggest one idea (e.g., slow and steady), the verb is singular."
+    },
+    // --- RULE: Article usage with 'And' (One Person vs Two People) ---
+    {
+        question: "The Director and Producer of the film ______ arrived.",
+        options: [
+            "has",  // Correct
+            "have", // Plural trap
+            "are",  // Plural trap
+            "were"  // Plural trap
+        ],
+        correct: 0,
+        explanation: "The article 'The' is used only before 'Director', implying one person holding both titles.",
+        rule: "<strong>Rule:</strong> If an article (the/a/an) is placed only before the first noun, the subject refers to one person ➔ Singular Verb."
+    },
+    // --- RULE: 'Neither... nor', 'Either... or' ---
+    {
+        question: "Neither the teacher nor the students ______ present.",
+        options: [
+            "was", // Singular trap
+            "is",  // Singular trap
+            "are", // Correct
+            "has been" // Singular trap
+        ],
+        correct: 2,
+        explanation: "The verb agrees with 'students' because it is closer to the verb.",
+        rule: "<strong>Rule:</strong> When subjects are joined by 'neither...nor', 'nor', or 'or', the verb agrees with the nearest subject."
+    },
+    // --- RULE: 'As well as', 'Along with' ---
+    {
+        question: "The captain, along with the players, ______ been honoured.",
+        options: [
+            "have", // Plural trap (matches players)
+            "has",  // Correct
+            "are",  // Wrong auxiliary
+            "were"  // Wrong auxiliary
+        ],
+        correct: 1,
+        explanation: "The main subject is 'The captain' (singular). The phrase 'along with...' does not change the number.",
+        rule: "<strong>Rule:</strong> When subjects are joined by 'along with', 'as well as', 'besides', the verb agrees with the <em>first</em> subject."
+    },
+    // --- RULE: 'Not only... but also' ---
+    {
+        question: "Not only the students but also the teacher ______ responsible.",
+        options: [
+            "is",   // Correct
+            "are",  // Plural trap (matches students)
+            "were", // Plural trap
+            "have"  // Plural trap
+        ],
+        correct: 0,
+        explanation: "The verb agrees with 'teacher' (singular) as it is the nearest subject.",
+        rule: "<strong>Rule:</strong> With 'Not only... but also', the verb agrees with the second subject (closest to the verb)."
+    },
+    // --- RULE: Indefinite Pronouns (Each) ---
+    {
+        question: "Each of the boys ______ given a prize.",
+        options: [
+            "were", // Plural trap
+            "are",  // Plural trap
+            "was",  // Correct
+            "have"  // Plural trap
+        ],
+        correct: 2,
+        explanation: "'Each' is singular, so it takes a singular verb ('was').",
+        rule: "<strong>Rule:</strong> 'Each', 'Every', 'Everyone', 'Someone', 'None', 'One' are singular pronouns and take a singular verb."
+    },
+    // --- RULE: 'Many a' ---
+    {
+        question: "Many a student ______ failed the test.",
+        options: [
+            "have", // Plural trap (Standard 'Many')
+            "has",  // Correct
+            "are",  // Plural trap
+            "were"  // Plural trap
+        ],
+        correct: 1,
+        explanation: "'Many a' is always followed by a singular noun and a singular verb.",
+        rule: "<strong>Rule:</strong> 'Many a' + Singular Noun + Singular Verb. (Contrast with 'Many' + Plural Noun + Plural Verb)."
+    },
+    // --- RULE: Collective Nouns (Divided) ---
+    {
+        question: "The jury ______ divided in their opinions.",
+        options: [
+            "was", // Singular trap
+            "is",  // Singular trap
+            "were", // Correct
+            "has been" // Singular trap
+        ],
+        correct: 2,
+        explanation: "Since the members are divided, the jury is treated as individual members (plural).",
+        rule: "<strong>Rule:</strong> Collective nouns take a singular verb when acting as a unit, but a plural verb when members disagree."
+    },
+    // --- RULE: Relative Pronouns (Antecedent) ---
+    {
+        question: "It is I who ______ to blame.",
+        options: [
+            "is", // Common trap (Who is...)
+            "am", // Correct
+            "are", // Wrong
+            "was" // Wrong tense
+        ],
+        correct: 1,
+        explanation: "The relative pronoun 'who' refers to the antecedent 'I'. Therefore, the verb matches 'I'.",
+        rule: "<strong>Rule:</strong> The verb after a relative pronoun (who/that) must agree with the antecedent (the word coming immediately before it)."
+    },
+    // --- RULE: One of the... who ---
+    {
+        question: "She is one of the noblest women that ______ ever lived.",
+        options: [
+            "has", // Singular trap (matches She)
+            "have", // Correct (matches women)
+            "is",
+            "was"
+        ],
+        correct: 1,
+        explanation: "The antecedent of 'that' is 'women' (plural), so the verb is plural ('have').",
+        rule: "<strong>Rule:</strong> 'One of the' + Plural Noun + Relative Pronoun + <em>Plural Verb</em>."
+    },
+    // --- RULE: The only one of the... who ---
+    {
+        question: "This is the only one of his novels that ______ worth reading.",
+        options: [
+            "are", // Plural trap (matches novels)
+            "is",  // Correct
+            "were",
+            "have been"
+        ],
+        correct: 1,
+        explanation: "The qualifier 'the only' makes the subject singular specific.",
+        rule: "<strong>Rule:</strong> 'The only one of the' + Plural Noun + Relative Pronoun + <em>Singular Verb</em>."
+    },
+    // --- RULE: Plural Nouns denoting quantity ---
+    {
+        question: "Fifty kilometers ______ a long distance.",
+        options: [
+            "are", // Plural trap
+            "is",  // Correct
+            "were",
+            "have been"
+        ],
+        correct: 1,
+        explanation: "The distance is considered as a single unit.",
+        rule: "<strong>Rule:</strong> When a plural number applies to distance, time, or money and represents a single unit, it takes a singular verb."
+    },
+    // --- RULE: Proper nouns ending in 'S' ---
+    {
+        question: "The Arabian Nights ______ an interesting book.",
+        options: [
+            "are", // Plural trap
+            "were",
+            "is",  // Correct
+            "have been"
+        ],
+        correct: 2,
+        explanation: "It is the title of a single book.",
+        rule: "<strong>Rule:</strong> Proper nouns ending in 's' (book titles, countries) take a singular verb."
+    },
+    // --- RULE: 'A number of' ---
+    {
+        question: "A number of students ______ waiting outside.",
+        options: [
+            "is", // Singular trap (The number)
+            "was",
+            "are", // Correct
+            "has been"
+        ],
+        correct: 2,
+        explanation: "'A number of' means 'many', so it is plural.",
+        rule: "<strong>Rule:</strong> 'A number of' takes a Plural Verb. 'The number of' takes a Singular Verb."
+    },
+    // --- RULE: 'More than one' ---
+    {
+        question: "More than one student ______ absent today.",
+        options: [
+            "are", // Plural trap (matches meaning)
+            "were",
+            "is",  // Correct (matches student)
+            "have been"
+        ],
+        correct: 2,
+        explanation: "'More than one' is followed by a singular noun and singular verb.",
+        rule: "<strong>Rule:</strong> 'More than one' + Singular Noun + Singular Verb."
+    },
+    // --- RULE: Imaginary sentences (Subjunctive) ---
+    {
+        question: "I wish I ______ a bird.",
+        options: [
+            "was", // Strong Trap
+            "am",
+            "were", // Correct
+            "had been"
+        ],
+        correct: 2,
+        explanation: "Hypothetical/imaginary situations use 'were' for all subjects.",
+        rule: "<strong>Rule:</strong> In subjunctive mood (wishes, contrary to fact), 'were' is used with all subjects."
+    },
+    // --- RULE: Optative Sentences ---
+    {
+        question: "Long ______ the King!",
+        options: [
+            "live", // Correct
+            "lives", // Strong Trap (Grammatically standard)
+            "lived",
+            "is living"
+        ],
+        correct: 0,
+        explanation: "In optative sentences (expressing a wish/prayer), the plural verb is used with a singular subject.",
+        rule: "<strong>Rule:</strong> Optative sentences use the base form (plural form) of the verb even with a singular subject."
+    },
+    // --- RULE: Nouns that look singular but are plural ---
+    {
+        question: "The cattle ______ grazing in the field.",
+        options: [
+            "is", // Singular Trap
+            "are", // Correct
+            "was",
+            "has"
+        ],
+        correct: 1,
+        explanation: "Cattle is a collective noun that is always plural.",
+        rule: "<strong>Rule:</strong> Nouns like cattle, cavalry, infantry, poultry, police, and people are plural and take a plural verb."
+    },
+    // --- RULE: Nouns that look plural but are singular ---
+    {
+        question: "Mathematics ______ a difficult subject.",
+        options: [
+            "are", // Plural Trap (ends in s)
+            "were",
+            "is",  // Correct
+            "have been"
+        ],
+        correct: 2,
+        explanation: "Mathematics is the name of a subject, so it is singular.",
+        rule: "<strong>Rule:</strong> Nouns ending in 's' like News, Physics, Economics are singular and take a singular verb."
+    },
+    // --- RULE: Uncountable Nouns ---
+    {
+        question: "The scenery of Kashmir ______ beautiful.",
+        options: [
+            "are", // Plural Trap
+            "have been",
+            "is",  // Correct
+            "were"
+        ],
+        correct: 2,
+        explanation: "Scenery is an uncountable noun and cannot be pluralized.",
+        rule: "<strong>Rule:</strong> Uncountable nouns (Scenery, Furniture, Advice, Information) are always singular and take a singular verb."
+    },
+    // --- RULE: 'The' + Adjective ---
+    {
+        question: "The rich ______ not always happy.",
+        options: [
+            "is", // Singular Trap
+            "are", // Correct
+            "was",
+            "has been"
+        ],
+        correct: 1,
+        explanation: "'The rich' refers to rich people as a class.",
+        rule: "<strong>Rule:</strong> 'The' + Adjective (The poor, The rich) represents the entire class and takes a plural verb."
+    },
+    // --- RULE: Majority/Fractions ---
+    {
+        question: "Two-thirds of the city ______ in ruins.",
+        options: [
+            "are", // Trap (Two-thirds sounds plural)
+            "were",
+            "is",  // Correct (City is singular)
+            "have been"
+        ],
+        correct: 2,
+        explanation: "'City' is singular, so 'two-thirds' of it is singular.",
+        rule: "<strong>Rule:</strong> With fractions (Two-thirds of), the verb agrees with the noun that follows."
+    },
+    // --- RULE: Nothing but ---
+    {
+        question: "Nothing but trees ______ seen.",
+        options: [
+            "were", // Plural trap (matches trees)
+            "was",  // Correct
+            "are",
+            "have been"
+        ],
+        correct: 1,
+        explanation: "The subject is 'Nothing' (singular).",
+        rule: "<strong>Rule:</strong> 'Nothing but' + Singular/Plural Noun + <em>Singular Verb</em>. The verb agrees with 'Nothing'."
+    },
+    // --- RULE: 'There' (Dummy Subject) ---
+    {
+        question: "There ______ many mistakes in your essay.",
+        options: [
+            "is",
+            "was",
+            "are", // Correct
+            "has been"
+        ],
+        correct: 2,
+        explanation: "The subject is 'mistakes' (plural), which comes after the verb.",
+        rule: "<strong>Rule:</strong> In sentences starting with 'There', the verb agrees with the 'real' subject that follows it."
+    },
+    // --- RULE: 'A pair of' ---
+    {
+        question: "A pair of scissors ______ lying on the table.",
+        options: [
+            "are", // Plural trap (matches scissors)
+            "were",
+            "is", // Correct
+            "have been"
+        ],
+        correct: 2,
+        explanation: "While 'scissors' is plural, 'A pair' is singular.",
+        rule: "<strong>Rule:</strong> Nouns like scissors/trousers take a Plural Verb usually. But 'A pair of' takes a Singular Verb."
+    },
+    // --- RULE: 'The percentage of' ---
+    {
+        question: "The percentage of successful candidates ______ very low.",
+        options: [
+            "are", // Trap
+            "were",
+            "have been",
+            "is" // Correct
+        ],
+        correct: 3,
+        explanation: "'The percentage' is a specific number/stat, hence singular.",
+        rule: "<strong>Rule:</strong> 'The percentage of' always takes a Singular Verb."
+    },
+    // --- RULE: Words like 'Statistics' (Data vs Subject) ---
+    {
+        // EDITED for grammar: "show" -> "shown" to fit the answer "have"
+        question: "Statistics ______ shown that the crime rate is rising.",
+        options: [
+            "have", // Correct (Data)
+            "has",  // Singular Trap (Subject)
+            "is",   
+            "was"
+        ],
+        correct: 0,
+        explanation: "Here, statistics refers to data/facts, not the subject of study.",
+        rule: "<strong>Rule:</strong> Statistics/Mathematics are Singular when referring to the study. Plural when referring to data or calculations."
+    },
+    // --- RULE: 'Means' (Income) ---
+    {
+        question: "His means ______ small, but he incurs no debt.",
+        options: [
+            "is", // Singular Trap
+            "are", // Correct
+            "was",
+            "has been"
+        ],
+        correct: 1,
+        explanation: "Here 'means' refers to income/wealth, so it is plural.",
+        rule: "<strong>Rule:</strong> When 'Means' refers to income/wealth, it is always Plural."
+    },
+    // --- RULE: 'A variety of' ---
+    {
+        question: "A variety of books ______ available in the library.",
+        options: [
+            "is", // Singular Trap
+            "was",
+            "are", // Correct
+            "has been"
+        ],
+        correct: 2,
+        explanation: "'A variety of' acts like 'A number of' (meaning many).",
+        rule: "<strong>Rule:</strong> 'A variety of' + Plural Noun + Plural Verb. 'The variety of' + Singular Verb."
+    },
+    // --- RULE: 'It' ---
+    {
+        question: "It ______ the stars that guide the sailors.",
+        options: [
+            "are", // Plural Trap (matches stars)
+            "were", // Plural Trap
+            "is", // Correct
+            "have been"
+        ],
+        correct: 2,
+        explanation: "'It' is always singular, even if the complement (stars) is plural.",
+        rule: "<strong>Rule:</strong> 'It' is always followed by a Singular Verb, regardless of the noun that comes after."
+    },
+    // --- RULE: 'All' (Uncountable) ---
+    {
+        question: "All ______ well that ends well.",
+        options: [
+            "are",
+            "is", // Correct
+            "were",
+            "have been"
+        ],
+        correct: 1,
+        explanation: "Here 'All' refers to a situation (uncountable), so it is singular.",
+        rule: "<strong>Rule:</strong> 'All' is Singular when it means everything/situation. 'All' is Plural when it refers to people."
+    },
+    // --- RULE: 'None' ---
+    {
+        question: "None of the work ______ completed.",
+        options: [
+            "have been",
+            "were",
+            "are",
+            "was" // Correct
+        ],
+        correct: 3,
+        explanation: "Work is uncountable, so 'None of the work' is singular.",
+        rule: "<strong>Rule:</strong> 'None of' + Uncountable Noun = Singular Verb."
+    },
+    // --- RULE: Gerunds ---
+    {
+        question: "Swimming ______ a good exercise.",
+        options: [
+            "are",
+            "were",
+            "is", // Correct
+            "have been"
+        ],
+        correct: 2,
+        explanation: "The action 'Swimming' is the subject.",
+        rule: "<strong>Rule:</strong> When a Gerund (-ing) acts as the subject, it takes a Singular Verb."
+    },
+    // --- RULE: 'The following' ---
+    {
+        question: "The following ______ the details of the meeting.",
+        options: [
+            "is", // Singular Trap
+            "was",
+            "are", // Correct
+            "has been"
+        ],
+        correct: 2,
+        explanation: "The verb agrees with the noun that comes after 'the following'.",
+        rule: "<strong>Rule:</strong> Expressions like 'The following' take a verb that agrees with the noun mentioned subsequently."
+    }
+];
+
+    // ==========================================
+    //  LOGIC (Do not edit unless necessary)
+    // ==========================================
+    
+    let currentQuiz = 0;
+    let score = 0;
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const explanationEl = document.getElementById('explanation');
+    const feedbackTitle = document.getElementById('feedback-title');
+    const feedbackText = document.getElementById('feedback-text');
+    const ruleContent = document.getElementById('rule-content');
+    const nextBtn = document.getElementById('next-btn');
+    const currentQEl = document.getElementById('current-q');
+    const totalQEl = document.getElementById('total-q');
+    const quizContent = document.getElementById('quiz-content');
+    const resultScreen = document.getElementById('result-screen');
+    const footer = document.querySelector('.quiz-footer');
+
+    // Initialize
+    totalQEl.innerText = quizData.length;
+    loadQuiz();
+
+    function loadQuiz() {
+        deselectAnswers();
+        resetUI();
+
+        const currentData = quizData[currentQuiz];
+        currentQEl.innerText = currentQuiz + 1;
+        
+        // Load Question
+        questionEl.innerHTML = currentData.question;
+
+        // Load Options
+        currentData.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('option-btn');
+            button.addEventListener('click', () => selectAnswer(index));
+            optionsEl.appendChild(button);
+        });
+    }
+
+    function selectAnswer(selectedIndex) {
+        const currentData = quizData[currentQuiz];
+        const buttons = optionsEl.querySelectorAll('.option-btn');
+        
+        // Disable all buttons to prevent multiple clicks
+        buttons.forEach(btn => btn.disabled = true);
+
+        // Check Answer
+        if (selectedIndex === currentData.correct) {
+            score++;
+            buttons[selectedIndex].classList.add('correct');
+            feedbackTitle.innerText = "✅ Correct!";
+            feedbackTitle.style.color = "var(--success-color)";
+            feedbackText.innerHTML = currentData.explanation;
+            // Even if correct, showing the rule helps reinforcement (optional)
+            ruleContent.innerHTML = ""; 
+        } else {
+            buttons[selectedIndex].classList.add('wrong');
+            buttons[currentData.correct].classList.add('correct'); // Show correct answer
+            
+            feedbackTitle.innerText = "❌ Incorrect";
+            feedbackTitle.style.color = "var(--error-color)";
+            feedbackText.innerHTML = `The correct answer was: <strong>${currentData.options[currentData.correct]}</strong>`;
+            
+            // Show the Rule specifically when wrong
+            if(currentData.rule) {
+                ruleContent.innerHTML = `<br><em>RULE:</em> ${currentData.rule}`;
+            }
+        }
+
+        // Show Explanation Box
+        explanationEl.style.display = "block";
+        nextBtn.style.display = "block";
+    }
+
+    function deselectAnswers() {
+        optionsEl.innerHTML = '';
+    }
+
+    function resetUI() {
+        explanationEl.style.display = "none";
+        nextBtn.style.display = "none";
+    }
+
+    nextBtn.addEventListener('click', () => {
+        currentQuiz++;
+
+        if (currentQuiz < quizData.length) {
+            loadQuiz();
+        } else {
+            showResults();
+        }
+    });
+
+    function showResults() {
+        quizContent.style.display = 'none';
+        footer.style.display = 'none';
+        resultScreen.style.display = 'block';
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Results Section */
+        .result-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-result-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-q-text { font-weight: 500; margin-bottom: 12px; font-size: 1.05rem; color: #334155; font-style: italic; }
+        .result-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 600; }
+        .text-wrong { color: #b91c1c; font-weight: 600; }
+        .result-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Comprehensive Practice Set</h1>
+    <button class="btn-finish" onclick="showResults()">Finish & View Results</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">University Ideas</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Joint Family</button>
+    <button class="tab-btn" onclick="switchPassage('p3', this)">Growing Age</button>
+    <button class="tab-btn" onclick="switchPassage('p4', this)">Country Walk</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="questionArea">
+            <div class="q-header" id="questionTitle">Select the appropriate word for the highlighted blank:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-section" id="resultSection">
+    <div class="result-container" id="resultContainer">
+        <!-- Result Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p1: {
+            title: "University Ideas",
+            text: "A university stands for humanism, reason and the adventure of ideas. It stands for the onward <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ &nbsp; ]</span> of the human race <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ &nbsp; ]</span> higher objectives. If the universities <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ &nbsp; ]</span> their duty adequately, then it <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ &nbsp; ]</span> well with the nation and <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ &nbsp; ]</span> people. but if the temple of learning itself becomes a home of narrow bigotry and petty objectives, <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ &nbsp; ]</span> will the nation prosper?",
+            questions: [
+                { opts: {a: "motion", b: "march", c: "progress"}, ans: "b", expl: "<strong>march:</strong> 'Onward march' is a strong, standard collocation used to describe the steady progress or advancement of the human race.", context: "... stands for the onward [...] of the human race ..." },
+                { opts: {a: "towards", b: "on", c: "for"}, ans: "a", expl: "<strong>towards:</strong> The march is directed 'towards' higher objectives, indicating purposeful direction.", context: "... of the human race [...] higher objectives." },
+                { opts: {a: "finish", b: "obey", c: "discharge"}, ans: "c", expl: "<strong>discharge:</strong> In formal English, one 'discharges' a duty or responsibility.", context: "If the universities [...] their duty adequately ..." },
+                { opts: {a: "was", b: "will be", c: "is"}, ans: "b", expl: "<strong>will be:</strong> The sentence uses a conditional 'If... then' structure referring to a future outcome based on a condition, requiring 'will be'.", context: "... then it [...] well with the nation ..." },
+                { opts: {a: "the", b: "her", c: "their"}, ans: "b", expl: "<strong>her:</strong> The nation is traditionally personified as female in formal English, taking the pronoun 'her'.", context: "... well with the nation and [...] people." },
+                { opts: {a: "when", b: "why", c: "how"}, ans: "c", expl: "<strong>how:</strong> The sentence asks a rhetorical question about the mechanism of prosperity if the foundation is flawed.", context: "... bigotry and petty objectives, [...] will the nation prosper?" }
+            ],
+            answers: []
+        },
+        p2: {
+            title: "Joint Family",
+            text: "The joint family gave way to the <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ &nbsp; ]</span> family. Despite the <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ &nbsp; ]</span>, lonely and frustrated leading to psychiatrist problems, pressures and <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ &nbsp; ]</span> A cross-section of children were interviewed, and they matter-of-factly <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ &nbsp; ]</span> problems, at the same time <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ &nbsp; ]</span> showing the way to <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ &nbsp; ]</span> solutions. Tell your children about your work. Young as they are, they <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ &nbsp; ]</span> where you have been all day. Explain to them 'Mummy has a teaching job. She teaches little children to read and write' or 'Daddy works in a factory. The factory makes scooters.' At least now the child <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ &nbsp; ]</span> a mental picture of how you spend the day. There develops a certain <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ &nbsp; ]</span> in that knowledge.",
+            questions: [
+                { opts: {a: "lonely", b: "individual", c: "nuclear", d: "self-centred"}, ans: "c", expl: "<strong>nuclear:</strong> The direct sociological contrast to a 'joint family' is a 'nuclear family'.", context: "The joint family gave way to the [...] family." },
+                { opts: {a: "seclusion", b: "privacy", c: "isolation", d: "separation"}, ans: "b", expl: "<strong>privacy:</strong> The sentence contrasts the positive aspect of a smaller family ('privacy') with the negative outcomes ('lonely and frustrated').", context: "Despite the [...], lonely and frustrated ..." },
+                { opts: {a: "burdens", b: "complexities", c: "complications", d: "controversies"}, ans: "b", expl: "<strong>complexities:</strong> Modern life is often described as having 'pressures and complexities' which lead to psychiatric problems.", context: "... leading to psychiatrist problems, pressures and [...]" },
+                { opts: {a: "marked", b: "declared", c: "pin-pointed", d: "designated"}, ans: "c", expl: "<strong>pin-pointed:</strong> To 'pin-point' means to identify a problem exactly and clearly, fitting the 'matter-of-fact' delivery of the children.", context: "... and they matter-of-factly [...] problems ..." },
+                { opts: {a: "inadvertently", b: "unknowingly", c: "obviously", d: "painstakingly"}, ans: "a", expl: "<strong>inadvertently:</strong> The children identified problems and, without intending to ('inadvertently'), also pointed toward the solutions.", context: "... at the same time [...] showing the way ..." },
+                { opts: {a: "reasonable", b: "plausible", c: "remarkable", d: "referred"}, ans: "b", expl: "<strong>plausible:</strong> Solutions that seem reasonable or probable are described as 'plausible'.", context: "... showing the way to [...] solutions." },
+                { opts: {a: "wonder", b: "amaze", c: "feel", d: "estimate"}, ans: "a", expl: "<strong>wonder:</strong> Children naturally 'wonder' (are curious about) where their parents are.", context: "Young as they are, they [...] where you have been all day." },
+                { opts: {a: "constructs", b: "inculcates", c: "develops", d: "establishes"}, ans: "a", expl: "<strong>constructs:</strong> One 'constructs' a mental picture by putting pieces of information together.", context: "At least now the child [...] a mental picture ..." },
+                { opts: {a: "security", b: "assurance", c: "solace", d: "restfulness"}, ans: "a", expl: "<strong>security:</strong> Knowing where their parents are provides emotional 'security' for children.", context: "There develops a certain [...] in that knowledge." }
+            ],
+            answers: []
+        },
+        p3: {
+            title: "Growing Age",
+            text: "Children loved by all human beings. But <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ &nbsp; ]</span> this world of human <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ &nbsp; ]</span> there is no <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ &nbsp; ]</span> nuisance than a boy <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ &nbsp; ]</span> the age of fourteen. He is neither ornamental <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ &nbsp; ]</span> useful. It is impossible to <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ &nbsp; ]</span> affection on him as on a <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ &nbsp; ]</span> boy and he is always getting <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ &nbsp; ]</span> the way. If he talks with a childish lisp he is called a baby, and if he answers in a grown up way he is called impertinent. Then he is <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ &nbsp; ]</span> the unattractive, growing age. He grows out <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ &nbsp; ]</span> his clothes, with indecent haste. His voice begins to break and loses its childish charm.",
+            questions: [
+                { opts: {a: "of", b: "on", c: "for", d: "in"}, ans: "d", expl: "<strong>in:</strong> The correct preposition is 'in' this world.", context: "But [...] this world of human ..." },
+                { opts: {a: "affairs", b: "life", c: "beings", d: "world"}, ans: "a", expl: "<strong>affairs:</strong> 'World of human affairs' is the original phrasing from this well-known literary excerpt, referring to human matters and interactions.", context: "... this world of human [...] there is no ..." },
+                { opts: {a: "worst", b: "bad", c: "worse", d: "better"}, ans: "c", expl: "<strong>worse:</strong> The sentence compares two states using 'than', requiring the comparative form 'worse'.", context: "... there is no [...] nuisance than a boy ..." },
+                { opts: {a: "at", b: "of", c: "on", d: "in"}, ans: "a", expl: "<strong>at:</strong> When referring to a specific point in time or age, 'at' is the correct preposition.", context: "... than a boy [...] the age of fourteen." },
+                { opts: {a: "and", b: "or", c: "nor", d: "so"}, ans: "c", expl: "<strong>nor:</strong> The correlative conjunction 'neither' must always be paired with 'nor'.", context: "He is neither ornamental [...] useful." },
+                { opts: {a: "show", b: "shower", c: "repose", d: "showering"}, ans: "b", expl: "<strong>shower:</strong> The idiom is to 'shower affection' on someone, meaning to give it abundantly.", context: "It is impossible to [...] affection on him ..." },
+                { opts: {a: "tiny", b: "big", c: "small", d: "little"}, ans: "d", expl: "<strong>little:</strong> 'Little boy' is the most common collocation for a young male child.", context: "... affection on him as on a [...] boy ..." },
+                { opts: {a: "through", b: "in", c: "on", d: "off"}, ans: "b", expl: "<strong>in:</strong> To get 'in the way' is a standard idiom meaning to be an obstruction or nuisance.", context: "... and he is always getting [...] the way." },
+                { opts: {a: "with", b: "on", c: "of", d: "at"}, ans: "d", expl: "<strong>at:</strong> A person is 'at' a certain age or stage of life.", context: "Then he is [...] the unattractive, growing age." },
+                { opts: {a: "of", b: "from", c: "beyond", d: "through"}, ans: "a", expl: "<strong>of:</strong> The phrasal verb 'grows out of' means to become too big for one's clothing.", context: "He grows out [...] his clothes, with indecent haste." }
+            ],
+            answers: []
+        },
+        p4: {
+            title: "Country Walk",
+            text: "We need never feel dull in the country. No matter how often we walk <span class='blank' id='b-p4-0' onclick='loadQuestion(\"p4\", 0)'>[ &nbsp; ]</span> the same road, over the same <span class='blank' id='b-p4-1' onclick='loadQuestion(\"p4\", 1)'>[ &nbsp; ]</span> or through the same woodland paths, <span class='blank' id='b-p4-2' onclick='loadQuestion(\"p4\", 2)'>[ &nbsp; ]</span> is always something new, something fresh to <span class='blank' id='b-p4-3' onclick='loadQuestion(\"p4\", 3)'>[ &nbsp; ]</span> . It may be a little plan that <span class='blank' id='b-p4-4' onclick='loadQuestion(\"p4\", 4)'>[ &nbsp; ]</span> up since last we visited the <span class='blank' id='b-p4-5' onclick='loadQuestion(\"p4\", 5)'>[ &nbsp; ]</span>, a hedge that was just a lot of <span class='blank' id='b-p4-6' onclick='loadQuestion(\"p4\", 6)'>[ &nbsp; ]</span> sticks may now be <span class='blank' id='b-p4-7' onclick='loadQuestion(\"p4\", 7)'>[ &nbsp; ]</span> with flowers. We may find a bird's <span class='blank' id='b-p4-8' onclick='loadQuestion(\"p4\", 8)'>[ &nbsp; ]</span> deep in a bush, if we are <span class='blank' id='b-p4-9' onclick='loadQuestion(\"p4\", 9)'>[ &nbsp; ]</span> not to frighten the birds, as the days pass, see first the little legs and then the baby birds.",
+            questions: [
+                { opts: {a: "at", b: "into", c: "down", d: "off"}, ans: "c", expl: "<strong>down:</strong> One typically walks 'down' a road.", context: "... how often we walk [...] the same road ..." },
+                { opts: {a: "fields", b: "lanes", c: "corner", d: "regions"}, ans: "a", expl: "<strong>fields:</strong> You walk 'over' fields, whereas you would walk 'through' lanes.", context: "... over the same [...] or through the same ..." },
+                { opts: {a: "there", b: "here", c: "this", d: "it"}, ans: "a", expl: "<strong>there:</strong> 'There is' is the correct dummy subject to introduce the existence of something new.", context: "... woodland paths, [...] is always something new ..." },
+                { opts: {a: "see", b: "smell", c: "scan", d: "spot"}, ans: "a", expl: "<strong>see:</strong> The passage lists visual observations (a plant, a hedge, a nest), making 'see' the logical primary verb.", context: "... always something new, something fresh to [...] ." },
+                { opts: {a: "did come", b: "has come", c: "would come", d: "comes"}, ans: "b", expl: "<strong>has come:</strong> The present perfect 'has come' links a past action (growing) to the present state (being visible now).", context: "It may be a little plan that [...] up since last we visited ..." },
+                { opts: {a: "site", b: "spot", c: "village", d: "place"}, ans: "d", expl: "<strong>place:</strong> 'Place' is a broad, natural term for a rural area previously visited.", context: "... since last we visited the [...], a hedge that was ..." },
+                { opts: {a: "twisted", b: "brown", c: "thick", d: "tall"}, ans: "b", expl: "<strong>brown:</strong> The contrast is between bare, lifeless 'brown' sticks and the new growth of flowers.", context: "... a hedge that was just a lot of [...] sticks ..." },
+                { opts: {a: "protected", b: "shrouded", c: "covered", d: "surrounded"}, ans: "c", expl: "<strong>covered:</strong> A hedge blossoming heavily is described as being 'covered' with flowers.", context: "... may now be [...] with flowers." },
+                { opts: {a: "cell", b: "hole", c: "hive", d: "nest"}, ans: "d", expl: "<strong>nest:</strong> Birds build a 'nest' deep in a bush.", context: "We may find a bird's [...] deep in a bush ..." },
+                { opts: {a: "anxious", b: "attentive", c: "thoughtful", d: "careful"}, ans: "d", expl: "<strong>careful:</strong> One must be 'careful' (cautious) to avoid frightening wildlife.", context: "... deep in a bush, if we are [...] not to frighten the birds ..." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = null;
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        switchPassage('p1', document.querySelector('.tab-btn'));
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+
+        // Automatically load the first question
+        loadQuestion(passageId, 0);
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        const activeBlank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(activeBlank) activeBlank.classList.add('active');
+
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function showResults() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        resultSection.style.display = 'block';
+        
+        let score = 0;
+        let resultHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            resultHTML += `<div class="passage-result-title">${passage.title} Results</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `(${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+                
+                // Inject the user's answer into the context string visually
+                const contextStr = q.context.replace('[...]', `<strong class="${statusClass}">[ ${statusText} ]</strong>`);
+
+                resultHTML += `
+                    <div class="result-item">
+                        <div class="result-q-text">"${contextStr}"</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="result-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="result-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        resultContainer.innerHTML = scoreCard + resultHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>

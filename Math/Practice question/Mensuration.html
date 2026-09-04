@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinnacle Mathematics Portal</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #8b5cf6;
+            --warning-hover: #7c3aed;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Custom Offline Math Rendering */
+        .math-frac {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.9em;
+            margin: 0 4px;
+            line-height: 1.2;
+        }
+        .math-frac > span:first-child {
+            border-bottom: 1px solid currentColor;
+            padding: 0 2px;
+        }
+        .math-frac > span:last-child {
+            padding: 0 2px;
+        }
+        .math-sqrt {
+            white-space: nowrap;
+            margin: 0 2px;
+        }
+        .math-sqrt::before {
+            content: '√';
+            font-family: serif;
+            margin-right: 1px;
+        }
+        .math-sqrt > span {
+            border-top: 1px solid currentColor;
+            padding-top: 1px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            height: 70px;
+            z-index: 10;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; color: var(--primary); }
+        .timer { font-size: 1.2rem; font-family: monospace; font-weight: bold; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 5px; }
+
+        /* Main Content */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Question Area */
+        .question-area {
+            flex: 3;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .question-content-wrapper {
+            transition: opacity 0.2s ease;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .option:hover:not(.selected):not(.correct):not(.incorrect) { 
+            background: rgba(59, 130, 246, 0.1); 
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .option.selected { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+        .option.correct { background: rgba(16, 185, 129, 0.2); border-color: var(--success); }
+        .option.incorrect { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); }
+        .option.disabled { cursor: not-allowed; opacity: 0.8; }
+        
+        .option-label {
+            font-weight: bold;
+            margin-right: 15px;
+            color: var(--primary);
+            min-width: 20px;
+        }
+
+        .option-icon {
+            margin-left: auto;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .icon-correct { color: var(--success); }
+        .icon-incorrect { color: var(--danger); }
+
+        /* Solution Area */
+        .solution-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .comparison-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Footer Controls */
+        .controls {
+            margin-top: auto;
+            display: flex;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-color);
+            padding-bottom: 20px;
+            z-index: 5;
+        }
+
+        .control-spacer { flex: 1; }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: white; }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover:not(:disabled) { background: var(--warning-hover); }
+        .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-danger-outline:hover:not(:disabled) { background: rgba(239, 68, 68, 0.1); }
+        
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Right Panel - Palette */
+        .palette-area {
+            flex: 1;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            max-width: 350px;
+        }
+
+        .progress-stats {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid var(--border);
+        }
+
+        .palette-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-box { width: 14px; height: 14px; border-radius: 4px; }
+        .legend-box.answered { background: var(--success); }
+        .legend-box.unanswered { background: transparent; border: 1px solid var(--text-muted); }
+        .legend-box.review { background: var(--warning); }
+        .legend-box.review-answered { background: var(--warning); position: relative; display: flex; align-items: center; justify-content: center; }
+        .legend-box.review-answered::after { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+        /* Review Filters */
+        .filter-group {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .filter-btn {
+            padding: 8px;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 25px;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        /* Palette Buttons */
+        .palette-btn {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .palette-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+            color: white;
+        }
+        
+        .palette-btn.active { 
+            box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 4px var(--primary);
+            border-color: transparent;
+            z-index: 2;
+        }
+
+        .palette-btn.attempted { background: var(--success); border-color: var(--success); color: white; }
+        .palette-btn.review { background: var(--warning); border-color: var(--warning); color: white; }
+        
+        .palette-btn.review-answered { background: var(--warning); border-color: var(--warning); color: white; }
+        .palette-btn.review-answered::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            border: 1px solid var(--bg-color);
+        }
+
+        .palette-btn.correct-palette { background: var(--success); border-color: var(--success); color: white; }
+        .palette-btn.incorrect-palette { background: var(--danger); border-color: var(--danger); color: white; }
+        .palette-btn.skipped-palette { background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--text-muted); }
+        .palette-btn.filtered-out { opacity: 0.15; pointer-events: none; }
+
+        .submit-section {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .submit-btn { width: 100%; padding: 15px; font-size: 1.1rem; letter-spacing: 0.5px; }
+
+        /* Review Screen overlay */
+        .review-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-card {
+            background: var(--panel-bg);
+            padding: 50px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .score-card h1 { font-size: 4rem; color: var(--primary); margin: 20px 0; }
+        
+        .shortcuts-help {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.3);
+            padding: 5px 12px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Pinnacle Mensuration Quiz</div>
+        <div class="timer" id="timer">60:00</div>
+    </header>
+
+    <div class="main-container">
+        <div class="question-area">
+            <div class="question-content-wrapper" id="q-wrapper">
+                <div class="question-header">
+                    <h2 id="question-number">Question 1</h2>
+                    <span id="question-meta" style="color: var(--text-muted); font-size: 0.95rem; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 4px;">SSC CGL 20/09/2025 (Shift 2)</span>
+                </div>
+                
+                <div class="question-text" id="question-text"></div>
+
+                <div class="options-grid" id="options-grid"></div>
+
+                <div class="solution-area" id="solution-area">
+                    <div id="comparison-badge" class="comparison-badge"></div>
+                    <h3 style="color: var(--success); margin-bottom: 10px;">Detailed Solution:</h3>
+                    <div id="solution-text" style="line-height: 1.6;"></div>
+                </div>
+            </div>
+
+            <div class="shortcuts-help">
+                ⌨️ Shortcuts: <b>1-4</b> (Select Option) &nbsp;|&nbsp; <b>← / →</b> (Prev/Next)
+            </div>
+
+            <div class="controls">
+                <button class="btn-secondary" onclick="prevQuestion()" id="btn-prev">Previous</button>
+                <button class="btn-danger-outline" onclick="clearResponse()" id="btn-clear">Clear Response</button>
+                <button class="btn-warning" onclick="toggleReview()" id="btn-review">Mark for Review</button>
+                <div class="control-spacer"></div>
+                <button class="btn-primary" onclick="nextQuestion()" id="btn-next">Next Question</button>
+            </div>
+        </div>
+
+        <div class="palette-area">
+            <h3 style="font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Question Palette</h3>
+            
+            <div class="progress-stats" id="progress-stats">
+                <span>Attempted: <b id="stat-attempted" style="color: var(--success)">0</b></span>
+                <span>Remaining: <b id="stat-remaining" style="color: var(--text-main)">10</b></span>
+            </div>
+
+            <div class="palette-legend" id="standard-legend">
+                <div class="legend-item"><div class="legend-box answered"></div> Answered</div>
+                <div class="legend-item"><div class="legend-box unanswered"></div> Unanswered</div>
+                <div class="legend-item"><div class="legend-box review"></div> Review</div>
+                <div class="legend-item"><div class="legend-box review-answered"></div> Ans & Review</div>
+            </div>
+
+            <div class="filter-group" id="review-filters">
+                <button class="filter-btn active" onclick="applyFilter('all')" id="filter-all">All</button>
+                <button class="filter-btn" onclick="applyFilter('correct')" id="filter-correct">Correct</button>
+                <button class="filter-btn" onclick="applyFilter('incorrect')" id="filter-incorrect">Incorrect</button>
+                <button class="filter-btn" onclick="applyFilter('skipped')" id="filter-skipped">Skipped</button>
+            </div>
+            
+            <div class="palette-grid" id="palette-grid"></div>
+
+            <div class="submit-section">
+                <button class="btn-primary submit-btn" onclick="submitQuiz()" id="main-submit-btn">Submit Test</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="review-screen" id="review-screen">
+        <div class="score-card">
+            <h2>Quiz Completed!</h2>
+            <h1 id="final-score">0 / 10</h1>
+            <p style="margin-bottom: 25px; color: var(--text-muted); font-size: 1.1rem;">You can now review detailed solutions and analyze your mistakes.</p>
+            <button class="btn-primary" style="padding: 15px 30px; font-size: 1.1rem;" onclick="closeReviewScreen()">Review Solutions</button>
+        </div>
+    </div>
+
+    <script>
+        // PASTE YOUR quizData ARRAY HERE
+        const quizData = [
+                        {
+                id: 1,
+                meta: "SSC CGL 20/09/2025 (Shift 2)",
+                question: "A large regular polygon is made by combining 12 regular hexagons around a common center. What is the ratio of area of the combined shape to two hexagon?",
+                options: ["4:1", "6:1", "3:1", "5:1"],
+                correctIndex: 1, // (b)
+                solution: "According to question,<br> Ratio = $12 \\times (6 \\times \\frac{\\sqrt{3}}{4} a^2) : 2 \\times (6 \\times \\frac{\\sqrt{3}}{4} a^2)$<br> $= 6:1$"
+            },
+            {
+                id: 2,
+                meta: "SSC CGL 19/09/2025 (Shift 3)",
+                question: "A right circular cone having height of 15 cm is cut by two parallel planes at heights 5 cm and 10 cm from the base. What is the ratio of the volumes of the three parts (from top to bottom)?",
+                options: ["8:19:27", "1:6:20", "8:19:64", "1:7:19"],
+                correctIndex: 3, // (d)
+                solution: "According to question,<br> volume $\\rightarrow \\frac{1}{3}\\pi(1)^3 \\times 5 : \\frac{1}{3}\\pi(2^3-1^3) \\times 5 : \\frac{1}{3}\\pi(3^3-2^3) \\times 5$<br> $\\rightarrow 1 : 7 : 19$"
+            },
+            {
+                id: 3,
+                meta: "SSC CGL 18/09/2025 (Shift 1)",
+                question: "A right circular cone is cut parallel to its base, forming a frustum. The height of the original cone is 20 cm, and the cut is made 5 cm from the top. What is the ratio of the volume of the frustum to the volume of the entire cone?",
+                options: ["63: 64", "62: 63", "16: 19", "14:15"],
+                correctIndex: 0, // (a)
+                solution: "According to the question,<br> Ratio of heights $= \\frac{h_{small}}{h_{full}} = \\frac{5}{20} = \\frac{1}{4}$<br>The truncated cone and the original cone are similar, their volumes are the ratio will be equal to the cube of the ratio of their heights:<br>$V_{small} : V_{full} = (\\frac{1}{4})^3 = \\frac{1}{64}$<br>volume of frustum $= 1 - \\frac{1}{64} = \\frac{63}{64}$<br>$V_{frustum} : V_{full} = 63:64$"
+            },
+            {
+                id: 4,
+                meta: "SSC CGL 17/09/2025 (Shift 2)",
+                question: "In a trapezoid PQRS with PQ parallel to SR, the diagonals PR and QS intersect at T. What is the ratio of the area of $\\triangle PQT$ to the area of $\\triangle SRT$",
+                options: [
+                    "The ratio of PQ to SR squared.",
+                    "The ratio of PQ to SR.",
+                    "The ratio of the perimeter of $\\triangle PQT$ to the perimeter of $\\triangle SRT$",
+                    "The ratio of the area of $\\triangle PQT$ to the area of $\\triangle SRT.$"
+                ],
+                correctIndex: 0, // (a)
+                solution: "When the diagonals of a trapezium intersect, the ratio of the areas of the triangles formed by those diagonals with the parallel sides is equal to the square of the ratio of the parallel sides.<br> $\\frac{ar.\\Delta PQT}{ar\\Delta SRT} = (\\frac{PQ}{SR})^2$"
+            },
+            {
+                id: 5,
+                meta: "Graduate Level 26/07/2025 (Shift - 3)",
+                question: "A chord in a circle with radius 10 cm subtends an angle of $90^{\\circ}$ at the center. What is the area of the minor segment?",
+                options: [
+                    "$(25\\pi-50)$ sq. cm",
+                    "$(100\\pi-50)$ sq.cm",
+                    "$(50\\pi-100)$ sq. cm",
+                    "$(25\\pi-100)$ sq. cm"
+                ],
+                correctIndex: 0, // (a) - Note: Typo in source PDF option A corrected mathematically based on solution
+                solution: "Area of sector $= \\frac{90^{\\circ}}{360^{\\circ}} \\times \\pi \\times (10)^2 = 25\\pi$<br>Area of triangle $= \\frac{1}{2} \\times (10)^2 \\times \\sin 90^{\\circ} = 50$<br>Area of minor segment $= 25\\pi - 50$ cm$^2$"
+            },
+            {
+                id: 6,
+                meta: "Graduate Level 25/07/2025 (Shift - 3)",
+                question: "A solid hemisphere is drilled with a cylindrical hole with radius $\\frac{R}{4}$ through its center. If the height of the removed cylinder equals the hemisphere's radius $\\frac{R}{2}$, find the ratio of the volume removed to the volume remaining.",
+                options: ["5:1", "5:4", "3:4", "3:5"],
+                correctIndex: 3, // (d)
+                solution: "Volume of cylinder $= \\pi r^2 h = \\pi (\\frac{R}{4})^2 \\times \\frac{R}{2} = \\pi \\times \\frac{R^3}{32}$<br>Volume of remaining hemisphere $= \\frac{2}{3}\\pi (\\frac{R}{2})^3 - \\pi \\times \\frac{R^3}{32} = \\frac{8\\pi R^3 - 3\\pi R^3}{96} = \\frac{5\\pi R^3}{96}$<br>So, Required ratio $= \\pi \\times \\frac{R^3}{32} : \\frac{5\\pi R^3}{96} = 3:5$"
+            },
+            {
+                id: 7,
+                meta: "Higher Secondary 02/08/2025 (Shift - 2)",
+                question: "There is a slide in a park. One of its side walls, shaped like a triangle, is painted with a message: 'RESPECT NATURE, PRESERVE GREENERY.' If the sides of the wall are 7 m, 8 m, and 9 m, what is the area painted in color?",
+                options: ["$12\\sqrt{5}m^2$", "$15\\sqrt{5}m^2$", "$12\\sqrt{3}m^2$", "$16\\sqrt{3}m^2$"],
+                correctIndex: 0, // (a)
+                solution: "Side of triangle = 7 m, 8m, 9m<br>Semi-perimeter of triangle(s) $= \\frac{7+8+9}{2} = 12m$<br>Area of triangle $= \\sqrt{s(s-a)(s-b)(s-c)} = \\sqrt{12 \\times 5 \\times 4 \\times 3} = 12\\sqrt{5}m^2$"
+            },
+            {
+                id: 8,
+                meta: "Higher Secondary 29/07/2025 (Shift - 2)",
+                question: "A field roller is in the shape of a cylinder whose diameter is 2.8 metres and length is 1.5 metres. If the roller rolls at a speed of 12 revolutions per minute, then find the maximum area (in m²) that it can roll in 1 hour (60 minutes).",
+                options: ["$9,504 m^2$", "$8,640 m^2$", "$9,000 m^2$", "$10,250 m^2$"],
+                correctIndex: 0, // (a)
+                solution: "Radius $(r) = \\frac{2.8}{2}$<br>Maximum area rolled $= CSA \\times Speed \\times time = 2\\pi rh \\times 12 \\times 60$<br> $= 2 \\times \\frac{22}{7} \\times \\frac{2.8}{2} \\times 1.5 \\times 12 \\times 60 = 9,504 m^2$"
+            },
+            {
+                id: 9,
+                meta: "Matriculation Level 01/08/2025 (Shift - 2)",
+                question: "A semi-circular window has a diameter of 2.8 meters. What is the total length of the frame required for this window?",
+                options: ["6.8 m", "7.2 m", "8.6 m", "9.0 m"],
+                correctIndex: 1, // (b)
+                solution: "Radius $= \\frac{2.8}{2} = 1.4$ cm<br>Semicircle circumference $= \\pi r = \\frac{22}{7} \\times 1.4 = 4.4$<br>Total length = Semicircle circumference + diameter $= 4.4 + 2.8 = 7.2$ m"
+            },
+            {
+                id: 10,
+                meta: "Matriculation Level 26/07/2025 (Shift - 1)",
+                question: "A cube is a special type of rectangular parallelepiped where: Which of the following correctly describes why a cube is considered a special type of rectangular parallelepiped?",
+                options: [
+                    "All edges (sides) are of equal length.",
+                    "The length is greater than the breadth, which equals the height.",
+                    "The length and breadth are equal, but greater than the height.",
+                    "The length, breadth, and height are all different."
+                ],
+                correctIndex: 0, // (a)
+                solution: "All edges (sides) are of equal length. Explanation: A rectangular parallelepiped has length, breadth, and height. If all three dimensions are equal, it forms a cube, making it a special case of a rectangular parallelepiped."
+            },
+            {
+        id: 11,
+        meta: "",
+        question: "At what angle is the arc length half the perimeter of the circle?",
+        options: ["120°", "180°", "90°", "270°"],
+        correctIndex: 1, // (b)
+        solution: "Let the arc length be l. According to the question,<br> $l=\\frac{2\\pi r}{2}\\Rightarrow l=\\pi r$<br>We know that,<br> $\\Rightarrow Area~of~a~circle=\\frac{1}{2}\\times r\\times l$<br> $\\Rightarrow\\pi r^{2}\\times\\frac{\\theta}{360^{\\circ}}=\\frac{1}{2}\\times r\\times\\pi r$<br> $\\Rightarrow\\theta=\\frac{360^{\\circ}}{2}=180^{\\circ}$"
+    },
+    {
+        id: 12,
+        meta: "",
+        question: "What is the central angle of a sector of a circle whose area and perimeter are, respectively, equal to 209 $cm^{2}$ and 63 cm if it is given that its radius is a non-negative integer (roundup to one decimal place)?",
+        options: ["55.5°", "53.5°", "49.5°", "51.5°"],
+        correctIndex: 2, // (c)
+        solution: "Area of $circle=\\frac{\\theta}{360}\\times\\pi r^{2}$<br> $=209\\Rightarrow\\frac{\\theta}{360}=\\frac{209}{\\pi~r^{2}}$<br>And perimeter of sector<br> $=\\frac{\\theta}{360}\\times2~\\pi~r+2r=63\\Rightarrow\\frac{\\theta}{360}$<br> $=\\frac{63-2r}{2\\pi r}$<br>On equating both:<br> $\\frac{209}{\\pi r^{2}}=\\frac{63-2r}{2\\pi r}\\Rightarrow\\frac{209}{r}=\\frac{63-2r}{2}$<br> $418=63r-2r^{2}\\Rightarrow2r^{2}-63r+418=0$<br> $2r^{2}-44r-19r+418=0$<br> $2r(r-22)-19(r-22)=0$<br> $(r-22)(2r-19)\\Rightarrow r=22$ or $\\frac{19}{2}$<br>Now perimeter of sector $=\\frac{\\theta}{360}\\times2\\pi~r+2r$<br> $63=\\frac{\\theta}{360}\\times2\\times\\frac{22}{7}\\times22+44$<br> $\\Rightarrow\\theta=49.5^{\\circ}$"
+    },
+    {
+        id: 13,
+        meta: "",
+        question: "The area of a square is $16x^{2}+40x+25$ square units. Find the perimeter of the square.",
+        options: ["3(10x+8)", "3(8x+10)", "2(10x+8)", "2(8x+10)"],
+        correctIndex: 3, // (d)
+        solution: "Area of $square=(side)^{2}$<br> $=16x^{2}+40x+25=(4x+5)^{2}$<br> $\\Rightarrow Side~of~square=(4x+5)$<br> $\\Rightarrow Perimeter~of~square=4\\times(4x+5)$<br> $=2(8x+10)$"
+    },
+    {
+        id: 14,
+        meta: "",
+        question: "A right triangle with sides 3 cm, 4 cm and 5 cm is rotated about the sides of 3 cm to form a cone. The volume of the cone so formed is:",
+        options: ["$20\\pi~cm^{3}$", "$16\\pi~cm^{3}$", "$25\\pi~cm^{3}$", "$28\\pi~cm^{3}$"],
+        correctIndex: 1, // (b)
+        solution: "Volume of the cone<br> $=\\frac{1}{3}\\pi r^{2}h$<br> $=\\frac{1}{3}\\times\\pi\\times4\\times4\\times3=16\\pi~cm^{3}$"
+    },
+    {
+        id: 15,
+        meta: "",
+        question: "Find the area (in cm²) of the sector whose perimeter is $\\frac{64}{3}$ cm and central angle is $60^{\\circ}$. (Use $\\pi=\\frac{22}{7}$)",
+        options: ["$\\frac{47}{3}$", "$\\frac{77}{3}$", "$\\frac{68}{3}$", "$\\frac{85}{3}$"],
+        correctIndex: 1, // (b)
+        solution: "Perimeter of $sector=2r+\\frac{\\theta}{360}\\times2\\pi r$<br> $\\Rightarrow2r+\\frac{\\theta}{360}\\times2\\pi r=\\frac{64}{3}$<br> $\\Rightarrow2r+\\frac{1}{6}\\times2\\times\\frac{22}{7}\\times r=\\frac{64}{3}$<br> $\\Rightarrow42r+22r=64\\times7$<br> $\\Rightarrow64r=64\\times7\\Rightarrow r=7$<br>Now,<br> $2r+l=\\frac{64}{3}(given)$<br> $\\Rightarrow2\\times7+l=\\frac{64}{3}\\Rightarrow l=\\frac{64}{3}-14=\\frac{22}{3}$<br>Hence, area of sector $=\\frac{1}{2}lr$<br> $=\\frac{1}{2}\\times\\frac{22}{3}\\times7=\\frac{77}{3}cm^{2}$"
+    },
+    {
+        id: 16,
+        meta: "",
+        question: "A cuboid with dimensions 20cm, 12cm, and 10 cm is cut into 8 identical pieces by 3 cuts. What will be the total surface area of all the pieces?",
+        options: ["$2240~cm^{2}$", "$1220~cm^{2}$", "$3360~cm^{2}$", "$1680~cm^{2}$"],
+        correctIndex: 0, // (a)
+        solution: "New length of cuboid $=\\frac{20}{2}=10~cm$<br>New breadth of cuboid $=\\frac{12}{2}=6~cm$<br>New height of cuboid $=\\frac{10}{2}=5~cm$<br>TSA of all the pieces<br> $=8\\times2(10\\times6+6\\times5+5\\times10)$<br> $=8\\times2(60+30+50)=2240~cm^{2}$"
+    },
+    {
+        id: 17,
+        meta: "",
+        question: "A rectangle with the largest area is cut out of a circle with radius 5 units. What is the area of the remaining portion?",
+        options: ["$25(2\\pi-3)$", "$25(2\\pi-5)$", "$25(\\pi-3)$", "$25(\\pi-2)$"],
+        correctIndex: 3, // (d)
+        solution: "As we know, Rectangle with the largest area cut out of the circle is square.<br>Area of circle $=\\pi\\times5^{2}=25\\pi$ square units<br>Diameter of $circle=5\\times2=10$ units<br>Diagonal of $square=\\sqrt{2}a=10$<br> $\\Rightarrow a=\\frac{10}{\\sqrt{2}}=5\\sqrt{2}units$<br>Area of square $=(5\\sqrt{2})^{2}=50$ square units<br>Area of remaining portion = Area of circle - Area of square<br> $=25\\pi-50=25(\\pi-2)$ square units"
+    },
+    {
+        id: 18,
+        meta: "",
+        question: "A cylinder has a curved surface area equal to 350% of the curved surface area of another cylinder. If their radii are in the ratio 3: 1, then the volume of the smaller cylinder is approximately % of the larger cylinder (the smaller cylinder has its radius and height smaller when compared to the larger).",
+        options: ["10.16", "8.86", "7.28", "9.52"],
+        correctIndex: 3, // (d)
+        solution: "According to the question,<br>CSA of the $cylinder=2\\pi rh$<br> $2\\pi rh\\times\\frac{350}{100}=2\\pi RH$<br> $h:H=6:7$ (where radii ratio are, 3: 1)<br>Volume of the cylinder $=\\pi r^{2}h$<br>Small cylinder volume $=\\pi(1)^{2}\\times6$<br>Big cylinder $volume=\\pi(3)^{2}\\times7$<br> $required\\%=\\frac{{\\pi(1)^{2}\\times6}}{{\\pi(3)^{2}\\times7}}\\times100=9.52\\%$"
+    },
+    {
+        id: 19,
+        meta: "",
+        question: "The inner and outer radii of a hemispherical wooden bowl are 6 cm and 8 cm, respectively. Its entire surface has to be polished and the cost of polishing $cm^{2}$ is Rs.50. How much will it cost to polish the bowl?",
+        options: ["Rs.11,600", "Rs.11,400", "Rs.10,000", "Rs.12,000"],
+        correctIndex: 1, // (b)
+        solution: "Outer area of hemispherical $bowl=2\\pi(R)^{2}=2\\pi(8)^{2}=128\\pi~cm^{2}$<br>Inner area of hemispherical bowl $=2\\pi(r)^{2}=2\\pi(6)^{2}=72\\pi~cm^{2}$<br>Ring area of the top $=\\pi(R^{2}-r^{2})$<br> $=\\pi(64-36)=28\\pi~cm^{2}$<br>Total area to polished<br> $=128\\pi+72\\pi+28\\pi=228\\pi~cm^{2}$<br>Hence, cost to polish the $bowl=228\\pi$<br> $=228\\times50=Rs.11400$"
+    },
+    {
+        id: 20,
+        meta: "",
+        question: "Which of the following statements is INCORRECT about the circle?",
+        options: [
+            "The area of a sector $=\\frac{1}{2}$ (arc length x R)",
+            "The radius of an incircle of an equilateral triangle of side 's' is $\\frac{s}{2\\sqrt{3}}$",
+            "The length of an arc = central angle made by the arc / 360° $\\times\\pi r^{2}$",
+            "Circles are congruent if they have same radii while similar circles may have different radii."
+        ],
+        correctIndex: 2, // (c)
+        solution: "Option 'c' is false<br>Length of an arc $=\\frac{\\theta}{360^{\\circ}}\\times2\\pi r$"
+    },
+    {
+        id: 21,
+        meta: "",
+        question: "The average of the areas of 2 similar triangles is 706.5 $m^{2}$ whose perimeters are in the ratio of 6:11. What is 20% of the difference $(in~m^{2})$ in areas of both triangles?",
+        options: ["164", "149", "153", "157"],
+        correctIndex: 2, // (c)
+        solution: "Sum of the area of similar $triangles=706.5\\times2=1413~m^{2}$<br> $\\frac{area~of~1st~triangle}{area~of~2nd~triangle} =(\\frac{side~of~1st~triangle}{side~of~2nd~triangle})^{2}=(\\frac{6}{11})^{2}=\\frac{36}{121}$<br>Sum of both triangles area = 36 + 121<br> $=157~units\\Rightarrow157~units=1413~m^{2}$<br>Area of 1st triangle (36 units)<br> $=\\frac{1413}{157}\\times36=324~m^{2}$<br>Area of 2nd triangle (121 units)<br> $=\\frac{1413}{157}\\times121=1089~m^{2}$<br>Required value $=(1089-324)\\times\\frac{1}{5}$<br> $=153~m^{2}$"
+    },
+    {
+        id: 22,
+        meta: "",
+        question: "Two equal circles are drawn on a square in such a way that opposite side of the square forms the diameter of each circle. If the remaining area of the square is 42 $cm^{2}$, what is the measurement (in cm) of the diameter of each circle?",
+        options: ["14", "2.5", "7", "3.5"],
+        correctIndex: 0, // (a)
+        solution: "Area of remaining area = area of square - 2 x area of semicircle<br>According to the question,<br> $42=(2r)^{2}-2\\times\\frac{1}{2}\\times\\pi\\times(r)^{2}$<br> $42=4r^{2}-\\frac{22}{7}\\times(r)^{2}$<br> $42=r^{2}(4-\\frac{22}{7})\\Rightarrow42=r^{2}(\\frac{6}{7})$<br> $r^{2}=42\\times\\frac{7}{6}=49\\Rightarrow r=7$<br>So, diameter of each circle $(2r)=14$ cm"
+    },
+    {
+        id: 23,
+        meta: "",
+        question: "The ratio of the diameters of two spheres is given as 1:4. The larger sphere is melted and 125 identical spheres are made out of the molten material. The smaller sphere is melted and 27 identical spheres are made out of the molten material. If the ratio of the volume of each of the 125 identical spheres to the volume of each of the 27 identical spheres is given as 1: m, what is the value of m?",
+        options: ["$|\\frac{1728}{125}$", "$\\frac{125}{1728}$", "$\\frac{27}{8000}$", "$\\frac{64}{3375}$"],
+        correctIndex: 1, // (b)
+        solution: "Let the radius of larger and smaller spheres 2x and $\\frac{x}{2}$ respectively.<br>1st condition:- Volume of larger spheres = 125 x volume of identical spheres<br> $\\frac{4}{3}\\pi R_{1}^{3}=125\\times\\frac{4}{3}\\pi r_{1}^{3}$<br> $(2x)^{3}=125\\times r_{1}^{3}\\Rightarrow r_{1}^{3}=\\frac{(2x)^{3}}{125}$<br> $2^{nd}$ condition: - Volume of smaller spheres = 27 x volume of identical spheres<br> $\\frac{4}{3}\\pi(R_{2}^{3})=27\\times\\frac{4}{3}\\pi r_{2}^{3}$<br> $\\frac{4}{3}\\pi(\\frac{x}{2})^{3}=27\\times\\frac{4}{3}\\pi r_{2}^{3}\\Rightarrow r_{2}^{3}=\\frac{(\\frac{x}{2})^{3}}{27}$<br>Ratio of the volume $=\\frac{(2x)^{3}}{125}:\\frac{(x)^{3}}{27\\times8}=1728:125$<br>According to question $\\frac{1}{m}=\\frac{1728}{125}$<br>Hence the value of $m=\\frac{125}{1728}$"
+    },
+    {
+        id: 24,
+        meta: "",
+        question: "Two rectangular sheets of paper, each $60~cm\\times36$ cm, are made into two right circular cylinders, one by rolling the paper along its length and the other along the breadth. The ratio of the volumes of the two cylinders, thus formed, is:",
+        options: ["5:6", "8:3", "7:4", "5:3"],
+        correctIndex: 3, // (d)
+        solution: "Case 1: When the sheet of paper is rolled along its length to form a cylinder, then the circumference of the base of the cylinder = length of the rectangular sheet, height of the cylinder = breadth of the rectangular sheet.<br>Let radius = r and $height=h=36~cm$<br>Circumference of $base=60~cm$<br> $2\\pi r=60~cm\\Rightarrow r=\\frac{30}{\\pi}cm$<br>Volume of the cylinder formed $(V_{1}) =\\pi r^{2}h=\\pi\\times\\frac{30}{\\pi}\\times\\frac{30}{\\pi}\\times36......(i)$<br>Case 2: When the sheet of paper is rolled along its breadth to form a cylinder, then the circumference of the base of the cylinder = breadth of the rectangular sheet, height of the cylinder = length of the rectangular sheet.<br>Let radius = R and $height=H=60~cm$<br>Circumference of $base=36~cm$<br> $2\\pi R=36~cm\\Rightarrow R=\\frac{18}{\\pi}cm$<br>Volume of the cylinder formed $(V_{2}) =\\pi R^{2}H=\\pi\\times\\frac{18}{\\pi}\\times\\frac{18}{\\pi}\\times60$ .....(ii)<br>Now, $V_{1}:V_{2}=\\pi\\times\\frac{30}{\\pi}\\times\\frac{30}{\\pi}\\times36:\\pi\\times\\frac{18}{\\pi}\\times\\frac{18}{\\pi}\\times60\\Rightarrow V_{1}:V_{2}=5:3$<br>Thus, the ratio of the volumes of the two cylinders so formed is 5: 3."
+    },
+    {
+        id: 25,
+        meta: "",
+        question: "Three circles each of radius 5 cm touch one another. The area (in cm²) subtended between them is:",
+        options: ["$50(\\sqrt{3}-\\frac{\\pi}{2})$", "$25(\\sqrt{3}+\\frac{\\pi}{2})$", "$25(2\\sqrt{3}\\cdot\\frac{\\pi}{2})$", "$25(\\sqrt{3}-\\frac{\\pi}{2})$"],
+        correctIndex: 3, // (d)
+        solution: "Center distance between $circle=side~of~triangle=2\\times5=10~cm$<br>Since all sides are of 10 cm so, $\\triangle ABC$ is an equilateral triangle<br>Area subtended between three circle = area of triangle - 3 x area of sector<br> $=\\frac{\\sqrt{3}}{4}\\times10\\times10-3\\times\\frac{\\theta}{360^{\\circ}}\\times\\pi r^{2}$<br> $=25\\sqrt{3}-3\\times\\frac{60^{\\circ}}{360^{\\circ}}\\times\\pi\\times5\\times5$<br> $=25\\sqrt{3}-\\frac{\\pi}{2}\\times25=25(\\sqrt{3}-\\frac{\\pi}{2})$"
+    },
+    {
+        id: 26,
+        meta: "",
+        question: "A gear 15 cm in diameter is turning a gear 21 cm in diameter. When the smaller gear has 105 revolutions, how many has the larger one made?",
+        options: ["75", "100", "85", "90"],
+        correctIndex: 0, // (a)
+        solution: "Circumference of Larger gear $(C_{1})=2\\pi R =2\\times\\frac{22}{7}\\times\\frac{21}{2}$<br>Circumference of smaller gear $(C_{2})=2\\pi r =2\\times\\frac{22}{7}\\times\\frac{15}{2}$<br>Ratio $\\rightarrow$ Larger: Smaller $\\rightarrow 7:5$<br>Circumference $7:5$ Revolution $5:7$<br> $7~unit=105$ revolution<br> $5~unit=\\frac{105}{7}\\times5=75$<br>Hence, larger gear has 75 revolutions."
+    },
+    {
+        id: 27,
+        meta: "",
+        question: "A solid metal cylinder of 12 cm height and 7 cm radius is melted and recast into two cones in the proportion of 1:2 (volume), keeping the height 12 cm. What would be the percentage change in the flat surface area before and after [use $\\pi=\\frac{22}{7}$]?",
+        options: ["35%", "20%", "45%", "50%"],
+        correctIndex: 3, // (d)
+        solution: "Volume of cylinder $=\\pi r^{2}h$<br> $=\\frac{22}{7}\\times7\\times7\\times12=1848~cm^{3}$<br>Let the two new recast cones volume be x and 2x<br>So,<br> $\\Rightarrow3x=1848$<br> $\\Rightarrow x=616~cm^{3}$ and $2x=1232~cm^{3}$<br>According to question,<br> $\\Rightarrow\\frac{616}{1232}=\\frac{\\frac{1}{3}\\pi r_{1}^{2}\\times12}{\\frac{1}{3}\\pi r_{2}^{2}\\times12}$<br> $\\Rightarrow\\frac{r_{1}^{2}}{r_{2}^{2}}=\\frac{1}{2}\\Rightarrow r_{1}:r_{2}=1:\\sqrt{2}$<br>Now,<br> $\\Rightarrow\\pi r_{1}^{2}:\\pi r_{2}^{2}=1:2$<br>Required percentage<br> $=\\frac{2-1}{2}\\times100=50\\%$"
+    },
+    {
+        id: 28,
+        meta: "",
+        question: "Three solid iron cubes of edges 8 cm, 10 cm and 12 cm are melted together to make a new cube. It is observed that 496 $cm^{3}$ of the melted material is lost due to improper handling. The area (in cm²) of the whole surface of the newly formed cube is:",
+        options: ["1331", "1176", "2197", "3375"],
+        correctIndex: 1, // (b)
+        solution: "Volume of cubes $=8^{3}+10^{3}+12^{3}=512+1000+1728=3240cm^{3}$<br>Remaining volume of cube<br> $=3240-496=2744~cm^{3}$<br> $a^{3}=2744\\Rightarrow a=14~cm$<br>Area of whole surface of the newly formed cube $(6a^{2})$<br> $=6\\times14\\times14=1176~cm^{2}$"
+    },
+    {
+        id: 29,
+        meta: "",
+        question: "If the semi-perimeter and area of a rectangular field whose length and breadth are 'x' and 'y' is 12 cm and 28 cm², respectively, then find the value of $x^{4}+x^{2}y^{2}+y^{4}$.",
+        options: ["6690", "6960", "6609", "6906"],
+        correctIndex: 1, // (b)
+        solution: "Semiperimeter $=\\frac{2(x+y)}{2}=x+y=12$<br>Area of rectangle = 28<br> $xy=28$<br>Now, $(x+y)^{2}=x^{2}+y^{2}+(xy+xy)$<br> $(x+y)^{2}-xy=x^{2}+y^{2}+xy$<br> $12^{2}-28=x^{2}+y^{2}+xy$<br> $116=x^{2}+y^{2}+xy$<br>Again, $(x+y)^{2}=x^{2}+y^{2}+(3xy-xy)$<br> $(x+y)^{2}-3xy=x^{2}+y^{2}-xy$<br> $12^{2}-28\\times3=x^{2}+y^{2}-xy$<br> $60=x^{2}+y^{2}-xy$<br>then, $x^{4}+x^{2}y^{2}+y^{4}=(x^{2}+y^{2}+xy)(x^{2}+y^{2}-xy)=116\\times60=6960$"
+    },
+    {
+        id: 30,
+        meta: "",
+        question: "The base of a right prism is an equilateral triangle with each side measuring 4 cm. If the lateral surface area is $120~cm^{2}$, find the volume $(in~cm^{3})$ of the prism.",
+        options: ["$30\\sqrt{3}$", "$40\\sqrt{3}$", "$10\\sqrt{3}$", "$20\\sqrt{3}$"],
+        correctIndex: 1, // (b)
+        solution: "Lateral surface $area=120~cm^{2}$<br>Lateral surface area of $prism=perimeter~of~base\\times height$<br> $120=3\\times4\\times height\\Rightarrow Height=10~cm$<br>Now,<br>volume of $prism=area~of~base\\times height$<br> $=\\frac{\\sqrt{3}}{4}\\times4\\times4\\times10=40\\sqrt{3}cm^{3}$"
+    },
+            {
+                id: 31,
+                meta: "",
+                question: "Some ice pieces, spherical in shape, of diameter 6 cm are dropped in a cylindrical container containing some juice and are fully submerged. If the diameter of the container is 18 cm and level of juice rises by 40 cm, then how many ice pieces are dropped in the container?",
+                options: ["90", "80", "85", "95"],
+                correctIndex: 0, // (a)
+                solution: "According to the question,<br>Let the number of ice pieces be n<br>Volume of spherical ice pieces x n = volume of cylindrical container<br> $\\frac{4}{3}\\times\\frac{22}{7}\\times3^{3}\\times n=\\frac{22}{7}\\times9^{2}\\times40$<br> $n=90$"
+            },
+            {
+                id: 32,
+                meta: "",
+                question: "Some medicine in liquid form is prepared in a hemispherical container of diameter 36 cm. When the container is full of medicine, the medicine is transferred to small cylindrical bottles of diameter 6 cm and height 6 cm. How many bottles are required to empty the container?",
+                options: ["70", "75", "72", "76"],
+                correctIndex: 2, // (c)
+                solution: "According to the question,<br>Volume of hemispherical container = volume of cylindrical bottles<br>Let the number of bottles = x<br> $\\frac{2}{3}\\pi r^{3}=\\pi r^{2}h\\times x$<br> $=\\frac{2}{3}\\times18\\times18\\times18=3\\times3\\times6\\times x$<br>(Number of bottles) $x=72$"
+            },
+            {
+                id: 33,
+                meta: "",
+                question: "The length and the breadth of the floor of a rectangular hall are 126 feet and 90 feet, respectively. What will be the area (in square feet) of each of the largest identical square tiles that can be used to tile this floor in a way that no part of the floor remains uncovered?",
+                options: ["196", "256", "324", "484"],
+                correctIndex: 2, // (c)
+                solution: "H.C.F of 90 and $126=18$<br>Largest possible side of the tiles $=18$ feet<br>Area of $tiles=18\\times18=324~feet^{2}$"
+            },
+            {
+                id: 34,
+                meta: "",
+                question: "The radii of the ends of a frustum of a solid right-circular cone 45 cm high are 28 cm and 7 cm. If this frustum is melted and reconstructed into a solid right circular cylinder whose radius of base and height are in the ratio 3: 5, find the curved surface area (in cm²) of this cylinder. [Use $\\pi=\\frac{22}{7}$]",
+                options: ["4610", "4620", "4580", "4640"],
+                correctIndex: 1, // (b)
+                solution: "Volume of $frustum=\\frac{\\pi H}{3}(R^{2}+r^{2}+Rr)$<br> $=\\frac{22\\times45}{7\\times3}(28^{2}+7^{2}+28\\times7)$<br> $=\\frac{22\\times45}{7\\times3}\\times1029=48510$<br>Now,<br>Volume of cylinder = Volume of frustum<br> $\\frac{22}{7}\\times3x\\times3x\\times5x=48510$<br> $x^{3}=343\\Rightarrow x=7$<br>So, curved surface area of cylinder $=2\\pi rh$<br> $=2\\times\\frac{22}{7}\\times21\\times35=4620~cm^{2}$"
+            },
+            {
+                id: 35,
+                meta: "",
+                question: "A square and a rhombus have the same base and the rhombus is inclined at 45°, then what will be the ratio of the area of the square to the area of the rhombus?",
+                options: ["$\\sqrt{3}:$ 1", "1 $:\\sqrt{3}$", "$\\sqrt{2}:\\sqrt{3}$", "$\\sqrt{2}:$ 1"],
+                correctIndex: 3, // (d)
+                solution: "Area of $square=Base^{2}$<br>Area of $rhombus=Base^{2}\\times \\sin\\theta(\\theta=angle$ between the sides)<br>The ratio of area of the square to the area of rhombus $=\\frac{1}{\\sin~45}=\\sqrt{2}:1$"
+            },
+            {
+                id: 36,
+                meta: "",
+                question: "A closed wooden box measures externally 10 cm long, 8 cm broad and 6 cm high. If the thickness of the wood is 0.5 cm, then the volume of wood required is",
+                options: ["$165~cm^{3}$", "$300~cm^{3}$", "$230~cm^{3}$", "150 cm³"],
+                correctIndex: 0, // (a)
+                solution: "Volume of the wood Required = (Total volume - inner volume)<br> $(10\\times8\\times6)-[(10-1)\\times(8-1)\\times(6-1)]$<br> $=480-315=165~cm^{3}$"
+            },
+            {
+                id: 37,
+                meta: "",
+                question: "The weight of a cube varies directly as the product of its volume and its density. The ratio of densities of the materials of the first cube and second cube is 27:16. If the weight of the first cube is 4 times the weight of the second cube, then what is the ratio of the edges of the first cube and second cube?",
+                options: ["2:3", "3:2", "3:4", "4:3"],
+                correctIndex: 3, // (d)
+                solution: "According to the question,<br>Weight $\\propto$ (density x volume)<br> $Volume=k\\times\\frac{weight}{density}$<br>Ratio - 1st cube : 2nd cube<br>Density - 27 : 16<br>Weight - 4 : 1<br>Volume - $4 : \\frac{1}{16}\\rightarrow64:27$<br> $Side=\\sqrt[3]{64}:\\sqrt[3]{27}\\rightarrow4:3$"
+            },
+            {
+                id: 38,
+                meta: "",
+                question: "The weight of a circular disc varies directly as the product of the square of the radius and its thickness. Two identical/similar discs have their thickness in the ratio of 16 : 9. What is the ratio of their radii if the weight of the first is four times that of the second?",
+                options: ["3:2", "2:3", "1:2", "2:1"],
+                correctIndex: 0, // (a)
+                solution: "According to the question,<br> $weight=radii^{2}\\times$ thickness<br>Ratio of $weight=4:1$<br>Ratio of $thickness=16:9$<br>Ratio of their $radii=\\sqrt{\\frac{4}{16}}:\\sqrt{\\frac{1}{9}}$<br> $=\\frac{2}{4}:\\frac{1}{3}=3:2$"
+            },
+            {
+                id: 39,
+                meta: "",
+                question: "A hemispherical dome of a building needs to be painted. If the circumference of the base of the dome is 154 cm, then find the cost of painting it if the cost of painting is ₹4 per $100~cm^{2}$ $(use~\\pi=\\frac{22}{7})$.",
+                options: ["₹150.92", "₹150.66", "₹105.29", "₹105.66"],
+                correctIndex: 0, // (a)
+                solution: "Circumference of dome $(2\\pi r) =154~cm\\Rightarrow r=154\\times\\frac{7}{44}=24.5~cm$<br>Curved surface area of hemispherical $dome=2\\times\\frac{22}{7}\\times24.5\\times24.5$<br>Required $cost=\\frac{2\\times22\\times24.5\\times24.5}{7\\times100}\\times4$<br> $=\\frac{2\\times22\\times3.5\\times24.5}{25}=150.92$ ₹"
+            },
+            {
+                id: 40,
+                meta: "",
+                question: "The area of a sector of a circle is $616~cm^{2}$ with a central angle of $10^{\\circ}$ The radius of the circle is $(use~\\pi=\\frac{22}{7})$",
+                options: ["84 cm", "21 cm", "48 cm", "28 cm"],
+                correctIndex: 0, // (a)
+                solution: "Area of sector $=\\frac{\\theta}{360^{\\circ}}\\times\\pi r^{2}$<br> $616~cm^{2}=\\frac{10^{\\circ}}{360^{\\circ}}\\times\\frac{22}{7}\\times r^{2}$<br> $r^{2}=\\frac{616\\times36\\times7}{22}=28\\times36\\times7$<br> $r=84~cm$"
+            },
+            {
+                id: 41,
+                meta: "",
+                question: "Find the volume of the largest right circular cone that can be cut out from a cube whose edge is $3\\frac{1}{2}$ cm, correct to two places of decimals $(use~\\pi=\\frac{22}{7})$.",
+                options: ["13.21 cm³", "$21.31~cm^{3}$", "$11.23~cm^{3}$", "$12.13~cm^{3}$"],
+                correctIndex: 2, // (c)
+                solution: "Volume of cone $=\\frac{1}{3}\\times\\frac{22}{7}\\times\\frac{7}{4}\\times\\frac{7}{4}\\times\\frac{7}{2}$<br> $=\\frac{11\\times7\\times7}{3\\times16}=\\frac{539}{48}=11.23~cm^{3}$"
+            },
+            {
+                id: 42,
+                meta: "",
+                question: "The sum of the radius of the base and the height of a cylinder is 42 m. If the total surface area of the cylinder is 6336 $m^{2}$ find the curved surface area of the cylinder correct to two places of decimals $(use~\\pi=\\frac{22}{7})$",
+                options: ["$2157.43~m^{2}$", "$2571.43~m^{2}$", "$2715.43~m^{2}$", "$2517.43~m^{2}$"],
+                correctIndex: 2, // (c)
+                solution: "Total surface area of $cylinder=2\\pi r(h+r)$<br> $6336=2\\times\\frac{22}{7}\\times r\\times42$<br> $r=\\frac{6336}{22\\times12}=24m$<br>Curved surface area of $cylinder=2\\pi r h$<br> $=2\\times\\frac{22}{7}\\times24\\times18=2715.43~m^{2}$"
+            },
+            {
+                id: 43,
+                meta: "",
+                question: "Three cubes with sides in the ratio of $3:4:5$ are melted to form a single cube whose diagonal is $18\\sqrt{3}$ cm. The sides of the three cubes are:",
+                options: ["21 cm, 28 cm and 35 cm", "9 cm, 12 cm and 15 cm", "18 cm, 24 cm and 30 cm", "12 cm, 16 cm and 20 cm"],
+                correctIndex: 1, // (b)
+                solution: "Let the side of cubes is 3x, 4x, 5x<br>Side of newly formed cube $=\\frac{diagonal}{\\sqrt{3}}$<br> $=\\frac{18\\sqrt{3}}{\\sqrt{3}}=18$<br>Equating the volume of cubes :-<br> $(3x)^{3}+(4x)^{3}+(5x)^{3}=18\\times18\\times18$<br> $x^{3}=\\frac{18\\times18\\times18}{216}=27\\Rightarrow x=3$<br>Sides are: 9, 12 and 15"
+            },
+            {
+                id: 44,
+                meta: "",
+                question: "The perimeter of equilateral triangle is $3\\times(\\sqrt[4]{\\frac{16}{3}})$ units. Determine the area of the triangle.",
+                options: ["$4~unit^{2}$", "1 $unit^{2}$", "$3~unit^{2}$", "$2~unit^{2}$"],
+                correctIndex: 1, // (b)
+                solution: "Perimeter of equilateral triangle $=3a$<br>Area of equilateral triangle $=\\frac{\\sqrt{3}}{4}a^{2}$<br>According to question, $a=\\sqrt[4]{\\frac{16}{3}}$<br> $area=\\frac{\\sqrt{3}}{4}\\times(\\sqrt[4]{\\frac{16}{3}})^{2}$<br> $=\\frac{\\sqrt{3}}{4}\\times\\frac{4}{\\sqrt{3}}=1~unit^{2}$"
+            },
+            {
+                id: 45,
+                meta: "",
+                question: "A spherical ball of diameter 8 cm is cut into two equal parts. The curved area of one such part has to be painted with green colour, while the other part has to be painted with red colour. The bases of both the hemispheres are to be painted with blue colour. The cost of painting with blue is ₹$2/cm^{2}$ while the cost of painting the curved area is ₹3/cm². What will be the cost (in ₹) of painting the hemispheres? Take $\\pi=3.14$",
+                options: ["₹451.92", "₹492.92", "₹803.84", "₹401.92"],
+                correctIndex: 2, // (c)
+                solution: "Curved surface area of hemisphere $=2\\pi r^{2}$<br>Cost for green colour = $3\\times(2\\times3.14\\times4\\times4)=301.44$ Rs.<br>Cost for red colour $=3\\times(2\\times3.14\\times4\\times4)=301.44~Rs.$<br>Area of two bases $=\\pi r^{2}+\\pi r^{2}=2\\pi r^{2}$<br> $=(2\\times3.14\\times4\\times4)=100.48$<br>The cost of painting with blue $=2\\times100.48=200.96$ Rs.<br>Total cost $=301.44+301.44+200.96$<br> $=803.84~Rs.$"
+            },
+            {
+                id: 46,
+                meta: "",
+                question: "A cube of side 5 cm, has been assembled using 125 cubes each of 1 cm edge. One cube is removed from the middle of each of the faces of the cube. What is the surface area (in cm²) of the remaining solid?",
+                options: ["155", "144", "150", "174"],
+                correctIndex: 3, // (d)
+                solution: "Total surface area of $cube=(6a^{2})$<br> $=6\\times5^{2}=150~cm^{2}$<br>Increased area $=6\\times5~cm^{2}-6\\times1~cm^{2}$<br> $=24~cm^{2}$<br>Total increased surface area $=150+24 =174~cm^{2}$"
+            },
+            {
+                id: 47,
+                meta: "",
+                question: "A prism and a pyramid have the same base and the same height. Find the ratio of the volumes of the prism and the pyramid.",
+                options: ["2:3", "3:1", "1:3", "3:2"],
+                correctIndex: 1, // (b)
+                solution: "Volume of Prism = Area of Base x Height<br>Volume of Pyramid $=\\frac{1}{3}\\times Area~of~Base\\times Height$<br>Required ratio $\\Rightarrow$ Volume of Prism: Volume of Pyramid $=3:1$"
+            },
+            {
+                id: 48,
+                meta: "",
+                question: "How many metres of 2 m wide cloth will be required to make a conical tent with the diameter of the base as 14 m and slant height as 9 m to ignore wastage?",
+                options: ["66 m", "88 m", "99 m", "77 m"],
+                correctIndex: 2, // (c)
+                solution: "ATQ, CSA of cone = total area of rectangular cloth<br> $\\frac{22}{7}\\times\\frac{14}{2}\\times9=2\\times(length~of~cloth)$<br> $\\Rightarrow198=2\\times l\\Rightarrow l=\\frac{198}{2}=99~m$"
+            },
+            {
+                id: 49,
+                meta: "",
+                question: "The minute hand of a clock is 20 cm long. Find the area on the face of the clock swept by the minute hand between 8 a.m. and 8:45 a.m.",
+                options: ["$\\frac{6600}{7}cm^{2}$", "$\\frac{6600}{9}cm^{2}$", "$\\frac{6600}{18}cm^{2}$", "$\\frac{6600}{14}cm^{2}$"],
+                correctIndex: 0, // (a)
+                solution: "Angle covered in 45 minutes by minute hand $=\\frac{360}{60}\\times45=270^{\\circ}$<br>Required area $=\\frac{270^{\\circ}}{360^{\\circ}}\\times\\frac{22}{7}\\times20\\times20$<br> $=\\frac{6600}{7}cm^{2}$"
+            },
+            {
+                id: 50,
+                meta: "",
+                question: "The external diameter of an iron pipe is 20 cm and its length is 12 cm. If the thickness of the pipe is 1 cm, find the surface area of the pipe (take $\\pi=\\frac{22}{7}$) correct to two places of decimal.",
+                options: ["$1,662.67~cm^{2}$", "$1,552.57~cm^{2}$", "$1,442.48~cm^{2}$", "$1,772.76~cm^{2}$"],
+                correctIndex: 1, // (b)
+                solution: "External radius $(R)=10$ cm<br>Internal radius $(r)=9$ cm and length $(h)=12~cm$<br>Total surface area of hollow cylinder pipe $=2\\pi(R+r)\\{h+R-r\\}$<br> $=2\\times\\frac{22}{7}\\times19\\times13$<br> $=\\frac{44\\times247}{7}=1552.57~cm^{2}$"
+            },
+            {
+                id: 51,
+                meta: "",
+                question: "If the length of a certain rectangle is decreased by 4 cm and breadth is increased by 2 cm, it would result in a square of the same area. What is the perimeter of the original rectangle?",
+                options: ["15 cm", "24 cm", "20 cm", "10 cm"],
+                correctIndex: 2, // (c)
+                solution: "Let the length of rectangle is 'l' and breadth of rectangle is 'b'<br>Area of rectangle $=length\\times breadth=l\\times b$<br>(Area of rectangle) = (lb) ......e.q.(1)<br>According to question,<br>(Area of resulting square) $=(l-4)\\times(b+2)......e.q.(2)$<br>Side of square are equal, so<br> $l-4=b+2\\Rightarrow l-b=6......e.q.(3)$<br>Equating e.q.(1) and e.q.(2), we get<br> $lb=(l-4)(b+2) = lb+2l-4b-8$<br> $2l-4b=8 \\Rightarrow l-2b=4......e.q.(4)$<br>From e.q.(3) and e.q.(4), we get<br> $b=2$, $l=8$<br>So, Perimeter of the original rectangle $=2(8+2)=20cm$"
+            },
+            {
+                id: 52,
+                meta: "",
+                question: "Two identical circles each of radius 30 cm intersect each other such that the circumference of each one passes through the center of the other. What is the area of the intersecting region?",
+                options: ["$400\\pi-250\\sqrt{3}cm^{2}$", "$300\\pi-150\\sqrt{3}cm^{2}$", "$500\\pi-350\\sqrt{3}cm^{2}$", "$600\\pi-450\\sqrt{3}cm^{2}$"],
+                correctIndex: 3, // (d)
+                solution: "Area of sector $ACB=\\frac{60^{\\circ}}{360^{\\circ}}\\times\\pi r^{2}=\\frac{900\\pi}{6}$<br>Area of sector $BAC=\\frac{60^{\\circ}}{360^{\\circ}}\\times\\pi r^{2}=\\frac{900\\pi}{6}$<br>Area of equilateral triangle ABC $=\\frac{\\sqrt{3}}{4}r^{2}=\\frac{900\\sqrt{3}}{4}$<br>Area of total shaded region $=2\\times$ area of upper half shaded region<br>Required shaded area $=2\\times\\{\\frac{900\\pi}{6}+\\frac{900\\pi}{6}-\\frac{900\\sqrt{3}}{4}\\}$<br> $=2\\times\\{\\frac{1800\\pi}{6}-\\frac{900\\sqrt{3}}{4}\\}$<br> $=(600\\pi-450\\sqrt{3})cm^{2}$<br>Short Trick:-<br>Area of shaded region $=r^{2}(\\frac{2}{3}\\pi-\\frac{\\sqrt{3}}{2})$<br> $Area=900(\\frac{2}{3}\\pi-\\frac{\\sqrt{3}}{2})$<br> $=(600\\pi-450\\sqrt{3})cm^{2}$"
+            },
+            {
+                id: 53,
+                meta: "",
+                question: "If the sum of the diagonals of a rhombus is L and the perimeter is 4P, find the area of the rhombus?",
+                options: ["$\\frac{1}{4}(L^{2}-P^{2})$", "$\\frac{1}{4}(L^{2}-4P^{2})$", "$\\frac{1}{2}(L^{2}-4P^{2})$", "$\\frac{1}{4}(L^{2}+3P^{2})$"],
+                correctIndex: 1, // (b)
+                solution: "Let side of the rhombus be 'a'<br>Perimeter of rhombus $=4a=4P\\Rightarrow a=P$<br>As we know that,<br> $D1^{2}+D2^{2}=4a^{2}$, $D_{1}+D_{2}=L$<br>Then, $D_{1}D_{2}=\\frac{L^{2}-4a^{2}}{2}$<br>Area of Rhombus $=\\frac{1}{2}\\times D_{1}\\times D_{2}$<br> $=\\frac{1}{2}\\times\\frac{L^{2}-4a^{2}}{2}=\\frac{1}{4}\\times(L^{2}-4P^{2})$"
+            },
+            {
+                id: 54,
+                meta: "",
+                question: "Water is flowing through a cylindrical canal with an internal diameter of 7 m at the speed of $18~km/h$. Find the volume of water flowing through the canal in 30 minutes. (take $\\pi=\\frac{22}{7}$)",
+                options: ["$3,76,500~m^{3}$", "$3,56,500~m^{3}$", "$3,66,500~m^{3}$", "$3,46,500~m^{3}$"],
+                correctIndex: 3, // (d)
+                solution: "Volume of water flowing through the canal in 30 min<br> $=\\frac{22}{7}\\times\\frac{7}{2}\\times\\frac{7}{2}\\times(18\\times\\frac{5}{18})\\times(30\\times60)$<br> $=3,46,500~m^{3}$"
+            },
+            {
+                id: 55,
+                meta: "",
+                question: "ABCDEF is a regular hexagon. Side of the hexagon is 36 cm. What is the area of the triangle ABC?",
+                options: ["$324\\sqrt{3}cm^{2}$", "$360\\sqrt{3}cm^{2}$", "$240\\sqrt{3}cm^{2}$", "$192\\sqrt{3}cm^{2}$"],
+                correctIndex: 0, // (a)
+                solution: "According to the question,<br>As ABCDEF is a regular hexagon,<br>Area of $ABCP=2\\times\\frac{\\sqrt{3}}{4}\\times(side)^{2}$<br> $=2\\times\\frac{\\sqrt{3}}{4}\\times36^{2}=648\\sqrt{3}cm^{2}$<br>So, area of $\\triangle ABC$<br> $\\Rightarrow \\frac{1}{2}\\times$ Area of ABCP<br> $=\\frac{1}{2}\\times648\\sqrt{3}=324\\sqrt{3}cm^{2}$"
+            },
+            {
+                id: 56,
+                meta: "",
+                question: "The frustum of a right circular cone has the radius of the base as 5 cm, radius of the top as 3 cm, and height as 6 cm. What is its volume?",
+                options: ["$98~\\pi~cm^{3}$", "$100\\pi~cm^{3}$", "$96~\\pi~cm^{3}$", "$90~\\pi~cm^{3}$"],
+                correctIndex: 0, // (a)
+                solution: "Volume of frustum $=\\frac{1}{3}\\pi h(R^{2}+r^{2}+Rr)$<br> $=\\frac{1}{3}\\pi\\times6(5^{2}+3^{2}+15)$<br> $=2\\pi(25+9+15)=98\\pi~cm^{3}$"
+            },
+            {
+                id: 57,
+                meta: "",
+                question: "Three sides of a triangle are $\\sqrt{a^{2}+b^{2}}, \\sqrt{(2a)^{2}+b^{2}}$ and $\\sqrt{a^{2}+(2b)^{2}}$ units. What is the area (in unit squares) of a triangle?",
+                options: ["$\\frac{5}{2}ab$", "3ab", "4ab", "$\\frac{3}{2}ab$"],
+                correctIndex: 3, // (d)
+                solution: "Let $a=b=2~units$<br> $BC=\\sqrt{a^{2}+b^{2}}=2\\sqrt{2}$ units<br> $AB=\\sqrt{(2a)^{2}+b^{2}}=2\\sqrt{5}$ units<br> $AC=\\sqrt{a^{2}+(2b)^{2}}=2\\sqrt{5}$ units<br>It becomes an isosceles triangle as below.<br> $AD=\\sqrt{(2\\sqrt{5})^{2}-{(\\sqrt{2})}^{2}}=3\\sqrt{2}units$<br>Area of triangle $=\\frac{1}{2}\\times2\\sqrt{2}\\times3\\sqrt{2}=6$ sq units<br>In option (d), $\\frac{3}{2}ab=\\frac{3}{2}\\times2\\times2=6$"
+            },
+            {
+                id: 58,
+                meta: "",
+                question: "A square park has been divided into two rectangles of equal area. If the perimeter of each of these rectangles is 39 m, then what will be the perimeter of the square park?",
+                options: ["104 m", "39 m", "78 m", "52 m"],
+                correctIndex: 3, // (d)
+                solution: "Let the side of $square=a$<br> $AB=BC=CD=DA=EF=a$<br>Perimeter of rectangle ADEF + Perimeter of rectangle $BCEF=39+39=78$<br> $AB+BC+CD+DA+EF+EF=78$<br> $6a=78~cm\\Rightarrow a=13~cm$<br>Perimeter of $Square=4a=52~cm$"
+            },
+            {
+                id: 59,
+                meta: "",
+                question: "The circumference of a circle is 'a$\\pi$' units and the area of the circle is 'b$\\pi$' square units. If a:b is equal to 4:5, then the radius of the circle is:",
+                options: ["3 cm", "2.5 cm", "5 cm", "2 cm"],
+                correctIndex: 1, // (b)
+                solution: "Circumference of a $circle=a\\pi$<br> $2\\pi r=a\\pi\\Rightarrow2r=a$<br> $Area=b\\pi\\Rightarrow\\pi r^{2}=b\\pi\\Rightarrow b=r^{2}$<br> $a:b=2r:r^{2}$ or $2:r$<br> $4:5=2:r\\Rightarrow r=2.5~cm$"
+            },
+            {
+                id: 60,
+                meta: "",
+                question: "The area of a triangular field whose sides are 65m, 72m and 97m is equal to the area of a rectangular park whose sides are in the ratio of 5:13. What is the perimeter (in m) of the rectangular park?",
+                options: ["108", "180", "216", "144"],
+                correctIndex: 2, // (c)
+                solution: "65 m, 72 m and 97 m are triplets of a right - angled triangle.<br>So area of triangular park $=\\frac{1}{2}\\times65\\times72=2340$<br>Let sides of the rectangle be 5x and 13x.<br>Area of rectangle $=65x^{2}$<br>ATQ, $65x^{2}=2340\\Rightarrow x=6$<br>Perimeter of rectangle $=2(5x+13x) =36x=216~m$"
+            },
+            {
+                id: 61,
+                meta: "",
+                question: "A bicycle wheel has a radius of 42 cm. It makes 40 revolutions in 25 seconds. What is its speed (in kmph, up to one decimal place)?",
+                options: ["3.5", "11.6", "15.2", "9.5"],
+                correctIndex: 2, // (c)
+                solution: "Radius of bicycle $=0.42~m$<br>Distance travelled in 25 seconds $=2~\\pi r\\times40\\Rightarrow2\\times\\frac{22}{7}\\times0.42\\times40 =105.6m$<br>Speed of bicycle $(in~m/s)=\\frac{105.6}{25} =4.224$<br>Speed of bicycle $(in~kmph)=4.224\\times\\frac{18}{5} =15.2$"
+            },
+            {
+                id: 62,
+                meta: "",
+                question: "A wire is bent to form a square of area $169~cm^{2}$. If the same wire is bent to form a circle, then what is its area in $cm^{2}$ (to the nearest whole number)?",
+                options: ["215", "227", "532", "531"],
+                correctIndex: 0, // (a)
+                solution: "Area of the square $=a^{2}=169$. So, $a=13$, $Perimeter=4a=4\\times13=52$<br>Circumference of the circle $=2\\pi r=52$<br> $r=\\frac{7}{44}\\times52=\\frac{91}{11}$<br> $Area=\\pi r^{2}=\\frac{22}{7}\\times\\frac{91}{11}\\times\\frac{91}{11} =\\frac{2366}{11}=215.09\\approx215~cm^{2}$"
+            },
+            {
+                id: 63,
+                meta: "",
+                question: "A sector of radius 10.5 cm with the central angle $120^{\\circ}$ is folded to form a cone by joining the two bounding radii of the sector. What is the volume $(in~cm^{3})$ of the cone so formed?",
+                options: ["$\\frac{343\\sqrt{2}}{6}\\pi$", "$\\frac{343\\sqrt{3}}{6}\\pi$", "$\\frac{343\\sqrt{3}}{12}\\pi$", "$\\frac{343\\sqrt{2}}{12}\\pi$"],
+                correctIndex: 3, // (d)
+                solution: "Slant height of the cone = radius of the sector<br>And $\\frac{\\theta}{360}\\times$ perimeter of the circle = perimeter of the base of the cone<br>Let the radius of cone = r<br> $\\frac{120}{360}\\times2\\times\\pi\\times10.5=2\\times\\pi\\times r \\Rightarrow r=3.5$<br>Height of the $cone=\\sqrt{l^{2}-r^{2}} =\\sqrt{(10.5)^{2}-(3.5)^{2}}=7\\sqrt{2}$<br>Volume of the cone $=\\frac{1}{3}\\times\\pi\\times3.5\\times3.5\\times7\\sqrt{2} =\\frac{343\\sqrt{2}}{12}\\pi~cm^{3}$"
+            },
+            {
+                id: 64,
+                meta: "",
+                question: "The base of a right prism is a triangle with sides 20 cm, 21 cm and 29 cm. If its volume is $7560cm^{3}$ then its lateral surface area $(in~cm^{2})$ is:",
+                options: ["2484", "2556", "2520", "2448"],
+                correctIndex: 2, // (c)
+                solution: "20, 21 and 29 are triplet pairs, clearly a given triangle is a right angle triangle.<br>Area of the triangle $=\\frac{1}{2}\\times20\\times21 =210~cm^{2}$<br>Volume of the $prism=Base~Area\\times Height \\Rightarrow7560=210\\times Height\\Rightarrow Height=36$<br>Lateral surface area of the prism $=Base~perimeter\\times Height =(20+21+29)\\times36=2520~cm^{2}$"
+            },
+            {
+                id: 65,
+                meta: "",
+                question: "If the radius of a sphere is increased by 4 cm, its surface area is increased by $464\\pi cm^{2}$ What is the volume $(in~cm^{3})$ of the original sphere?",
+                options: ["$\\frac{15625}{6}\\pi$", "$\\frac{35937}{8}\\pi$", "$\\frac{11979}{2}\\pi$", "$\\frac{15625}{8}\\pi$"],
+                correctIndex: 0, // (a)
+                solution: "Let the original radius be r.<br>According to the question<br> $4\\pi(r+4)^{2}=4\\pi r^{2}+464\\pi \\Rightarrow r^{2}+16+8r=r^{2}+116\\Rightarrow r=12.5$<br> $volume~of~the~sphere=\\frac{4}{3}\\pi r^{3} =\\frac{4}{3}\\times12.5\\times12.5\\times12.5\\times\\pi =\\frac{15625}{6}\\pi cm^{3}$"
+            },
+            {
+                id: 66,
+                meta: "",
+                question: "The base of right prism is a trapezium whose parallel sides are 11 cm and 15cm and the distance between them is 9 cm. If the volume of the prism is 1731.6 $cm^{3}$ then the height (in cm) of the prism will be:",
+                options: ["15.6", "15.2", "14.8", "14.2"],
+                correctIndex: 2, // (c)
+                solution: "Volume of $prism=base~area\\times height$<br> $1731.6=\\frac{1}{2}\\times(15+11)\\times9\\times height \\Rightarrow height=14.8$"
+            },
+            {
+                id: 67,
+                meta: "",
+                question: "A ribbon of equal width and length I is wrapped around the curved surface of a right circular cylinder to cover it completely. If the base circumference of this cylinder is c, then how many times the ribbon was wrapped around the cylinder",
+                options: ["$\\frac{l}{4c}$", "$\\frac{l}{c}$", "$\\frac{1}{2c}$", "$\\frac{2l}{c}$"],
+                correctIndex: 1, // (b)
+                solution: "Let n be the number of turns.<br>Total length of the ribbon = number of turns x circumference of the base of cylinder<br> $l=n\\times c\\Rightarrow n=\\frac{l}{c}$"
+            },
+            {
+                id: 68,
+                meta: "",
+                question: "ABCD is a rhombus with each side being equal to 8 cm. If $BD=10$ cm, $AC= 2\\sqrt{x}$ cm, what is the value of $\\sqrt{x+10}?$",
+                options: ["$2\\sqrt{3}$", "$3\\sqrt{2}$", "7", "5"],
+                correctIndex: 2, // (c)
+                solution: "$BO=\\frac{BD}{2}=\\frac{10}{2}=5$<br> $AO=\\frac{AC}{2}=\\frac{2\\sqrt{x}}{2}=\\sqrt{x}$<br>Now, $AB^{2}=AO^{2}+BO^{2}$<br> $8^{2}=(\\sqrt{x})^{2}+5^{2}\\Rightarrow x=39$<br> $\\sqrt{x+10}\\Rightarrow\\sqrt{39+10}=7~cm$"
+            },
+            {
+                id: 69,
+                meta: "",
+                question: "The two diagonals of a rhombus are respectively, 14 cm and 48 cm. The perimeter of the rhombus is equal to:",
+                options: ["120cm", "160cm", "80cm", "100cm"],
+                correctIndex: 3, // (d)
+                solution: "Perimeter of rhombus $=2\\sqrt{d_{1}^{2}+d_{2}^{2}}=2\\sqrt{14^{2}+48^{2}}=100~cm$"
+            },
+            {
+                id: 70,
+                meta: "",
+                question: "The area of a sector of a circle with central angle $60^{\\circ}$ is A. The circumference of the circle is C. Then A is equal to:",
+                options: ["$\\frac{c^{2}}{6\\pi}$", "$\\frac{c^{2}}{18\\pi}$", "$\\frac{c^{2}}{24\\pi}$", "$\\frac{c^{2}}{4\\pi}$"],
+                correctIndex: 2, // (c)
+                solution: "Circumference of the $circle(C) =2\\pi r\\Rightarrow r=\\frac{C}{2\\pi}$<br>Area of the sector $(A)=\\frac{60}{360}\\times\\pi\\times r^{2} =\\frac{1}{6}\\times\\pi\\times(\\frac{c}{2\\pi})^{2}\\Rightarrow\\frac{c^{2}}{24\\pi}$"
+            },
+            {
+                id: 71,
+                meta: "",
+                question: "Equilateral triangles are drawn on the hypotenuse and one of the perpendicular sides of a right-angled isosceles triangle. Their areas are H and A respectively. $\\frac{A}{H}$ is equal to:",
+                options: ["$\\frac{1}{4}$", "$\\frac{1}{2}$", "$\\frac{1}{\\sqrt{2}}$", "$\\frac{1}{\\sqrt[2]{2}}$"],
+                correctIndex: 1, // (b)
+                solution: "Let the length of the perpendicular and base of the right angle triangle is a cm.<br> $\\rightarrow$ Hypotenuse of the $triangle=a\\sqrt{2}$<br>Area of A formed on hypotenuse(H) $=\\frac{\\sqrt{3}}{4}\\times(a\\sqrt{2})^{2}=\\frac{\\sqrt{3}a^{2}}{2}$<br>Area of A formed on perpendicular(A) $=\\frac{\\sqrt{3}a^{2}}{4}\\Rightarrow\\frac{A}{H}=\\frac{\\frac{\\sqrt{3}a^{2}}{4}}{\\frac{\\sqrt{3}a^{2}}{2}}=\\frac{1}{2}$"
+            },
+            {
+                id: 72,
+                meta: "",
+                question: "Twelve sticks, each of length one unit, are used to form an equilateral triangle. The area of the triangle is:",
+                options: ["$3\\sqrt{3}$", "$2\\sqrt{3}$", "$4\\sqrt{3}$", "$8\\sqrt{3}$"],
+                correctIndex: 2, // (c)
+                solution: "Since it is an equilateral triangle. Each side will be formed of 4 sticks and its length will be 4 units.<br>Area of the equilateral triangle $=\\frac{\\sqrt{3}}{4}\\times4\\times4=4\\sqrt{3}$"
+            },
+            {
+                id: 73,
+                meta: "",
+                question: "If the length of a rectangle is decreased by 11% and the breadth is increased by 11%, its area will undergo:",
+                options: ["13.13% increase", "1.21% increase", "1.21%decrease", "13.13% decrease"],
+                correctIndex: 2, // (c)
+                solution: "% age change in the area $=(-11)+11+\\frac{(-11)\\times(11)}{100}=-1.21\\%.$<br>Here, -ve sign indicates that the area is decreasing."
+            },
+            {
+                id: 74,
+                meta: "",
+                question: "In triangle ABC, the length of BC is less than twice the length of AB by 2 cm. The length of AC exceeds the length of AB by 10 cm. The perimeter is 32cm. The length (in cm) of the smallest side of the triangle is:",
+                options: ["4", "10", "8", "6"],
+                correctIndex: 3, // (d)
+                solution: "Let $AB=a~cm$<br> $AC=a+10\\Rightarrow BC=2a-2$<br>According to the question<br> $a+a+10+2a-2=32\\Rightarrow4a=24$<br> $a=6$ cm<br> $AC=6+10=16~cm$<br> $BC=2(6)-2=10~cm$<br>Clearly AB is the smallest side."
+            },
+            {
+                id: 75,
+                meta: "",
+                question: "The parallel sides of a trapezium are 20 cm and 10 cm and its non-parallel sides are equal to each other. If its area is 180 $cm^{2},$ then what is the length (in cm) of each non parallel side?",
+                options: ["11", "13", "12", "15"],
+                correctIndex: 1, // (b)
+                solution: "Let ABCD be the given trapezium. And AE be its height.<br>Area of trapezium $=\\frac{1}{2}\\times(CD+AB)AE$<br> $180=\\frac{1}{2}\\times(20+10)AE$<br> $AE=12~cm~Draw~AF||BC$<br> $\\Rightarrow AB=FC=10$ cm and $AF=BC$<br> $\\Rightarrow DF=DC-FC=20-10=10~cm$<br> $In\\Delta ADF\\Rightarrow AF=AD$ .... (AD = BC, given)<br> $DE=EF=\\frac{DF}{2}=5~cm$<br>(Perpendicular drawn on the base of an isosceles triangle)<br> $AF^{2}=AE^{2}+EF^{2}$, $AF=\\sqrt{AE^{2}+EF^{2}} =\\sqrt{12^{2}+5^{2}}=13$<br>Hence $AD=BC=13cm$"
+            },
+            {
+                id: 76,
+                meta: "",
+                question: "The length of a rectangular park is 20m more than its breadth. If the cost of fencing the park at Rs. 53 per metre is Rs. 21,200, then what is the area (In square metres) of the park?",
+                options: ["9504", "8925", "9240", "9900"],
+                correctIndex: 3, // (d)
+                solution: "Let the breadth of the rectangle = b<br>Length of the rectangle $(l)=b+20$<br>Perimeter of the $rectangle=2(b+b+20) =4(b+10)$<br>According to the question<br> $4(b+10)\\times53=21200$<br> $b+10=100\\Rightarrow b=90~m$<br> $l=90+20=110~m$<br>Area of the $rectangle=90\\times110=9900{m}^{2}$"
+            },
+            {
+                id: 77,
+                meta: "",
+                question: "A wire is in the shape of a rectangle whose sides are in the ratio 7: 4. It was initially in the shape of a circle of radius, very nearly equal to 31.5 cm. The length of smaller side of the rectangle is : (Take $\\pi=\\frac{22}{7})$",
+                options: ["44 cm", "36 cm", "40 cm", "32cm"],
+                correctIndex: 1, // (b)
+                solution: "Let the sides of the rectangle are 7x and 4x.<br>Perimeter of $rectangle=2(7x+4x)=22x$<br>Perimeter of circle $=2\\pi r\\Rightarrow2\\times\\frac{22}{7}\\times31.5$<br>According to the question<br> $22x=2\\times\\frac{22}{7}\\times31.5\\Rightarrow x=9$<br>Smaller side of rectangle = 4x $=4\\times9=36$ cm"
+            },
+            {
+                id: 78,
+                meta: "",
+                question: "A circle circumscribes a rectangle whose sides are in the ratio 4: 3. If the perimeter of the rectangle is 56 cm, then what is the area (In square cm) of the circle?",
+                options: ["70$\\pi$", "96$\\pi$", "90$\\pi$", "100$\\pi$"],
+                correctIndex: 3, // (d)
+                solution: "Let the sides be 4 units and 3 units.<br>According to the question<br> $2(4~unit+3~unit)=56$<br>1 unit = 4 cm, 4 unit = 16 cm, $3~unit=12~cm$<br>Diagonal of Rectangle = Diameter of circle $=\\sqrt{AB^{2}+BC^{2}}=\\sqrt{16^{2}+12^{2}}=20~cm$<br>Radius of the $circle=\\frac{20}{2}=10~cm$<br>Area of circle $=\\pi r^{2}=\\pi10^{2}=100\\pi$"
+            },
+            {
+                id: 79,
+                meta: "",
+                question: "The curved surface area and volume of a cylindrical pole are 132 square metres and 528 cubic metres, respectively. What is the height (In m) of the pole ? (Taken $\\pi=\\frac{22}{7})$",
+                options: ["$2\\frac{1}{2}$", "$3\\frac{5}{8}$", "$3\\frac{1}{2}$", "$2\\frac{5}{8}$"],
+                correctIndex: 3, // (d)
+                solution: "Curved Surface area of $cylinder=2\\pi rh$<br>Volume of cylinder $=\\pi r^{2}h$<br>According to the question<br> $2\\pi rh=132......(1)$<br> $\\pi r^{2}h = 528......(2)$<br>Dividing eq 2 by eq 1, $r=8cm$<br>Put r = 8 in eq (1)<br> $2\\pi rh=132$<br> $2\\times\\frac{22}{7}\\times8\\times h=132\\Rightarrow h=2\\frac{5}{8}m$"
+            },
+            {
+                id: 80,
+                meta: "",
+                question: "The area of a field in the shape of a hexagon is $2400\\sqrt{3}$ square meters. What will be the cost(Rs.) of fencing it at Rs. 18.50 per meter?",
+                options: ["4440", "5920", "5550", "5180"],
+                correctIndex: 0, // (a)
+                solution: "Area of Hexagon $=6\\times\\frac{\\sqrt{3}}{4}a^{2}$<br>Here, $6\\times\\frac{\\sqrt{3}}{4}a^{2}=2400\\sqrt{3}$,<br> $a^{2}=1600$ , $a=40$<br>Perimeter of the hexagonal $field=6a$<br> $6\\times40=240$ metre<br>Required cost of $fencing=240\\times18.5 =Rs.4440$"
+            },
+            {
+                id: 81,
+                meta: "",
+                question: "Six cubes, each of edge 2 cm, are joined end to end. What is the total surface area of the resulting cuboid",
+                options: ["$96cm^{2}$", "$144cm^{2}$", "$104cm^{2}$", "$128cm^{2}$"],
+                correctIndex: 2, // (c)
+                solution: "One of the sides of newly formed cuboid $=6\\times2=12~cm$<br>Other two sides will be 2 cm.<br>Surface area of $cuboid=2(lb+bh+hl)$<br> $=2(12\\times2+2\\times2+2\\times12)=104~cm^{2}$"
+            },
+            {
+                id: 82,
+                meta: "",
+                question: "The radius of a sphere is reduced by 40%. By what percent, will its volume decrease?",
+                options: ["60%", "64%", "72.5%", "78.4%"],
+                correctIndex: 3, // (d)
+                solution: "40% = $\\frac{2}{5}$<br>Old : New<br>Radius $\\rightarrow$ 5 : 3<br> $Volume(\\alpha r^{3})\\rightarrow125$ : 27<br>Let the volumes are 125 unit and 27 unit<br>Required $\\%=\\frac{125-27}{125}\\times100=78.4\\%$"
+            },
+            {
+                id: 83,
+                meta: "",
+                question: "The area of a field in the shape of a triangle with each side x meter is equal to the area of another triangular field having sides 50m, 70m and 80m. The value of x is closest to:",
+                options: ["65.5", "63.2", "62.4", "61.8"],
+                correctIndex: 1, // (b)
+                solution: "Area of triangular field with $side~x~m=\\frac{\\sqrt{3}}{4}x^{2}$<br>Area of other triangular field $=\\sqrt{s(s-a)(s-b)(s-c)}$<br>Where $s=\\frac{a+b+c}{2} \\Rightarrow\\frac{50+70+80}{2}=100~m$<br>Area of field = $\\sqrt{100(100-50)(100-70)(100-80)} =\\sqrt{100\\times50\\times30\\times20}=1000\\sqrt{3}m^{2}$<br>According to question, $\\frac{\\sqrt{3}}{4}x^{2}=1000\\sqrt{3}$<br> $x^{2}=4000\\Rightarrow x=63.25~m$"
+            },
+            {
+                id: 84,
+                meta: "",
+                question: "A sector is cut out from a circle of diameter 42 cm. If the angle of the sector is $150^{\\circ}$, then its area (in square cm) is: (Take $\\pi=\\frac{22}{7})$",
+                options: ["564", "574", "580.6", "577.5"],
+                correctIndex: 3, // (d)
+                solution: "Area of Sector $=\\frac{\\theta}{360^{\\circ}}\\times\\pi r^{2}$<br> $=\\frac{150}{360}\\times\\frac{22}{7}\\times21^{2}=577.5~cm^{2}$"
+            },
+            {
+                id: 85,
+                meta: "",
+                question: "The radii of three concentric circles are in the ratio of 4:5:7. What is the ratio of the area between the two inner circles to that between the two outer circles?",
+                options: ["4:7", "5:9", "4:5", "3:8"],
+                correctIndex: 3, // (d)
+                solution: "Area of circle is $\\propto r^{2}$.<br>$\\rightarrow$ Area of three circles will be $4^{2}$, $5^{2}$, $7^{2}$<br>Desired Ratio = $(5^{2}-4^{2}):(7^{2}-5^{2})$<br> $=9:24=3:8$"
+            },
+            {
+                id: 86,
+                meta: "",
+                question: "The length of the metallic pipe is 7.56 m. Its external and internal radii are 2.5 cm and 1.5 cm respectively. If 1 cubic cm of the metal weigh 7.5 g, then the weight(kg) of the pipe is",
+                options: ["72.82", "70.14", "71.28", "69.68"],
+                correctIndex: 2, // (c)
+                solution: "Volume of a $cylinder=\\pi(R^{2}-r^{2})h$<br>Where $R=$ external radius, $r=$ internal radius, $h=$ height or length of the cylinder<br> $Volume=\\frac{22}{7}\\times(2.5^{2}-1.5^{2})\\times756$<br> $=22\\times(2.5+1.5)(2.5-1.5)\\times108 =9504~cm^{3}$<br>Total Weight of pipe = Volume of pipe x density of metal<br> $=9504\\times7.5=71280$ g or 71.28 kg"
+            },
+            {
+                id: 87,
+                meta: "",
+                question: "The volume of a metallic cylindrical pipe is $7480~cm^{3}.$ If its length is 1.4 m and its external radius is 9 cm, then its thickness (given $\\pi=\\frac{22}{7})$ is:",
+                options: ["1 cm", "0.8 cm", "0.9 cm", "1.2cm"],
+                correctIndex: 0, // (a)
+                solution: "Volume of a $cylinder=\\pi(R^{2}-r^{2})h$<br>Where $R=$ external radius, $r=$ internal radius, $h=$ height or length of the cylinder<br> $7480=\\frac{22}{7}\\times(9^{2}-r^{2})\\times140$<br> $17=81-r^{2}\\Rightarrow r^{2}=64\\Rightarrow r=8~cm$<br> $Thickness=9-8=1cm$"
+            },
+            {
+                id: 88,
+                meta: "",
+                question: "The areas of the three adjacent faces of a cuboid are $32cm^{2}, 24cm^{2}$ and $48cm^{2}$ What is the volume $(in~cm^{3})$ of the cuboid?",
+                options: ["192", "256", "288", "128"],
+                correctIndex: 0, // (a)
+                solution: "Volume of cuboid $=\\sqrt{a\\times b\\times c}$<br>Here a, b and c are the area of three faces<br> $=\\sqrt{32\\times24\\times48}=192~cm^{3}$"
+            },
+            {
+                id: 89,
+                meta: "",
+                question: "The area of a triangle is 15 sq cm and the radius of its incircle is 3 cm. Its perimeter is equal to:",
+                options: ["12 cm", "20 cm", "5 cm", "10 cm"],
+                correctIndex: 3, // (d)
+                solution: "We know that $Inradius=\\frac{area}{semiperimeter}$<br> $3=\\frac{15}{semiperimeter}\\Rightarrow Semiperimeter=5$<br>Perimeter $=2\\times5=10~cm$"
+            },
+            {
+                id: 90,
+                meta: "",
+                question: "How much iron sheet $(in~m^{2})$ will be needed to construct a rectangular tank measuring $10~m\\times8~m\\times6~m$, if a circular opening of radius one meter is to be left at the top of the tank? (correct to one decimal place)",
+                options: ["371.6", "370.4", "372.9", "370.8"],
+                correctIndex: 2, // (c)
+                solution: "Required area of $sheet=Total$ surface area of rectangular tank - Area of circular opening<br> $=2\\times(80+48+60)-\\pi\\times1^{2}$<br> $=376-3.14=372.86 \\approx 372.9~m^{2}$"
+            },
+            {
+                id: 91,
+                meta: "",
+                question: "A solid cube of volume $13824~cm^{3}$ is cut into 8 cubes of equal volumes. The ratio of the surface area of the original cube to the sum of the surface areas of three of the smaller cubes is:",
+                options: ["2:3", "4:3", "8:3", "2:1"],
+                correctIndex: 1, // (b)
+                solution: "Let side of bigger $cube=R$<br> $R^{3}=13824\\Rightarrow R=\\sqrt[3]{13824}=24$<br>Let side of smaller cubes = r<br> $13824=8\\times r^{3}\\Rightarrow1728=r^{3}\\Rightarrow12=r$<br> $Required~ratio=(6\\times24^{2}):(3\\times6\\times12^{2}) =4:3$"
+            },
+            {
+                id: 92,
+                meta: "",
+                question: "The unequal side of an isosceles triangle is 2cm. The medians drawn to the equal sides are perpendicular. The area of the triangle is:",
+                options: ["$2cm^{2}$", "$3cm^{2}$", "$5cm^{2}$", "$1cm^{2}$"],
+                correctIndex: 1, // (b)
+                solution: "$\\triangle OBC, OB=OC=x\\Rightarrow BC=2$<br> $x^{2}+x^{2}=2^{2}\\Rightarrow x^{2}=2\\Rightarrow x=\\sqrt{2}$<br>In $\\triangle OBD, BD=1\\Rightarrow OB=\\sqrt{2}$<br> $OD=\\sqrt{(\\sqrt{2})^{2}-1^{2}}=1$<br>Now, $AO=2\\times0D\\Rightarrow2\\times1=2$<br> $AD=AO+OD=3$<br>Area of $\\Delta ABC=\\frac{1}{2}\\times3\\times2=3~cm^{2}$"
+            },
+            {
+                id: 93,
+                meta: "",
+                question: "A steel vessel has a base of length 60 cm and breadth 30 cm. Water is poured in the vessel. A cubical steel box having an edge of 30 cm is immersed completely in the vessel. By how much will the water rise?",
+                options: ["12 cm", "15 cm", "10 cm", "9 cm"],
+                correctIndex: 1, // (b)
+                solution: "Volume of cubical box $=30\\times30\\times30=27000~cm^{3}$<br>Required rise in water level $=\\frac{27000}{60\\times30}=15~cm$"
+            },
+            {
+                id: 94,
+                meta: "",
+                question: "Original breadth of a rectangular box is 20cm. The box was then remade in such a way that its length increased by 30% but the breadth decreased by 20% and the area increased by $100~cm^{2}$ What is the new area(in $cm^{2})$ of the box?",
+                options: ["2500", "2200", "2600", "2400"],
+                correctIndex: 2, // (c)
+                solution: "Old: New<br> $Length\\rightarrow10:13$<br> $Breadth\\rightarrow5:4$<br>Area $\\rightarrow50:52$<br> $52-50=2~unit=100\\Rightarrow1~unit=50$<br>New $area=52\\times50=2600~cm^{2}$"
+            },
+            {
+                id: 95,
+                meta: "",
+                question: "Find the cost of carpeting a room which is 11m long and 6m broad by a carpet which is 60cm broad at the rate of rs 112.50 per meter.",
+                options: ["12,375", "13,280", "11,695", "12,040"],
+                correctIndex: 0, // (a)
+                solution: "Required Cost $=\\frac{11\\times6\\times100}{60}\\times112.50=12,375$"
+            },
+            {
+                id: 96,
+                meta: "",
+                question: "A field is $119m\\times18m$ in dimension. A tank $17m\\times6m\\times3m$ is dug out in the middle and the soil removed is evenly spread over the remaining part of the field. The increase in the level on the remaining part of the field is: (in cm)",
+                options: ["14 cm", "13 cm", "15 cm", "12 cm"],
+                correctIndex: 2, // (c)
+                solution: "Remaining area $=119\\times18-17\\times6=2040$<br>Volume of $sand=17\\times6\\times3=306$<br>Required height $=\\frac{306\\times100\\times100\\times100}{2040\\times100\\times100}=15~cm$"
+            },
+            {
+                id: 97,
+                meta: "",
+                question: "A swimming pool is 40 m in length, 30 m in breadth and 2.2 m in depth. The cost of cementing its floor and the four sides at Rs. $25/m^{2}$ is:",
+                options: ["Rs.43,980", "Rs.37540", "Rs.34260", "Rs.37700"],
+                correctIndex: 3, // (d)
+                solution: "Total area to be painted $=40\\times30+2(40\\times2.2+30\\times2.2)=1508$<br>Total $cost=1508\\times25=37700$"
+            },
+            {
+                id: 98,
+                meta: "",
+                question: "A square cardboard with side 3 m is folded through one of its diagonal to make a triangle, the height(m) of the triangle is:",
+                options: ["$\\frac{3}{\\sqrt{2}}$", "$2\\sqrt{3}$", "$3\\sqrt{2}$", "$\\frac{2}{\\sqrt{3}}$"],
+                correctIndex: 0, // (a)
+                solution: "Since, the height of the triangle formed will be half of the diagonal of the square.<br>Therefore, $Height=\\frac{3\\sqrt{2}}{2}=\\frac{3}{\\sqrt{2}}m$"
+            },
+            {
+                id: 99,
+                meta: "",
+                question: "If the area of a regular hexagon is $108\\sqrt{3}cm^{2}$ its perimeter (in cm) is:",
+                options: ["$36\\sqrt{2}$", "$42\\sqrt{3}$", "$28\\sqrt{3}$", "24"],
+                correctIndex: 0, // (a)
+                solution: "ATQ, $\\frac{3\\sqrt{3}}{2}\\times a^{2}=108\\sqrt{3}\\Rightarrow a=6\\sqrt{2}$<br> $\\therefore Perimeter=6\\times6\\sqrt{2}=36\\sqrt{2}cm$"
+            },
+            {
+                id: 100,
+                meta: "",
+                question: "A square piece of cardboard with side 12 cm has a small square of 2 cm cut out from each of the corners. The resulting flaps are turned up to make a box 2 cm deep. The volume $(in~cm^{3})$ of the box is:",
+                options: ["128", "94", "102", "11"],
+                correctIndex: 0, // (a)
+                solution: "$Volume=(12-4)\\times(12-4)\\times2 =8\\times8\\times2=128~cu.cm$"
+            },
+            {
+                id: 101,
+                meta: "",
+                question: "The area $(in~cm^{2})$ of a right angled triangle having base 24 cm and hypotenuse 25 cm is:",
+                options: ["72", "108", "92", "84"],
+                correctIndex: 3, // (d)
+                solution: "Given, in a right angle triangle<br>Hypotenuse = 25, $Base=24$<br>Then, $Height=7$<br> $\\therefore Area=\\frac{1}{2}\\times24\\times7=84~cm^{2}$"
+            },
+            {
+                id: 102,
+                meta: "",
+                question: "The length of the longest pole that can be placed in a room 16 m long, 8 m wide and 11 m high is:",
+                options: ["21 m", "20 m", "18 m", "19 m"],
+                correctIndex: 0, // (a)
+                solution: "Longest $pole=\\sqrt{16^{2}+8^{2}+11^{2}}=21m$"
+            },
+            {
+                id: 103,
+                meta: "",
+                question: "If the height of an equilateral triangle is $10\\sqrt{3}$ cm, the area $(in~cm^{2})$",
+                options: ["$124\\sqrt{3}$", "$75\\sqrt{3}$", "$80\\sqrt{3}$", "$100\\sqrt{3}$"],
+                correctIndex: 3, // (d)
+                solution: "$\\frac{\\sqrt{3}}{2}a=10\\sqrt{3}\\Rightarrow a=20$<br> $Area=\\frac{\\sqrt{3}}{4}a^{2}$<br> $=\\frac{\\sqrt{3}}{4}\\times20\\times20=100\\sqrt{3}cm^{2}$"
+            },
+            {
+                id: 104,
+                meta: "",
+                question: "The dimensions of a swimming pool are 66m x 35m x 3m. How many hours will it take to fill the pool by a pipe of diameter 35 cm with water flowing at speed $8~m/s$?",
+                options: ["2.75 h", "3.5 h", "2.5 h", "3.2 h"],
+                correctIndex: 2, // (c)
+                solution: "$Required~time=\\frac{66\\times35\\times3}{\\frac{22}{7}\\times\\frac{35}{200}\\times\\frac{35}{200}\\times8}$<br> $=9000~sec=2.5~h$"
+            },
+            {
+                id: 105,
+                meta: "",
+                question: "Which of the following has the maximum number of vertices?",
+                options: ["Cuboid", "Triangular Prism", "Hexagonal pyramid", "Tetrahedron"],
+                correctIndex: 0, // (a)
+                solution: "In the given solid figures. Cuboid has the maximum no. of vertex i.e. 8."
+            },
+            {
+                id: 106,
+                meta: "",
+                question: "A diagonal of a quadrilateral is 40 cm. The length of the perpendicular to the opposite ends is 7.5 cm and 8.6 cm. What is the area (in $cm^{2})$ of quadrilateral?",
+                options: ["434", "322", "368", "28"],
+                correctIndex: 1, // (b)
+                solution: "$Area=20\\times(7.5+8.6)=322~cm^{2}$"
+            },
+            {
+                id: 107,
+                meta: "",
+                question: "The area of each square of a chessboard having 64 squares is $4~cm^{2}$ . If there is a border on all the sides of the chessboard of 2 cm, then the perimeter of the chessboard is:",
+                options: ["128cm", "80cm", "70cm", "256cm"],
+                correctIndex: 1, // (b)
+                solution: "Since the chessboard is composed of 64 squares of side 2cm and the border is of thickness 2 cm.<br>Therefore, the length of each side of $chessboard=2\\times8+4=20$<br>So, the $perimeter=4\\times20=80~cm$"
+            },
+            {
+                id: 108,
+                meta: "",
+                question: "The sides of a triangle are 24cm, 45cm and 51cm. At each of its vertices, circles of radius 10.5cm are drawn. What is the area of the triangle, excluding the portion covered by sectors of the circles?",
+                options: ["$244.75cm^{2}$", "$366.75cm^{2}$", "$464.75cm^{2}$", "$327.75cm^{2}$"],
+                correctIndex: 1, // (b)
+                solution: "Given triangle is a right angled triangle:<br>Area of triangle $=\\frac{1}{2}\\times24\\times45=540$<br>Area of all sectors of the circle covering the triangle $=\\frac{180}{360}\\times\\frac{22}{7}\\times10.5\\times10.5 =173.25$<br>Therefore, Area of triangle excluding the portion $covered=540-173.25 =366.75~sq.cm$"
+            },
+            {
+                id: 109,
+                meta: "",
+                question: "The radius of a cylinder is increased by 150% and its height is decreased by 20%. What is the percentage increase in its volume?",
+                options: ["400%", "600%", "500%", "80%"],
+                correctIndex: 0, // (a)
+                solution: "Old: New<br>Radius $2^{2} : 5^{2}$<br>Height $5 : 4$<br>Volume 20 : 100<br>Required $\\%=\\frac{100-20}{20}\\times100=400\\%$"
+            }
+        ]; 
+
+        // Custom lightweight LaTeX to HTML parser
+        function parseLaTeX(str) {
+            if (!str) return '';
+            let res = str.replace(/\$/g, ''); // Remove $ signs
+            
+            // 1. Replace text symbols
+            const symbols = {
+                '\\\\pi': 'π', '\\\\theta': 'θ', '\\\\circ': '°', '\\\\times': '×', 
+                '\\\\Rightarrow': '⇒', '\\\\rightarrow': '→', '\\\\approx': '≈', 
+                '\\\\Delta': 'Δ', '\\\\triangle': 'Δ', '\\\\cdot': '·', '\\\\alpha': '∝',
+                '\\\\sin': 'sin', '\\\\cos': 'cos', '\\\\tan': 'tan'
+            };
+            for (let key in symbols) res = res.replace(new RegExp(key, 'g'), symbols[key]);
+
+            // 2. Run replacements to handle nesting (like roots inside fractions)
+            for (let i = 0; i < 3; i++) {
+                // Superscripts & Subscripts
+                res = res.replace(/\^\{([^{}]+)\}/g, '<sup>$1</sup>');
+                res = res.replace(/\^([a-zA-Z0-9])/g, '<sup>$1</sup>');
+                res = res.replace(/_\{([^{}]+)\}/g, '<sub>$1</sub>');
+                res = res.replace(/_([a-zA-Z0-9])/g, '<sub>$1</sub>');
+                
+                // N-th Roots: \sqrt[n]{x}
+                res = res.replace(/\\sqrt\[([^{}]+)\]\{([^{}]+)\}/g, '<sup>$1</sup><span class="math-sqrt"><span>$2</span></span>');
+                
+                // Square Roots: \sqrt{x}
+                res = res.replace(/\\sqrt\{([^{}]+)\}/g, '<span class="math-sqrt"><span>$1</span></span>');
+                
+                // Fractions: \frac{a}{b}
+                res = res.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '<span class="math-frac"><span>$1</span><span>$2</span></span>');
+            }
+            
+            // Clean up remaining stray backslashes
+            res = res.replace(/\\/g, '');
+            return res;
+        }
+
+        let currentIndex = 0;
+        let userAnswers = [];
+        let reviewMarks = [];
+        let isSubmitted = false;
+        let currentFilter = 'all';
+
+        function init() {
+            if (quizData.length === 0) {
+                alert("Please add your quizData array to the script!");
+                return;
+            }
+            userAnswers = new Array(quizData.length).fill(null);
+            reviewMarks = new Array(quizData.length).fill(false);
+            renderPalette();
+            updateProgressText();
+            loadQuestion(0);
+            startTimer(3600); 
+            setupKeyboardShortcuts();
+        }
+
+        function renderPalette() {
+            const grid = document.getElementById('palette-grid');
+            grid.innerHTML = '';
+            quizData.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'palette-btn';
+                btn.textContent = index + 1;
+                btn.onclick = () => loadQuestion(index);
+                btn.id = `pal-btn-${index}`;
+                grid.appendChild(btn);
+            });
+            updatePaletteStyles();
+        }
+
+        function updateProgressText() {
+            if(isSubmitted) {
+                document.getElementById('progress-stats').style.display = 'none';
+                return;
+            }
+            const attempted = userAnswers.filter(a => a !== null).length;
+            document.getElementById('stat-attempted').textContent = attempted;
+            document.getElementById('stat-remaining').textContent = quizData.length - attempted;
+        }
+
+        function updatePaletteStyles() {
+            quizData.forEach((_, index) => {
+                const btn = document.getElementById(`pal-btn-${index}`);
+                btn.className = 'palette-btn'; 
+                
+                // Active State (Current Question)
+                if (index === currentIndex) btn.classList.add('active');
+                
+                if (isSubmitted) {
+                    if (userAnswers[index] === quizData[index].correctIndex) {
+                        btn.classList.add('correct-palette');
+                    } else if (userAnswers[index] !== null) {
+                        btn.classList.add('incorrect-palette');
+                    } else {
+                        btn.classList.add('skipped-palette');
+                    }
+
+                    // Apply filters
+                    if (currentFilter === 'correct' && userAnswers[index] !== quizData[index].correctIndex) btn.classList.add('filtered-out');
+                    if (currentFilter === 'incorrect' && (userAnswers[index] === quizData[index].correctIndex || userAnswers[index] === null)) btn.classList.add('filtered-out');
+                    if (currentFilter === 'skipped' && userAnswers[index] !== null) btn.classList.add('filtered-out');
+
+                } else {
+                    // Pre-submission UI Logic
+                    if (reviewMarks[index] && userAnswers[index] !== null) {
+                        btn.classList.add('review-answered');
+                    } else if (reviewMarks[index]) {
+                        btn.classList.add('review');
+                    } else if (userAnswers[index] !== null) {
+                        btn.classList.add('attempted');
+                    }
+                }
+            });
+        }
+
+        function applyFilter(filterType) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`filter-${filterType}`).classList.add('active');
+            updatePaletteStyles();
+        }
+
+        function loadQuestion(index) {
+            const wrapper = document.getElementById('q-wrapper');
+            wrapper.style.opacity = 0; // fade out
+
+            setTimeout(() => {
+                currentIndex = index;
+                const q = quizData[index];
+                const labels = ['A', 'B', 'C', 'D'];
+                
+                document.getElementById('question-number').textContent = `Question ${index + 1}`;
+                document.getElementById('question-meta').textContent = q.meta || '';
+                
+                // USE PARSER FOR QUESTION TEXT
+                document.getElementById('question-text').innerHTML = parseLaTeX(q.question);
+                
+                const optionsGrid = document.getElementById('options-grid');
+                optionsGrid.innerHTML = '';
+                
+                q.options.forEach((opt, i) => {
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'option';
+                    if(isSubmitted) optDiv.classList.add('disabled');
+                    
+                    let iconHtml = '';
+                    
+                    if (isSubmitted) {
+                        if (i === q.correctIndex) {
+                            optDiv.classList.add('correct');
+                            iconHtml = '<span class="option-icon icon-correct">✓</span>';
+                        }
+                        else if (i === userAnswers[index]) {
+                            optDiv.classList.add('incorrect');
+                            iconHtml = '<span class="option-icon icon-incorrect">✗</span>';
+                        }
+                    } else if (userAnswers[index] === i) {
+                        optDiv.classList.add('selected');
+                    }
+
+                    optDiv.onclick = () => !isSubmitted && selectOption(i);
+                    // USE PARSER FOR OPTIONS
+                    optDiv.innerHTML = `<span class="option-label">${labels[i]}.</span> <div>${parseLaTeX(opt)}</div> ${iconHtml}`;
+                    optionsGrid.appendChild(optDiv);
+                });
+
+                document.getElementById('btn-prev').disabled = currentIndex === 0;
+                document.getElementById('btn-next').disabled = currentIndex === quizData.length - 1;
+                document.getElementById('btn-clear').disabled = isSubmitted || userAnswers[index] === null;
+
+                const solArea = document.getElementById('solution-area');
+                if (isSubmitted) {
+                    solArea.style.display = 'block';
+                    // USE PARSER FOR SOLUTION
+                    document.getElementById('solution-text').innerHTML = parseLaTeX(q.solution);
+                    
+                    const badge = document.getElementById('comparison-badge');
+                    const userAnsLabel = userAnswers[index] !== null ? labels[userAnswers[index]] : 'Skipped';
+                    const correctAnsLabel = labels[q.correctIndex];
+                    
+                    if(userAnsLabel === correctAnsLabel) {
+                        badge.style.color = 'var(--success)';
+                        badge.innerHTML = `Great Job! Your Answer: ${userAnsLabel}`;
+                    } else if (userAnsLabel === 'Skipped') {
+                        badge.style.color = 'var(--warning)';
+                        badge.innerHTML = `Skipped | Correct Answer: ${correctAnsLabel}`;
+                    } else {
+                        badge.style.color = 'var(--danger)';
+                        badge.innerHTML = `Your Answer: ${userAnsLabel} | Correct Answer: ${correctAnsLabel}`;
+                    }
+                } else {
+                    solArea.style.display = 'none';
+                }
+
+                updatePaletteStyles();
+                
+                // Immediately show content (no MathJax promise needed)
+                wrapper.style.opacity = 1;
+
+            }, 200); 
+        }
+
+        function selectOption(optIndex) {
+            userAnswers[currentIndex] = optIndex;
+            updateProgressText();
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach((opt, i) => {
+                if (i === optIndex) {
+                    opt.classList.add('selected');
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+
+            document.getElementById('btn-clear').disabled = false;
+            updatePaletteStyles();
+        }
+
+        function clearResponse() {
+            if(isSubmitted || userAnswers[currentIndex] === null) return;
+            userAnswers[currentIndex] = null;
+            updateProgressText();
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            document.getElementById('btn-clear').disabled = true;
+            updatePaletteStyles();
+        }
+
+        function toggleReview() {
+            if (isSubmitted) return;
+            reviewMarks[currentIndex] = !reviewMarks[currentIndex];
+            updatePaletteStyles();
+        }
+
+        function nextQuestion() {
+            if (currentIndex < quizData.length - 1) loadQuestion(currentIndex + 1);
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) loadQuestion(currentIndex - 1);
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if(e.target.tagName === 'BUTTON') return; 
+                if (e.key === 'ArrowRight') nextQuestion();
+                if (e.key === 'ArrowLeft') prevQuestion();
+                if (!isSubmitted) {
+                    if (e.key === '1') selectOption(0);
+                    if (e.key === '2') selectOption(1);
+                    if (e.key === '3') selectOption(2);
+                    if (e.key === '4') selectOption(3);
+                }
+            });
+        }
+
+        function submitQuiz() {
+            if(isSubmitted) return;
+            
+            const unattempted = quizData.length - userAnswers.filter(a => a !== null).length;
+            let confirmMsg = "Are you sure you want to submit the test?";
+            if(unattempted > 0) confirmMsg = `You have ${unattempted} unattempted questions.\n\n` + confirmMsg;
+            
+            if (!confirm(confirmMsg)) return;
+
+            isSubmitted = true;
+            let score = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans === quizData[i].correctIndex) score++;
+            });
+
+            document.getElementById('final-score').textContent = `${score} / ${quizData.length}`;
+            document.getElementById('review-screen').style.display = 'flex';
+            
+            document.getElementById('standard-legend').style.display = 'none';
+            document.getElementById('review-filters').style.display = 'grid';
+            
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('btn-clear').style.display = 'none';
+            
+            const submitBtn = document.getElementById('main-submit-btn');
+            submitBtn.textContent = "Test Submitted - Review Mode";
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = 0.5;
+            
+            updateProgressText();
+            updatePaletteStyles();
+        }
+
+        function closeReviewScreen() {
+            document.getElementById('review-screen').style.display = 'none';
+            loadQuestion(0); 
+        }
+
+        function startTimer(duration) {
+            let timer = duration, minutes, seconds;
+            const display = document.getElementById('timer');
+            const interval = setInterval(function () {
+                if (isSubmitted) { clearInterval(interval); return; }
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    alert("Time is up! Auto-submitting quiz.");
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

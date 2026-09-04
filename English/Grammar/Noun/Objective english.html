@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grammar Quiz</title>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success-light: #dcfce7;
+            --success-dark: #15803d;
+            --error-light: #fee2e2;
+            --error-dark: #b91c1c;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 700px;
+            overflow: hidden;
+        }
+
+        /* --- Progress Bar --- */
+        .progress-container {
+            height: 8px;
+            background-color: var(--border-color);
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* --- Quiz Header & Body --- */
+        .quiz-header {
+            padding: 30px 40px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .question-counter {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .quiz-body {
+            padding: 20px 40px 40px;
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            line-height: 1.4;
+            color: var(--text-main);
+        }
+
+        /* --- Options --- */
+        .options-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .option-btn {
+            background-color: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px 24px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            color: var(--text-main);
+            font-weight: 500;
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #f0f9ff;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Answer States */
+        .option-btn.correct {
+            border-color: var(--success-dark);
+            background-color: var(--success-light);
+            color: var(--success-dark);
+            opacity: 1;
+        }
+
+        .option-btn.wrong {
+            border-color: var(--error-dark);
+            background-color: var(--error-light);
+            color: var(--error-dark);
+        }
+
+        /* --- Review Section --- */
+        #review-section {
+            display: none;
+            padding: 40px;
+        }
+
+        .review-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .review-header h2 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .score-display {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .score-highlight {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        /* --- Review Filter Tabs --- */
+        .review-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 8px 20px;
+            background-color: white;
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* --- Review Cards --- */
+        .review-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .review-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .review-q-num {
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge.correct {
+            background-color: var(--success-light);
+            color: var(--success-dark);
+        }
+
+        .badge.wrong {
+            background-color: var(--error-light);
+            color: var(--error-dark);
+        }
+
+        .review-q-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .review-answer-row {
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .review-explanation {
+            margin-top: 16px;
+            padding: 16px;
+            background-color: #e0f2fe;
+            border-radius: 8px;
+            color: var(--primary-dark);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* --- Action Buttons --- */
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 30px;
+            flex-direction: column;
+        }
+
+        @media (min-width: 600px) {
+            .action-buttons {
+                flex-direction: row;
+            }
+        }
+
+        .btn {
+            display: block;
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-main);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-main);
+            background-color: #f1f5f9;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-body, #review-section { padding: 20px; }
+            .quiz-header { padding: 20px 20px 0; }
+            .review-tabs { flex-wrap: wrap; }
+            .tab-btn { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="quiz-view">
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="quiz-header">
+            <div class="question-counter">Question <span id="current-q">1</span> of <span id="total-q">?</span></div>
+        </div>
+
+        <div class="quiz-body">
+            <div class="question-text" id="question">Loading...</div>
+            <div class="options-grid" id="options"></div>
+        </div>
+    </div>
+
+    <div id="review-section">
+        <div class="review-header">
+            <h2 id="review-title">Quiz Complete!</h2>
+            <div class="score-display">You scored <span class="score-highlight" id="final-score">0</span> out of <span id="total-score">0</span></div>
+        </div>
+
+        <div class="review-tabs">
+            <button class="tab-btn active" onclick="filterReview('all', this)">All</button>
+            <button class="tab-btn" onclick="filterReview('correct', this)">Correct</button>
+            <button class="tab-btn" onclick="filterReview('wrong', this)">Wrong</button>
+        </div>
+        
+        <div id="review-list"></div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="location.reload()">Restart Full Quiz</button>
+            <button class="btn btn-primary" id="reattempt-btn" onclick="reattemptWrong()" style="display: none;">Reattempt Incorrect</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    //  QUIZ DATA - ADD YOUR QUESTIONS HERE
+    // ==========================================
+ const quizData = [
+    // --- EXERCISE A ---
+    {
+        question: "Identify the part with the error:<br><br><em>'My friend always likes to travel by the air since he is a very busy man.'</em>",
+        options: [
+            "My friend always likes to travel",
+            "by the air",
+            "since he is",
+            "a very busy man."
+        ],
+        correct: 1,
+        explanation: "The correct phrase is 'by air'. We do not use articles before means of transportation when introduced by the preposition 'by'.",
+        rule: "Omission of Articles: Omit articles in phrases like by car, by bus, by train, by air, by sea."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Dr. Radha Krishnan was a more famous philosopher than a politician.'</em>",
+        options: [
+            "Dr. Radha Krishnan was",
+            "a more famous philosopher",
+            "than a politician.",
+            "No error"
+        ],
+        correct: 2,
+        explanation: "The article 'a' before 'politician' should be removed. When two qualities of the same person are compared, the article is used only before the first noun.",
+        rule: "Articles in Comparisons: If two nouns refer to the same person or thing, the article should only appear before the first noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Manager and the Executive Director of our hotel is a very energetic person.'</em>",
+        options: [
+            "The Manager",
+            "and the Executive Director",
+            "of our hotel is",
+            "a very energetic person."
+        ],
+        correct: 1,
+        explanation: "The word 'the' before 'Executive Director' should be removed. Because the verb 'is' and the noun 'person' are singular, it indicates one person holds both titles.",
+        rule: "Dual Titles: If two titles refer to the same person, use the article 'the' only before the first title."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Whenever I meet him he always makes a mention of his father.'</em>",
+        options: [
+            "Whenever I meet him",
+            "he always makes a mention",
+            "of his father.",
+            "No error"
+        ],
+        correct: 1,
+        explanation: "The phrase should be 'makes mention', not 'makes a mention'.",
+        rule: "Idiomatic Expressions: Certain phrases omit articles entirely, such as 'make mention of', 'take heart', or 'set sail'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Although he has undergone a very costly treatment, he has not been cured of a headache.'</em>",
+        options: [
+            "Although he has undergone",
+            "a very costly treatment,",
+            "he has not been cured",
+            "of a headache."
+        ],
+        correct: 3,
+        explanation: "The phrase should be 'cured of headache' or 'cured of the headache' depending on context, but 'a headache' in this specific prolonged medical context is incorrect usage.",
+        rule: "Articles with Ailments: Generally, minor ailments take 'a' (a cold, a headache), but in the context of being 'cured of' a specific ongoing condition, the indefinite article is dropped or replaced with 'the'."
+    },
+
+    // --- EXERCISE B ---
+    {
+        question: "Identify the part with the error:<br><br><em>'He is as a weak boy as my brother.'</em>",
+        options: [
+            "He is",
+            "as a weak boy",
+            "as my brother.",
+            "No error"
+        ],
+        correct: 1,
+        explanation: "The correct structure is 'as weak a boy'. When 'as...as' is used with an adjective and a singular countable noun, the article comes after the adjective.",
+        rule: "Adjective + Article Placement: The structure is 'as + adjective + a/an + singular noun + as'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is futile to give an advice to a person who would not listen to you.'</em>",
+        options: [
+            "It is futile to",
+            "give an advice",
+            "to a person who would",
+            "not listen to you."
+        ],
+        correct: 1,
+        explanation: "'Advice' is an uncountable noun, so it cannot be preceded by 'an'. It should just be 'give advice' or 'give a piece of advice'.",
+        rule: "Uncountable Nouns: Do not use indefinite articles (a/an) before uncountable nouns like advice, information, furniture, or luggage."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The pride hath a fall, 'Says the Bible.''</em>",
+        options: [
+            "The pride",
+            "hath a fall,",
+            "'Says the Bible.'",
+            "No error"
+        ],
+        correct: 0,
+        explanation: "The correct proverb is 'Pride hath a fall'. 'Pride' is used here in a general, abstract sense, so it does not take a definite article.",
+        rule: "Abstract Nouns: Abstract nouns used in a general sense do not take articles."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She is both a virtuous and a beautiful daughter of a successful working mother.'</em>",
+        options: [
+            "She is both a virtuous",
+            "and a beautiful daughter",
+            "of a successful",
+            "working mother."
+        ],
+        correct: 1,
+        explanation: "The article 'a' before 'beautiful' should be omitted. Because both adjectives (virtuous and beautiful) describe the same single daughter, only one article is needed.",
+        rule: "Multiple Adjectives for One Noun: When two or more adjectives qualify the same noun, the article is used only before the first adjective."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He has been sent to the prison several times but has not shown any sign of improvement in his conduct.'</em>",
+        options: [
+            "He has been sent",
+            "to the prison several times",
+            "but has not shown any sign",
+            "of improvement in his conduct."
+        ],
+        correct: 1,
+        explanation: "It should be 'sent to prison'. When primary institutions (prison, school, hospital) are visited for their primary purpose, the article 'the' is omitted.",
+        rule: "Primary Purpose Omission: Omit 'the' before words like school, college, church, bed, hospital, and prison when they are visited for their primary function."
+    },
+        {
+        question: "Identify the part with the error:<br><br><em>'Those in hurry should realise that speed is no key to success in life.'</em>",
+        options: ["Those in hurry", "should realise that speed", "is no key to success", "in life."],
+        correct: 0,
+        explanation: "The correct idiomatic expression is 'in a hurry'.",
+        rule: "Idiomatic Expressions: Certain phrases require the indefinite article, such as 'in a hurry', 'make a noise', and 'keep a secret'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'God made country and man made town.'</em>",
+        options: ["God made country", "and man", "made town.", "No error"],
+        correct: 0,
+        explanation: "The proverb should be 'God made the country and man made the town.' Both nouns refer to specific concepts here and require definite articles.",
+        rule: "Definite Articles with Specific Concepts: Use 'the' before words like 'country' and 'town' when distinguishing between rural and urban environments."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is pity that he does not behave humbly with his parents and friends.'</em>",
+        options: ["It is pity that", "he does not behave humbly", "with his parents", "and friends."],
+        correct: 0,
+        explanation: "The correct phrase is 'It is a pity'.",
+        rule: "Idiomatic Phrases: 'A pity', 'a pleasure', and 'a shame' take the indefinite article 'a' when used in introductory clauses."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Being M.A. only he could not be appointed to the post of a lecturer.'</em>",
+        options: ["Being M.A. only", "he could not be appointed", "to the post", "of a lecturer."],
+        correct: 0,
+        explanation: "It should be 'Being an M.A.' because the pronunciation of the letter 'M' starts with a vowel sound (em). Also, 'post of lecturer' (without 'a') is preferred, but the primary error is the missing 'an'.",
+        rule: "Articles with Abbreviations: Use 'an' before abbreviations that begin with a vowel sound, regardless of their starting consonant letter."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He always takes a heavy breakfast because he generally skips lunch.'</em>",
+        options: ["He always takes", "a heavy breakfast", "because he generally", "No error"],
+        correct: 3,
+        explanation: "This sentence is grammatically correct. While meals usually don't take articles, an article is used when an adjective (heavy) precedes the meal.",
+        rule: "Articles with Meals: Do not use articles before names of meals unless they are preceded by an adjective (e.g., 'a heavy breakfast', 'a delicious dinner')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Please go and find out dog so that you may not lose it forever.'</em>",
+        options: ["Please go and", "find out dog", "so that you may not", "lose it forever."],
+        correct: 1,
+        explanation: "The sentence refers to a specific, known dog, so it must be 'find out the dog'.",
+        rule: "Definite Article for Specificity: Use 'the' before a singular or plural noun when it refers to a specific entity known to both the speaker and the listener."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Snake we saw was very deadly though it left the kitchen quietly.'</em>",
+        options: ["Snake we saw", "was very deadly though", "it left the kitchen", "quietly."],
+        correct: 0,
+        explanation: "It should be 'The snake we saw'. The relative clause 'we saw' makes the snake specific.",
+        rule: "Articles with Defined Nouns: If a noun is followed by a defining relative clause or phrase, it becomes specific and takes 'the'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Tonight I shall go to the bed early because I have to leave for Mumbai at dawn tomorrow.'</em>",
+        options: ["Tonight I shall", "go to the bed early", "because I have to leave", "for Mumbai at dawn tomorrow."],
+        correct: 1,
+        explanation: "The phrase should be 'go to bed'. When 'bed' is used for its primary purpose (sleeping), the article 'the' is omitted.",
+        rule: "Primary Purpose: Omit 'the' before words like bed, church, hospital, and prison when visited for their primary function."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Child needs love and affection if he is to be brought up as a healthy young man.'</em>",
+        options: ["Child needs love", "and affection if he is", "to be brought up", "as a healthy young man."],
+        correct: 0,
+        explanation: "A singular countable noun like 'child' cannot stand alone without an article. It should be 'A child'.",
+        rule: "Singular Countable Nouns: A singular countable noun must be preceded by an article (a, an, or the) or a determiner."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is said that elephant is vindictive by nature and never forgets his enemy.'</em>",
+        options: ["It is said that", "elephant is vindictive", "by nature and never", "forgets his enemy."],
+        correct: 1,
+        explanation: "It should be 'the elephant' or 'an elephant' to represent the entire species.",
+        rule: "Representing a Class: Use 'the' or 'a/an' with a singular countable noun to represent a whole class of animals or things."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is very difficult to get a taxi at such a hour as it is already 11 p.m.'</em>",
+        options: ["It is very difficult", "to get a taxi", "at such a hour", "as it is already 11 p.m."],
+        correct: 2,
+        explanation: "The word 'hour' begins with a silent 'h' and a vowel sound, so it must take 'an'.",
+        rule: "Vowel Sounds: Use 'an' before words beginning with a silent 'h' (hour, honor, honest)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Do you take a sugar and if so, how much?'</em>",
+        options: ["Do you take", "a sugar and", "if so,", "how much?"],
+        correct: 1,
+        explanation: "Sugar is an uncountable material noun, so 'a' should be removed. It should be 'take sugar'.",
+        rule: "Material Nouns: Material and uncountable nouns do not take indefinite articles (a/an)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'She lives in first storey of the house and she has to come down quite often.'</em>",
+        options: ["She lives in", "first storey of the house", "and she has to come", "down quite often."],
+        correct: 1,
+        explanation: "Ordinal numbers must be preceded by 'the'. It should be 'the first storey'.",
+        rule: "Ordinal Numbers: Always use the definite article 'the' before ordinal numbers (first, second, third, etc.)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'He knows how to play flute. He learnt it while he was a student.'</em>",
+        options: ["He knows how to", "play flute.", "He learnt it while", "he was a student."],
+        correct: 1,
+        explanation: "Musical instruments take the definite article. It should be 'play the flute'.",
+        rule: "Musical Instruments: Use 'the' before the names of musical instruments when referring to playing them."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It is said that he is a wise man. He cannot err, Vedas may err.'</em>",
+        options: ["It is said that", "he is a wise man.", "He cannot err,", "Vedas may err."],
+        correct: 3,
+        explanation: "Holy books require the definite article. It should be 'the Vedas'.",
+        rule: "Sacred Texts: Use 'the' before the names of holy books, scriptures, and epics."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'These days only rich can afford the hospitality of the costly nursing homes and hospitals coming up all over the country.'</em>",
+        options: ["These days only rich", "can afford the hospitality", "of the costly nursing homes", "coming up all over the country."],
+        correct: 0,
+        explanation: "To refer to rich people as a class, we must use 'the rich'.",
+        rule: "Adjectives as Nouns: Use 'the' + adjective to refer to a whole group of people (e.g., the rich, the poor, the brave)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Rajputs belong to a martial race since they were organised into the force to fight against the oppression of the rulers.'</em>",
+        options: ["Rajputs belong", "to a martial race", "since they were organised", "into the force..."],
+        correct: 0,
+        explanation: "Names of specific communities or historical clans take 'the'. It should be 'The Rajputs'.",
+        rule: "Communities and Clans: Use 'the' before the names of specific communities, castes, or nations."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'What nice mother she is, becasue she takes care of every small need of her children.'</em>",
+        options: ["What nice mother she is,", "because she takes care", "of every small need", "of her children."],
+        correct: 0,
+        explanation: "In exclamatory sentences starting with 'What', singular countable nouns take 'a/an'. It should be 'What a nice mother'.",
+        rule: "Exclamatory Sentences: Use 'a/an' after 'What' and 'How' in exclamatory sentences before singular countable nouns."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'What a kind of fellow he is, if his enemies are to be believed.'</em>",
+        options: ["What a kind", "of fellow he is,", "if his enemies", "are to be believed."],
+        correct: 0,
+        explanation: "The correct structure drops the 'a' after 'kind of'. It should be 'What kind of fellow'.",
+        rule: "Phrases like 'Kind of': Articles are generally omitted after phrases like 'kind of', 'sort of', and 'type of'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Kapil Dev brought glory to India by winning World Cup in 1983.'</em>",
+        options: ["Kapil Dev brought", "glory to India", "by winning World Cup", "in 1983."],
+        correct: 2,
+        explanation: "Unique historical events, cups, and trophies take the definite article. It should be 'the World Cup'.",
+        rule: "Sports Trophies and Events: Use 'the' before the names of major unique sporting events and cups."
+    },
+
+    // ==========================================
+    //  EXERCISE B (Questions 6 - 25)
+    // ==========================================
+    {
+        question: "Identify the part with the error:<br><br><em>'He was watching the television when I called on him last night.'</em>",
+        options: ["He was watching", "the television when", "I called on him", "last night."],
+        correct: 1,
+        explanation: "We do not use 'the' when referring to television as a medium of entertainment. It should be 'watching television'.",
+        rule: "Mediums of Entertainment: Omit the article before 'television' when referring to the broadcast medium, unless referring to the physical set (e.g., turn off the television)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Prince William is a heir to the throne of the Great Britain.'</em>",
+        options: ["Prince William is", "a heir to the throne", "of the Great Britain.", "No error"],
+        correct: 1, 
+        explanation: "The word 'heir' starts with a silent 'h', so it takes 'an' (an heir). Additionally, 'Great Britain' should not take 'the'.",
+        rule: "Silent Consonants: Use 'an' before words starting with a silent 'h' (heir, honest, hour)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Tea we used to get in the Scouting Camp was never to our taste.'</em>",
+        options: ["Tea we used to get", "in the Scouting Camp", "was never to", "our taste."],
+        correct: 0,
+        explanation: "Since the tea is specific (the one from the Scouting Camp), it must be 'The tea'.",
+        rule: "Specific Uncountable Nouns: Material nouns normally take no article, but take 'the' when made specific."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'It was a so hot day that it was impossible to go out shopping.'</em>",
+        options: ["It was a so hot day", "that it was impossible", "to go out", "shopping."],
+        correct: 0,
+        explanation: "The correct word order is 'so hot a day'.",
+        rule: "Adverb 'So': The structure is 'so + adjective + a/an + singular countable noun'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I shall never forget a good deed you did to me, when I was in crisis.'</em>",
+        options: ["I shall never forget", "a good deed you did", "to me, when", "I was in crisis."],
+        correct: 1,
+        explanation: "The deed is specific (the one 'you did to me'), so it requires the definite article: 'the good deed'.",
+        rule: "Definite Article for Defined Nouns: Use 'the' when a noun is followed by a defining relative clause."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The singing is both my vocation and avocation because it is a source of joy and bread to me.'</em>",
+        options: ["The singing is both", "my vocation and avocation", "because it is a source", "of joy and bread to me."],
+        correct: 0,
+        explanation: "Gerunds or abstract nouns used in a general sense do not take articles. It should simply be 'Singing is...'.",
+        rule: "Abstract Nouns & Gerunds: Do not use articles before abstract nouns or gerunds acting as general subjects."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Surdas is often called Milton of India although unlike Milton, Surdas had no political ambitions.'</em>",
+        options: ["Surdas is often called", "Milton of India", "although unlike Milton,", "Surdas had no political ambitions."],
+        correct: 1,
+        explanation: "Proper nouns used as common nouns for comparison require 'the'. It should be 'the Milton of India'.",
+        rule: "Proper Nouns as Common Nouns: Use 'the' before a proper noun when it is used to denote a specific comparable quality (e.g., 'He is the Newton of our class')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Higher you go, colder it is.'</em>",
+        options: ["Higher you go,", "colder it is.", "No error", "Both parts have errors"],
+        correct: 3,
+        explanation: "Parallel comparatives require 'the' before both adjectives. It should be 'The higher you go, the colder it is.'",
+        rule: "Parallel Comparatives: Use 'the' before comparative adjectives in 'the... the...' structures showing proportionate increase or decrease."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The old woman placed kettle on fire and come back to the bedroom.'</em>",
+        options: ["The old woman", "placed kettle on fire", "and come back", "to the bedroom."],
+        correct: 1,
+        explanation: "It should be 'the kettle on the fire' because both are specific household items in this context.",
+        rule: "Specific Household Objects: Use 'the' before familiar household elements when the context makes them specific."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Never give the ear to the slanderous talk of others because they are always motivated by jealousy.'</em>",
+        options: ["Never give the ear", "to the slanderous talk", "of others because they", "are always motivated by jealousy."],
+        correct: 0,
+        explanation: "The idiom is 'give ear', meaning to listen. The article 'the' is incorrect here.",
+        rule: "Idioms with Body Parts: Certain idioms involving body parts omit the article entirely (e.g., give ear, set foot, lose heart)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The District Magistrate possesses both the civil and criminal jurisdiction.'</em>",
+        options: ["The District Magistrate", "possesses both", "the civil and criminal", "jurisdiction."],
+        correct: 2,
+        explanation: "It should be 'both civil and criminal jurisdiction' or 'both the civil and the criminal jurisdiction'. When 'the' is only used before the first adjective, it implies one unified concept, which doesn't fit 'both'.",
+        rule: "Articles with Multiple Adjectives: When adjectives describe distinct, separate things joined by 'and', the article must be repeated or omitted entirely depending on the noun."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'You must enjoy classical music on radio even if you are not able to understand its true spirit.'</em>",
+        options: ["You must enjoy", "classical music on radio", "even if you are not able", "to understand its true spirit."],
+        correct: 1,
+        explanation: "It should be 'on the radio'.",
+        rule: "Inventions and Media: Use 'the' before inventions and media forms like 'the radio' (but note 'television' is an exception when watching it)."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'I have a work to do and so I will reach late.'</em>",
+        options: ["I have a work", "to do and so", "I will reach", "late."],
+        correct: 0,
+        explanation: "Work is an uncountable noun. It should be 'I have work to do' or 'a piece of work'.",
+        rule: "Uncountable Nouns: 'Work' cannot be counted and therefore does not take the indefinite article 'a'."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'You should be true to a word because it is a characteristic of a gentleman.'</em>",
+        options: ["You should be", "true to a word", "because it is a characteristic", "of a gentleman."],
+        correct: 1,
+        explanation: "The phrase should be 'true to your word'.",
+        rule: "Possessive vs. Article: In specific phrases involving personal commitment or body parts, use possessive adjectives (my, your, his) instead of articles."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'This young man is in search of an employment because he is in grave financial crisis.'</em>",
+        options: ["This young man is", "in search of an employment", "because he is in", "grave financial crisis."],
+        correct: 1,
+        explanation: "Employment is an uncountable noun, so it cannot take 'an'. It should be 'in search of employment'.",
+        rule: "Uncountable Nouns: Do not use a/an with uncountable nouns like employment, furniture, or damage."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Although he is a hard working student, his success in the examination is out of question.'</em>",
+        options: ["Although he is a", "hard working student,", "his success in the examination", "is out of question."],
+        correct: 3,
+        explanation: "The correct idiom is 'out of the question', meaning impossible.",
+        rule: "Fixed Idioms: 'Out of the question' always includes the definite article."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'Wisdom of Vikramaditya solved many riddles that pepole brought to him for solution.'</em>",
+        options: ["Wisdom of Vikramaditya", "solved many riddles", "that pepole brought", "to him for solution."],
+        correct: 0,
+        explanation: "Abstract nouns made specific by 'of' must take 'The'. It should be 'The wisdom of Vikramaditya'.",
+        rule: "Specific Abstract Nouns: While abstract nouns generally take no article, they take 'the' when modified by a limiting prepositional phrase ('The [noun] of...')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The Chinese is a very difficult language to understand for those who have never been to China.'</em>",
+        options: ["The Chinese is", "a very difficult language", "to understand for those", "who have never been to China."],
+        correct: 0,
+        explanation: "We do not use 'the' before names of languages. 'The Chinese' refers to the people. It should be 'Chinese is...'.",
+        rule: "Languages: Do not use articles before the names of languages unless the word 'language' follows it (e.g., 'The Chinese language')."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'News you broke to his wife made her nervous and she broke down.'</em>",
+        options: ["News you broke", "to his wife", "made her nervous", "and she broke down."],
+        correct: 0,
+        explanation: "The news is specified by 'you broke to his wife', so it requires 'The'. It should be 'The news'.",
+        rule: "Specific Uncountable Nouns: Use 'the' before uncountable nouns when they are made specific by a defining clause."
+    },
+    {
+        question: "Identify the part with the error:<br><br><em>'The lions are carnivorous.'</em>",
+        options: ["The lions", "are", "carnivorous.", "No error"],
+        correct: 0,
+        explanation: "When making a general statement about plural countable nouns, no article is used. It should be 'Lions are carnivorous'.",
+        rule: "Plural Nouns in General Sense: Omit articles before plural countable nouns used in a general or universal sense."
+    }
+];
+
+
+// Function to randomize the order of the questions
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        // Swap elements
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+    // ==========================================
+    //  QUIZ LOGIC
+    // ==========================================
+    let activeQuizData = [...quizData]; // The active pool of questions being tested
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let userAnswers = []; 
+
+    // DOM Elements
+    const quizView = document.getElementById('quiz-view');
+    const reviewSection = document.getElementById('review-section');
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const currentQEl = document.getElementById('current-q');
+    const totalQEl = document.getElementById('total-q');
+    const progressBar = document.getElementById('progress-bar');
+    const reattemptBtn = document.getElementById('reattempt-btn');
+
+// Initialize
+    shuffleArray(activeQuizData);
+    
+    if(activeQuizData.length === 0) {
+        questionEl.innerHTML = "<em>No questions found. Please add data to the quizData array.</em>";
+    } else {
+        totalQEl.innerText = activeQuizData.length;
+        document.getElementById('total-score').innerText = activeQuizData.length;
+        loadQuestion();
+    }
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        userAnswers = [];
+        totalQEl.innerText = activeQuizData.length;
+        document.getElementById('total-score').innerText = activeQuizData.length;
+        
+        quizView.style.display = 'block';
+        reviewSection.style.display = 'none';
+        
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const currentData = activeQuizData[currentQuestionIndex];
+        currentQEl.innerText = currentQuestionIndex + 1;
+        
+        // Update Progress Bar
+        const progressPercentage = (currentQuestionIndex / activeQuizData.length) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+
+        // Render Question
+        questionEl.innerHTML = currentData.question;
+        optionsEl.innerHTML = '';
+
+        // Render Options
+        currentData.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('option-btn');
+            button.addEventListener('click', () => handleAnswer(index));
+            optionsEl.appendChild(button);
+        });
+    }
+
+    function handleAnswer(selectedIndex) {
+        const currentData = activeQuizData[currentQuestionIndex];
+        const buttons = optionsEl.querySelectorAll('.option-btn');
+        
+        // Disable all buttons immediately
+        buttons.forEach(btn => btn.disabled = true);
+
+        // Record the user's answer
+        userAnswers[currentQuestionIndex] = selectedIndex;
+
+        // Visual feedback
+        if (selectedIndex === currentData.correct) {
+            score++;
+            buttons[selectedIndex].classList.add('correct');
+        } else {
+            buttons[selectedIndex].classList.add('wrong');
+            buttons[currentData.correct].classList.add('correct'); 
+        }
+
+        // AUTO ADVANCE
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < activeQuizData.length) {
+                loadQuestion();
+            } else {
+                showReview();
+            }
+        }, 1200); 
+    }
+
+    function showReview() {
+        progressBar.style.width = '100%';
+        quizView.style.display = 'none';
+        reviewSection.style.display = 'block';
+        
+        document.getElementById('final-score').innerText = score;
+
+        // Show reattempt button ONLY if there are wrong answers
+        if (score < activeQuizData.length) {
+            reattemptBtn.style.display = 'block';
+        } else {
+            reattemptBtn.style.display = 'none';
+        }
+
+        // Reset tabs to 'All'
+        const tabs = document.querySelectorAll('.tab-btn');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[0].classList.add('active'); // 'All' is first
+
+        generateReviewList();
+    }
+
+    function generateReviewList() {
+        const reviewList = document.getElementById('review-list');
+        reviewList.innerHTML = '';
+
+        activeQuizData.forEach((data, index) => {
+            const userAnswerIndex = userAnswers[index];
+            const isCorrect = userAnswerIndex === data.correct;
+            
+            const card = document.createElement('div');
+            // Add identifying classes for the filter to target
+            card.className = `review-card ${isCorrect ? 'correct-card' : 'wrong-card'}`;
+
+            let answerHtml = `
+                <div class="review-answer-row">
+                    <strong>Your Answer:</strong> 
+                    <span style="color: ${isCorrect ? 'var(--success-dark)' : 'var(--error-dark)'}; font-weight: 600;">
+                        ${userAnswerIndex !== undefined ? data.options[userAnswerIndex] : 'Skipped'}
+                    </span>
+                </div>
+            `;
+
+            if (!isCorrect) {
+                answerHtml += `
+                    <div class="review-answer-row">
+                        <strong>Correct Answer:</strong> 
+                        <span style="color: var(--success-dark); font-weight: 600;">${data.options[data.correct]}</span>
+                    </div>
+                `;
+            }
+
+            let explanationHtml = '';
+            if (data.explanation || data.rule) {
+                explanationHtml = `<div class="review-explanation">`;
+                if (data.explanation) explanationHtml += `<p><strong>Explanation:</strong> ${data.explanation}</p>`;
+                if (data.rule) explanationHtml += `<p style="margin-top: 8px;"><strong>Rule:</strong> ${data.rule}</p>`;
+                explanationHtml += `</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="review-card-header">
+                    <span class="review-q-num">Question ${index + 1}</span>
+                    <span class="badge ${isCorrect ? 'correct' : 'wrong'}">
+                        ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                    </span>
+                </div>
+                <div class="review-q-text">${data.question}</div>
+                ${answerHtml}
+                ${explanationHtml}
+            `;
+
+            reviewList.appendChild(card);
+        });
+    }
+
+    // --- NEW FEATURE FUNCTIONS ---
+
+    function filterReview(filterType, btnElement) {
+        // Update Tab Active State
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Filter Cards
+        const allCards = document.querySelectorAll('.review-card');
+        allCards.forEach(card => {
+            if (filterType === 'all') {
+                card.style.display = 'block';
+            } else if (filterType === 'correct') {
+                card.style.display = card.classList.contains('correct-card') ? 'block' : 'none';
+            } else if (filterType === 'wrong') {
+                card.style.display = card.classList.contains('wrong-card') ? 'block' : 'none';
+            }
+        });
+    }
+
+    function reattemptWrong() {
+        // Filter activeQuizData to ONLY include questions the user just got wrong
+        const wrongQuestions = activeQuizData.filter((data, index) => {
+            return userAnswers[index] !== data.correct;
+        });
+
+        // Update active dataset to the missed questions
+        activeQuizData = wrongQuestions;
+        
+        // Update title to let them know it's a retry
+        document.getElementById('review-title').innerText = "Reattempt Complete!";
+
+        // Start the quiz again with the new subset
+        startQuiz();
+    }
+</script>
+
+</body>
+</html>

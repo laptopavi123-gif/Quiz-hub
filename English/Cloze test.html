@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Cloze Test Challenge</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --error: #ef4444;
+            --error-bg: #fee2e2;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        .subtitle { color: var(--text-light); font-size: 1.1em; }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        .tab-btn:hover { background-color: var(--primary-light); color: var(--primary); }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Layout */
+        .quiz-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 900px) {
+            .quiz-layout {
+                grid-template-columns: 45% 55%;
+                align-items: start;
+            }
+            .passage-card {
+                position: sticky;
+                top: 20px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Passage Text Styling */
+        .passage-text {
+            font-size: 1.15em;
+            color: #334155;
+            line-height: 1.9;
+            white-space: pre-line;
+        }
+
+        .blank-marker {
+            display: inline-block;
+            min-width: 24px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary);
+            background-color: var(--primary-light);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid #c7d2fe;
+            margin: 0 3px;
+            font-size: 0.9em;
+        }
+
+        /* Question Item */
+        .question-item {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .q-header {
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 12px;
+            color: #1e293b;
+            font-size: 1.05em;
+        }
+
+        .q-badge {
+            background: #1e293b;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            height: fit-content;
+            margin-top: 2px;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 0.95em;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Answer States */
+        .option-btn.correct {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95em;
+            color: #334155;
+            display: none; /* Hidden by default */
+            animation: fadeIn 0.4s ease;
+        }
+
+        .explanation-box strong { color: var(--primary); display: block; margin-bottom: 5px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar for passage */
+        .passage-card::-webkit-scrollbar { width: 8px; }
+        .passage-card::-webkit-scrollbar-track { background: #f1f1f1; }
+        .passage-card::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .passage-card::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Master Cloze Test Challenge</h1>
+        <div class="subtitle">SSC CGL Tier II Preparation Module</div>
+    </header>
+
+    <div class="tabs" id="tabContainer"></div>
+
+    <div class="quiz-layout">
+        <div class="card passage-card">
+            <h2 style="margin-top:0; color:#1e293b; font-size:1.3em; border-bottom:2px solid #f1f5f9; padding-bottom:15px; margin-bottom:20px;">
+                📖 Reading Passage
+            </h2>
+            <div id="passageContainer" class="passage-text"></div>
+        </div>
+
+        <div class="card" id="questionsCard">
+            <h2 style="margin-top:0; color:#1e293b; font-size:1.3em; border-bottom:2px solid #f1f5f9; padding-bottom:15px; margin-bottom:20px;">
+                ✍️ Questions
+            </h2>
+            <div id="questionsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            title: "1. Marriage",
+            passage: "The <span class='blank-marker'>1</span> to marriage in urban India is turning turtle. The financial imperatives of modern, urban living demand that both <span class='blank-marker'>2</span> should have a career. The crunch comes when the career woman demands an entity distinct from her husband and a measure of financial independence.\n\nThe woman’s <span class='blank-marker'>3</span> is that the man as the bread-winner should be <span class='blank-marker'>4</span> the household expenses, while what she earns is the jam over the bread and butter. And she gets to choose the brand of jam.\n\nMrinalini Singh, a manager with a high <span class='blank-marker'>5</span> company, says, “My husband earns enough to keep the home <span class='blank-marker'>6</span> burning. When I take on the responsibility of home as well as office, it is not just to sink in all the money. I earn into the home kitty.\n\nI definitely want a <span class='blank-marker'>7</span> in where my money goes. As a high profile executive, I need to keep up a certain <span class='blank-marker'>8</span> personally as well as of my husband and children. I also need to <span class='blank-marker'>9</span> the image of my home because of the people who visit me. Where <span class='blank-marker'>10</span> would the money for all this come from?”",
+            questions: [
+                { 
+                    numb: 1, 
+                    question: "The ______ to marriage in urban India is turning turtle.", 
+                    answer: "attitude", 
+                    options: ["demands", "economics", "attitude", "approach"],
+                    explanation: "The phrase 'turning turtle' means turning upside down or changing completely. 'Attitude' fits best as it describes a changing perspective or mindset towards marriage." 
+                },
+                { 
+                    numb: 2, 
+                    question: "demand that both ______ should have a career.", 
+                    answer: "partners", 
+                    options: ["partners", "pairs", "couples", "spouses"],
+                    explanation: "In the context of marriage and shared careers, 'partners' is the most appropriate term for husband and wife working together." 
+                },
+                { 
+                    numb: 3, 
+                    question: "The woman’s ______ is that the man as the bread-winner...", 
+                    answer: "idea", 
+                    options: ["example", "idea", "stance", "viewpoint"],
+                    explanation: "'Idea' refers to a thought or concept. In this context, it represents the woman's belief or notion regarding the financial arrangement. (Updated based on official key)." 
+                },
+                { 
+                    numb: 4, 
+                    question: "man... should be ______ the household expenses.", 
+                    answer: "bearing", 
+                    options: ["shouldering", "bearing", "sharing", "dividing"],
+                    explanation: "'Bearing the expenses' is the standard, formal collocation when referring to paying costs. 'Shouldering' is typically used for responsibilities or burdens in a more abstract sense." 
+                },
+                { 
+                    numb: 5, 
+                    question: "manager with a high ______ company...", 
+                    answer: "profile", 
+                    options: ["powered", "profile", "income", "status"],
+                    explanation: "'High profile' is a standard collocation used to describe a company or position that attracts a lot of attention or is prestigious." 
+                },
+                { 
+                    numb: 6, 
+                    question: "keep the home ______ burning.", 
+                    answer: "fires", 
+                    options: ["cooking", "stove", "fires", "hearth"],
+                    explanation: "The idiom is 'keep the home fires burning', which means to maintain daily life and necessities, especially while someone is away or working." 
+                },
+                { 
+                    numb: 7, 
+                    question: "I definitely want a ______ in where my money goes.", 
+                    answer: "say", 
+                    options: ["say", "answer", "statement", "voice"],
+                    explanation: "To 'have a say' is the correct idiom meaning to have the right or power to participate in making a decision." 
+                },
+                { 
+                    numb: 8, 
+                    question: "keep up a certain ______ personally.", 
+                    answer: "image", 
+                    options: ["reputation", "image", "face", "standard"],
+                    explanation: "In a professional context (executive), one maintains an 'image' or outward appearance." 
+                },
+                { 
+                    numb: 9, 
+                    question: "need to ______ the image of my home", 
+                    answer: "keep up", 
+                    options: ["keep up", "keep on", "keep for", "maintain"],
+                    explanation: "'Keep up' is the phrasal verb meaning to maintain the quality or condition of something." 
+                },
+                { 
+                    numb: 10, 
+                    question: "Where ______ would the money come from?", 
+                    answer: "else", 
+                    options: ["from", "else", "for", "otherwise"],
+                    explanation: "'Where else' is a standard phrase asking for an alternative source. It implies there is no other source." 
+                }
+            ]
+        },
+        {
+            title: "2. Broadcasting",
+            passage: "Broadcasting of which we have begun to <span class='blank-marker'>11</span> so much now-a-days is an invention of recent <span class='blank-marker'>12</span> and development. Half a century ago no one could ever <span class='blank-marker'>13</span> how important it would become in the life of the people of the twentieth century. Now-a-days its value in the sphere of education, entertainment and state administration is <span class='blank-marker'>14</span> recognized and accepted.\n\nTo Marconi falls the credit for the <span class='blank-marker'>15</span> of the wireless. He is the Edison of the wireless world. It was in 1896 that Marconi first took out a patent for it. He soon succeeded in sending messages <span class='blank-marker'>16</span> the Atlantic ocean to America.\n\nFrom Marconi’s first <span class='blank-marker'>17</span> to broadcasting as we know it is a long road. But scientists travelled along it <span class='blank-marker'>18</span> by difficulties and obstacles on the way. Wireless service was <span class='blank-marker'>19</span> between India and England in 1927. Later, a broadcasting service was maintained by an Indian Broadcasting Company. The company failed and the Government of India stepped into the <span class='blank-marker'>20</span>.",
+            questions: [
+                { 
+                    numb: 11, 
+                    question: "Broadcasting of which we have begun to ______ so much...", 
+                    answer: "hear", 
+                    options: ["hear", "listen", "admire", "witness"],
+                    explanation: "We 'hear of' something when it becomes a common topic. While we 'listen' to radio, the context here is about the topic of broadcasting itself being discussed." 
+                },
+                { 
+                    numb: 12, 
+                    question: "invention of recent ______ and development.", 
+                    answer: "origin", 
+                    options: ["period", "age", "origin", "birth"],
+                    explanation: "'Recent origin' is the correct phrase to describe when something started or was invented." 
+                },
+                { 
+                    numb: 13, 
+                    question: "no one could ever ______ how important it would become.", 
+                    answer: "imagine", 
+                    options: ["imagine", "know", "think", "predict"],
+                    explanation: "'Imagine' fits best with 'could ever', expressing the inability to conceive the future magnitude of the invention." 
+                },
+                { 
+                    numb: 14, 
+                    question: "value... is ______ recognized and accepted.", 
+                    answer: "universally", 
+                    options: ["well", "universally", "rightly", "widely"],
+                    explanation: "'Universally recognized' is a strong collocation meaning recognized by everyone everywhere." 
+                },
+                { 
+                    numb: 15, 
+                    question: "credit for the ______ of the wireless.", 
+                    answer: "invention", 
+                    options: ["invention", "finding", "discovery", "creation"],
+                    explanation: "Wireless technology was an 'invention' (created by man), not a 'discovery' (finding something that already existed in nature)." 
+                },
+                { 
+                    numb: 16, 
+                    question: "sending messages ______ the Atlantic ocean.", 
+                    answer: "across", 
+                    options: ["to", "across", "over", "through"],
+                    explanation: "We send messages 'across' a distance or an ocean." 
+                },
+                { 
+                    numb: 17, 
+                    question: "From Marconi’s first ______ to broadcasting...", 
+                    answer: "step", 
+                    options: ["step", "achievement", "success", "attempt"],
+                    explanation: "'Step' fits the metaphor of a journey ('long road') mentioned in the sentence." 
+                },
+                { 
+                    numb: 18, 
+                    question: "scientists travelled along it ______ by difficulties.", 
+                    answer: "undeterred", 
+                    options: ["unafraid", "undeterred", "unchecked", "unhindered"],
+                    explanation: "'Undeterred' means persevering despite setbacks or difficulties. It fits the context of overcoming obstacles." 
+                },
+                { 
+                    numb: 19, 
+                    question: "Wireless service was ______ between India and England.", 
+                    answer: "started", 
+                    options: ["introduced", "originated", "started", "established"],
+                    explanation: "Services are 'started' or 'inaugurated'. In this simple context, 'started' works well to denote commencement." 
+                },
+                { 
+                    numb: 20, 
+                    question: "Government of India stepped into the ______.", 
+                    answer: "breach", 
+                    options: ["feet", "shoes", "foot prints", "breach"],
+                    explanation: "The correct idiom is 'step into the breach', meaning to help when someone else has failed. 'Step into the shoes' is incorrect here as it would require a possessive (e.g., 'into its shoes')." 
+                }
+            ]
+        },
+        {
+            title: "3. Economics",
+            passage: "One of the major causes of the failure of <span class='blank-marker'>21</span> countries on economic front is their <span class='blank-marker'>22</span> to evolve a judicious mixture of <span class='blank-marker'>23</span> substitution and export promotion. Zambia which <span class='blank-marker'>24</span> on imports after its independence 20 years <span class='blank-marker'>25</span> has depleted 50% of its national <span class='blank-marker'>26</span>, whereas South Korea, which started its <span class='blank-marker'>27</span> development from a war ravaged status <span class='blank-marker'>28</span> the fifties by equalizing high exports <span class='blank-marker'>29</span> high imports, is one of the <span class='blank-marker'>30</span> nations today.",
+            questions: [
+                { 
+                    numb: 21, 
+                    question: "failure of ______ countries on economic front...", 
+                    answer: "developing", 
+                    options: ["developed", "developing", "advanced", "advancing"],
+                    explanation: "The context discusses failure to grow and comparisons with South Korea (which was developing). 'Developing countries' is the standard economic term." 
+                },
+                { 
+                    numb: 22, 
+                    question: "is their ______ to evolve a judicious mixture...", 
+                    answer: "inability", 
+                    options: ["inability", "disadvantage", "incapacity", "handicap"],
+                    explanation: "'Inability' refers to the lack of capacity or means to do something, fitting the context of 'failure'." 
+                },
+                { 
+                    numb: 23, 
+                    question: "mixture of ______ substitution and export promotion.", 
+                    answer: "import", 
+                    options: ["scientific", "invention", "export", "import"],
+                    explanation: "'Import substitution' is a specific economic policy term that pairs with 'export promotion'." 
+                },
+                { 
+                    numb: 24, 
+                    question: "Zambia which ______ on imports...", 
+                    answer: "banked", 
+                    options: ["expected", "traded", "banked", "carried"],
+                    explanation: "'Banked on' is a phrasal verb meaning to rely on or depend on." 
+                },
+                { 
+                    numb: 25, 
+                    question: "independence 20 years ______ has depleted...", 
+                    answer: "ago", 
+                    options: ["later", "ago", "earlier", "since"],
+                    explanation: "'Ago' is used to show how far back in the past something happened (20 years ago)." 
+                },
+                { 
+                    numb: 26, 
+                    question: "depleted 50% of its national ______.", 
+                    answer: "capital", 
+                    options: ["capital", "deposit", "income", "credit"],
+                    explanation: "In national economics, depleting 'capital' refers to using up the country's wealth or assets." 
+                },
+                { 
+                    numb: 27, 
+                    question: "South Korea, which started its ______ development...", 
+                    answer: "economic", 
+                    options: ["financial", "fiscal", "economic", "economical"],
+                    explanation: "We are discussing the 'economic front', so 'economic development' is the correct term." 
+                },
+                { 
+                    numb: 28, 
+                    question: "development... ______ the fifties", 
+                    answer: "in", 
+                    options: ["upto", "over", "on", "in"],
+                    explanation: "We use 'in' for decades (e.g., in the fifties, in the nineties)." 
+                },
+                { 
+                    numb: 29, 
+                    question: "equalizing high exports ______ high imports", 
+                    answer: "with", 
+                    options: ["over", "with", "and", "into"],
+                    explanation: "To equalize X 'with' Y means to make them equal or balanced." 
+                },
+                { 
+                    numb: 30, 
+                    question: "is one of the ______ nations today.", 
+                    answer: "richest", 
+                    options: ["richest", "innovative", "prolific", "advancing"],
+                    explanation: "The context contrasts failure (Zambia) with success (South Korea). Being one of the 'richest' indicates economic success." 
+                }
+            ]
+        },
+        {
+            title: "4. October Heat",
+            passage: "Come October and you are burnt by the mid-day Sun. The storm and the sizzle is particularly <span class='blank-marker'>31</span> as it comes after the relatively cool monsoon months. Though it is hot and muggy, that does not <span class='blank-marker'>32</span> people from coming out on the streets to <span class='blank-marker'>33</span> the traditional festivals. And it must be shopping time also, colourfully decorated showrooms are <span class='blank-marker'>34</span> the passerby to let his hair down, splurge and take a <span class='blank-marker'>35</span> of gifts home for the family. After all, the New year’s just <span class='blank-marker'>36</span> the corner.",
+            questions: [
+                { 
+                    numb: 31, 
+                    question: "The storm and the sizzle is particularly ______...", 
+                    answer: "sultry", 
+                    options: ["traumatic", "sultry", "pleasant", "fantastic"],
+                    explanation: "'Sultry' is the specific adjective used to describe weather that is oppressively hot and moist (humid). 'Traumatic' is an emotional state and incorrect here." 
+                },
+                { 
+                    numb: 32, 
+                    question: "that does not ______ people from coming out...", 
+                    answer: "prevent", 
+                    options: ["oppose", "deny", "prevent", "reject"],
+                    explanation: "'Prevent from' is the correct grammatical structure. We prevent someone *from* doing something." 
+                },
+                { 
+                    numb: 33, 
+                    question: "on the streets to ______ the traditional festivals.", 
+                    answer: "herald", 
+                    options: ["boycott", "moot", "herald", "invite"],
+                    explanation: "'Herald' means to announce or signal the approach of something (festivals). It fits the celebratory tone." 
+                },
+                { 
+                    numb: 34, 
+                    question: "showrooms are ______ the passerby...", 
+                    answer: "exhorting", 
+                    options: ["drawing", "fascinating", "pursuing", "exhorting"],
+                    explanation: "'Exhorting' means to strongly encourage or urge someone to do something. The grammar 'exhorting... to let his hair down' fits perfectly, as it urges an action." 
+                },
+                { 
+                    numb: 35, 
+                    question: "splurge and take a ______ of gifts home.", 
+                    answer: "bagful", 
+                    options: ["token", "list", "bagful", "placement"],
+                    explanation: "'Bagful' implies a large quantity, fitting the word 'splurge' (spending freely)." 
+                },
+                { 
+                    numb: 36, 
+                    question: "New year’s just ______ the corner.", 
+                    answer: "round", 
+                    options: ["round", "at", "near", "along"],
+                    explanation: "The idiom is 'just round the corner', meaning very near in time." 
+                }
+            ]
+        },
+        {
+            title: "5. Newspaper",
+            passage: "The <span class='blank-marker'>1</span> of today is a huge financial undertaking with the same outlook as any other limited company. The <span class='blank-marker'>2</span> staff have to make circulation and if they do not, they will soon be <span class='blank-marker'>3</span> by those who can. Their independence, therefore, suffers a grave limitation. It is further <span class='blank-marker'>4</span> by the fact that a newspaper is as much an advertising medium as a vehicle for <span class='blank-marker'>5</span>. It is said that the <span class='blank-marker'>6</span> which the public pays for its newspaper covers no more than a third of the <span class='blank-marker'>7</span> of production, the other two-thirds is accounted <span class='blank-marker'>8</span> by advertisement revenue.",
+            questions: [
+                { 
+                    numb: 1, 
+                    question: "The ______ of today is a huge financial undertaking...", 
+                    answer: "newspaper", 
+                    options: ["newspaper", "hospital", "school", "theatre", "library"],
+                    explanation: "The passage explicitly discusses circulation, advertising, and staff in the context of media. 'Newspaper' is the subject." 
+                },
+                { 
+                    numb: 2, 
+                    question: "The ______ staff have to make circulation...", 
+                    answer: "editorial", 
+                    options: ["medical", "performing", "teaching", "editorial", "company"],
+                    explanation: "In a newspaper, the 'editorial' staff creates the content that drives circulation." 
+                },
+                { 
+                    numb: 3, 
+                    question: "they will soon be ______ by those who can.", 
+                    answer: "supplanted", 
+                    options: ["sustained", "treated", "cured", "covered", "supplanted"],
+                    explanation: "'Supplanted' means superseded or replaced. If staff don't perform, they are replaced." 
+                },
+                { 
+                    numb: 4, 
+                    question: "It is further ______ by the fact that...", 
+                    answer: "curtailed", 
+                    options: ["destroyed", "deepened", "curtailed", "failed", "aggravated"],
+                    explanation: "'Curtailed' means reduced or restricted. The independence of the paper is limited (curtailed) by financial needs." 
+                },
+                { 
+                    numb: 5, 
+                    question: "medium as a vehicle for ______.", 
+                    answer: "news", 
+                    options: ["news", "epidemics", "training", "business", "patients"],
+                    explanation: "A newspaper is a vehicle for 'news'. This is its primary function." 
+                },
+                { 
+                    numb: 6, 
+                    question: "the ______ which the public pays for its newspaper...", 
+                    answer: "price", 
+                    options: ["value", "tax", "price", "cost", "fee"],
+                    explanation: "The 'price' is what the consumer pays to buy the product." 
+                },
+                { 
+                    numb: 7, 
+                    question: "covers no more than a third of the ______ of production", 
+                    answer: "cost", 
+                    options: ["expenses", "sale", "amount", "price", "cost"],
+                    explanation: "We contrast the 'price' (paid by user) with the 'cost' (expense to create/produce)." 
+                },
+                { 
+                    numb: 8, 
+                    question: "two-thirds is accounted ______ by advertisement revenue.", 
+                    answer: "for", 
+                    options: ["into", "in", "from", "for", "with"],
+                    explanation: "'Accounted for' is the correct phrasal verb meaning 'explained by' or 'supplied by'." 
+                }
+            ]
+        }
+    ];
+
+    let currentPassageIndex = 0;
+
+    function init() {
+        renderTabs();
+        loadPassage(0);
+    }
+
+    function renderTabs() {
+        const tabContainer = document.getElementById('tabContainer');
+        tabContainer.innerHTML = '';
+        
+        quizData.forEach((test, index) => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+            btn.innerText = test.title;
+            btn.onclick = () => loadPassage(index);
+            tabContainer.appendChild(btn);
+        });
+    }
+
+    function loadPassage(index) {
+        currentPassageIndex = index;
+        const data = quizData[index];
+
+        document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+            if(idx === index) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        document.getElementById('passageContainer').innerHTML = data.passage;
+
+        const qContainer = document.getElementById('questionsContainer');
+        qContainer.innerHTML = '';
+
+        data.questions.forEach(q => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-item';
+            
+            let optionsHtml = '';
+            q.options.forEach((opt) => {
+                optionsHtml += `
+                    <button class="option-btn" onclick="checkAnswer(${q.numb}, '${opt.replace(/'/g, "\\'")}', this)">
+                        ${opt}
+                    </button>
+                `;
+            });
+
+            qDiv.innerHTML = `
+                <div class="q-header">
+                    <span class="q-badge">#${q.numb}</span>
+                    <span>${q.question}</span>
+                </div>
+                <div class="options-grid" id="opts-${q.numb}" data-answered="false">
+                    ${optionsHtml}
+                </div>
+                <div class="explanation-box" id="expl-${q.numb}">
+                    <strong>💡 Explanation</strong>
+                    ${q.explanation}
+                </div>
+            `;
+            qContainer.appendChild(qDiv);
+        });
+    }
+
+    function checkAnswer(questionNumber, selectedOption, btnElement) {
+        const currentData = quizData[currentPassageIndex];
+        const question = currentData.questions.find(q => q.numb === questionNumber);
+        
+        const parentGrid = document.getElementById(`opts-${questionNumber}`);
+        const explanationBox = document.getElementById(`expl-${questionNumber}`);
+        const allBtns = parentGrid.querySelectorAll('.option-btn');
+        
+        if (parentGrid.dataset.answered === "true") return;
+        parentGrid.dataset.answered = "true";
+
+        const isCorrect = (selectedOption === question.answer);
+        
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+        } else {
+            btnElement.classList.add('wrong');
+            allBtns.forEach(btn => {
+                if(btn.innerText.trim() === question.answer) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        allBtns.forEach(btn => btn.disabled = true);
+        
+        // Show explanation
+        explanationBox.style.display = 'block';
+    }
+
+    init();
+
+</script>
+</body>
+</html>

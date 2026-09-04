@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>GeoMaster Atlas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+    .app-back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000; /* Ensures it stays on top */
+        transition: transform 0.2s;
+        text-decoration: none; /* In case you use <a> tag */
+    }
+        .app-back-btn:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+        :root {
+            /* Vintage Map Theme Colors */
+            --bg-map-tint: rgba(233, 214, 176, 0.85); /* Sepia overlay */
+            --parchment: #f4e8d3;
+            --parchment-dark: #e6d3b3;
+            --border-dark: #3a2a18;
+            --text-main: #2c1e0f;
+            --text-sub: #5c4731;
+            --success: #2d6a4f;
+            --success-bg: #d8f3dc;
+            --danger: #9b2226;
+            --danger-bg: #f8d7da;
+            --accent-blue: #1d3557;
+            --accent-gold: #c29227;
+            --radius: 12px;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: #d4b483; /* Fallback color */
+            /* Vintage World Map Background Pattern */
+            background-image: url('https://www.transparenttextures.com/patterns/vintage-concrete.png'), linear-gradient(to bottom, rgba(255,255,255,0.2), rgba(0,0,0,0.1));
+            /* Note: In a real deployment, download a seamless vintage map pattern and use it here. 
+               Using a texture placeholder for now that gives an old paper feel. */
+            
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Vintage Vignette Overlay */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            box-shadow: inset 0 0 150px rgba(58, 42, 24, 0.5);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        
+        @keyframes tilt {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        .anim-float { animation: float 4s ease-in-out infinite; }
+        .anim-tilt { animation: tilt 5s ease-in-out infinite; }
+
+        /* --- APP CONTAINER --- */
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            min-height: 700px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .btn:active { transform: scale(0.98) !important; }
+
+        /* --- PAPER SCROLL CONTAINER STYLE --- */
+        .paper-container {
+            background: var(--parchment);
+            border: 4px solid var(--border-dark);
+            border-radius: var(--radius);
+            box-shadow: 
+                inset 0 0 40px rgba(58, 42, 24, 0.1), /* Inner shadow for depth */
+                0 10px 20px rgba(0,0,0,0.3), /* Outer drop shadow */
+                0 6px 0 var(--border-dark); /* 3D border effect */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Decorative corners */
+        .paper-container::before, .paper-container::after {
+            content: '✥';
+            position: absolute;
+            font-size: 2rem;
+            color: var(--border-dark);
+            opacity: 0.3;
+        }
+        .paper-container::before { top: 10px; left: 10px; }
+        .paper-container::after { bottom: 10px; right: 10px; }
+
+
+        /* --- MAIN MENU SCREEN --- */
+        #menu-screen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .compass-icon {
+            font-size: 5rem;
+            margin-bottom: -25px;
+            z-index: 2;
+            background: var(--parchment);
+            border-radius: 50%;
+            border: 4px solid var(--border-dark);
+            padding: 10px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            color: var(--accent-blue);
+        }
+
+        .title-scroll {
+            background: var(--parchment-dark);
+            border: 3px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 15px 70px;
+            box-shadow: 0 6px 0 var(--border-dark), 0 10px 20px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            position: relative;
+            transform: rotate(-1deg);
+        }
+        
+        .title-scroll h1 {
+            font-family: 'Lora', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+        }
+
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .topic-card {
+            background: var(--parchment);
+            border: 3px solid var(--border-dark);
+            border-radius: var(--radius);
+            padding: 25px 15px;
+            text-align: center;
+            box-shadow: 0 6px 0 var(--border-dark), 0 8px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .topic-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 11px 0 var(--border-dark), 0 15px 25px rgba(0,0,0,0.2); 
+            background: #fff0db;
+        }
+        .topic-card:active { transform: translateY(2px); box-shadow: 0 4px 0 var(--border-dark); }
+
+        .tc-icon-wrapper {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            border: 3px solid var(--border-dark);
+            background: var(--parchment-dark);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .tc-name { font-family: 'Lora', serif; font-weight: 700; font-size: 1.5rem; color: var(--text-main); margin-bottom: 5px;}
+        .tc-status { font-size: 0.8rem; text-transform: uppercase; font-weight: 800; color: var(--text-sub); letter-spacing: 1px;}
+
+        /* --- SUBMENU SCREEN (UNIVERSE TYPES) --- */
+        #submenu-screen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .submenu-title {
+            font-family: 'Lora', serif;
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            border-bottom: 3px double var(--border-dark);
+            padding-bottom: 10px;
+        }
+
+        .type-grid {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            max-width: 700px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .type-card {
+            background: var(--parchment);
+            border: 3px solid var(--border-dark);
+            border-radius: var(--radius);
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 8px 0 var(--border-dark);
+            cursor: pointer;
+            flex: 1 1 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .type-card:hover { transform: translateY(-5px); box-shadow: 0 13px 0 var(--border-dark); background: #fff0db;}
+        
+        .type-icon { font-size: 3.5rem; margin-bottom: 20px; }
+        .type-name { font-family: 'Lora', serif; font-size: 1.8rem; font-weight: 700; }
+        .type-desc { margin-top: 10px; color: var(--text-sub); font-weight: 600;}
+
+        .back-btn-container { width: 100%; margin-bottom: 20px; }
+        .back-btn {
+            background: transparent; border: 2px solid var(--border-dark);
+            padding: 8px 20px; border-radius: 30px; font-weight: 700; color: var(--text-main);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .back-btn:hover { background: var(--parchment-dark); }
+
+
+        /* --- QUIZ SCREEN --- */
+        .quiz-header {
+            padding: 20px 35px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid var(--border-dark);
+            background: rgba(58, 42, 24, 0.05);
+        }
+
+        .header-title { font-family: 'Lora', serif; font-weight: 700; font-size: 1.5rem; color: var(--text-main); display: flex; align-items: center; gap: 15px;}
+        .score-badge { 
+            background: var(--accent-gold); 
+            color: #fff;
+            padding: 8px 18px; 
+            border-radius: 30px; 
+            font-size: 1.1rem; 
+            font-weight: 800;
+            border: 2px solid var(--border-dark);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .progress-container { height: 10px; background: rgba(58, 42, 24, 0.1); width: 100%; border-bottom: 3px solid var(--border-dark); }
+        .progress-fill { height: 100%; background: var(--accent-blue); width: 0%; transition: width 0.4s ease; border-right: 2px solid var(--border-dark);}
+
+        .quiz-body { padding: 40px; flex: 1; overflow-y: auto; }
+
+        .question-meta {
+            color: var(--accent-blue); font-size: 1rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .question-meta::before { content:''; height: 2px; width: 30px; background: var(--accent-blue); display: block;}
+
+        .question-text {
+            font-family: 'Lora', serif; font-size: 1.5rem; font-weight: 700;
+            line-height: 1.5; margin-bottom: 35px; color: var(--text-main);
+        }
+
+        .options-grid { display: flex; flex-direction: column; gap: 15px; }
+
+        .option-card {
+            padding: 18px 25px; border: 3px solid var(--border-dark);
+            background: var(--parchment); border-radius: 10px; text-align: left;
+            font-size: 1.1rem; font-weight: 700; color: var(--text-main); cursor: pointer;
+            box-shadow: 0 4px 0 var(--border-dark);
+            position: relative;
+        }
+
+        .option-card:hover:not(:disabled) {
+            background: #fff;
+            transform: translateY(-3px); box-shadow: 0 7px 0 var(--border-dark);
+        }
+
+        .option-card.correct { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+        .option-card.wrong { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); opacity: 0.8; }
+
+        .explanation-box {
+            margin-top: 35px; background: rgba(255,255,255,0.5); border-radius: 12px; padding: 25px;
+            border: 3px dashed var(--border-dark); animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .insight-title { font-family: 'Lora', serif; font-weight: 700; color: var(--accent-blue); margin-bottom: 12px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;}
+        .expl-text { font-size: 1.05rem; line-height: 1.7; color: var(--text-main); font-weight: 600;}
+
+        .action-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 40px; padding-top: 25px; border-top: 3px dotted var(--border-dark);
+        }
+
+        .exit-btn { background: transparent; color: var(--danger); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
+        .exit-btn:hover { text-decoration: underline; }
+
+        .next-btn {
+            background-color: var(--accent-blue); color: var(--parchment); padding: 14px 35px;
+            border-radius: 30px; font-weight: 800; font-size: 1.1rem; border: 3px solid var(--border-dark);
+            box-shadow: 0 6px 0 var(--border-dark); letter-spacing: 1px;
+        }
+        .next-btn:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--border-dark); background-color: #2a4d7a;}
+
+        /* --- RESULTS SCREEN --- */
+        #result-screen { padding: 50px 40px; text-align: center; flex-grow: 1; overflow-y: auto; }
+        .res-title { font-family: 'Lora', serif; font-size: 3rem; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+        .res-subtitle { color: var(--accent-blue); font-weight: 800; font-size: 1.4rem; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 3px;}
+
+        .score-display {
+            width: 180px; height: 180px; border-radius: 50%;
+            background: conic-gradient(var(--accent-gold) var(--pct), var(--border-dark) 0);
+            margin: 0 auto 40px; display: flex; align-items: center; justify-content: center;
+            border: 5px solid var(--border-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .score-inner {
+            width: 140px; height: 140px; background: var(--parchment); border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 3px dotted var(--border-dark);
+        }
+        .score-num { font-size: 3rem; font-weight: 800; color: var(--text-main); font-family: 'Lora', serif;}
+        .score-label { font-size: 0.9rem; color: var(--text-sub); font-weight: 800; letter-spacing: 1px; text-transform: uppercase;}
+
+        .review-section {
+            background: rgba(255,255,255,0.5); border-radius: 12px; padding: 30px; text-align: left;
+            margin-bottom: 30px; border: 3px solid var(--border-dark);
+            max-height: 350px; overflow-y: auto;
+        }
+
+        .review-item { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px dashed var(--border-dark); }
+        .review-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .rev-q { font-weight: 800; color: var(--text-main); margin-bottom: 8px; font-size: 1.1rem; font-family: 'Lora', serif;}
+        .rev-a { font-size: 1rem; font-weight: 700; }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--parchment-dark); border-left: 2px solid var(--border-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 0; border: 2px solid var(--parchment); }
+    </style>
+</head>
+<body>
+    <button class="app-back-btn" onclick="history.back()">❮ Back to Menu</button>
+
+<div class="app-container">
+    <div id="menu-screen" class="paper-container">
+        <div class="compass-icon anim-float">🧭</div>
+        <div class="title-scroll anim-tilt">
+            <h1>GeoMaster Atlas</h1>
+        </div>
+
+        <div class="topic-grid">
+            <button class="btn topic-card" onclick="showUniverseSubmenu()">
+                <div class="tc-icon-wrapper anim-float" style="color: var(--accent-blue);">🛸</div>
+                <div class="tc-name">Universe</div>
+                <div class="tc-status">2 Types Available</div>
+            </button>
+
+            <button class="btn topic-card" onclick="alertVacant('Lithosphere')">
+                <div class="tc-icon-wrapper anim-float" style="color: #8d5524; animation-delay: 0.5s;">🌋</div>
+                <div class="tc-name">Lithosphere</div>
+                <div class="tc-status">Vacant Sector</div>
+            </button>
+            <button class="btn topic-card" onclick="alertVacant('Atmosphere')">
+                <div class="tc-icon-wrapper anim-float" style="color: #5b8db8; animation-delay: 1s;">☁️</div>
+                <div class="tc-name">Atmosphere</div>
+                <div class="tc-status">Vacant Sector</div>
+            </button>
+            <button class="btn topic-card" onclick="alertVacant('Hydrosphere')">
+                <div class="tc-icon-wrapper anim-float" style="color: #2a9d8f; animation-delay: 1.5s;">🌊</div>
+                <div class="tc-name">Hydrosphere</div>
+                <div class="tc-status">Vacant Sector</div>
+            </button>
+            <button class="btn topic-card" onclick="alertVacant('Agriculture')">
+                <div class="tc-icon-wrapper anim-float" style="color: #e9c46a; animation-delay: 2s;">🌾</div>
+                <div class="tc-name">Agriculture</div>
+                <div class="tc-status">Vacant Sector</div>
+            </button>
+            <button class="btn topic-card" onclick="alertVacant('Ecology')">
+                <div class="tc-icon-wrapper anim-float" style="color: #606c38; animation-delay: 2.5s;">🌿</div>
+                <div class="tc-name">Ecology</div>
+                <div class="tc-status">Vacant Sector</div>
+            </button>
+        </div>
+    </div>
+
+    <div id="submenu-screen" class="paper-container hidden">
+        <div class="back-btn-container">
+            <button class="btn back-btn" onclick="backToMainMenu()">⬅ Return to Atlas</button>
+        </div>
+        <h2 class="submenu-title">Universe Exploration</h2>
+        
+        <div class="type-grid">
+            <button class="btn type-card" onclick="startQuiz('Level_1')">
+                <div class="type-icon anim-float">🌌</div>
+                <div class="type-name">Type 1</div>
+                <div class="type-desc">Solar System Foundations</div>
+            </button>
+            <button class="btn type-card" onclick="startQuiz('Level_2')">
+                <div class="type-icon anim-float" style="animation-delay: 0.5s;">🪐</div>
+                <div class="type-name">Type 2</div>
+                <div class="type-desc">Deep Space Concepts</div>
+            </button>
+        </div>
+    </div>
+
+    <div id="quiz-screen" class="paper-container hidden">
+        <div class="quiz-header">
+            <div class="header-title"><span style="font-size:1.8rem" class="anim-tilt">📜</span> <span id="topic-label">Level I</span></div>
+            <div class="score-badge" id="score-badge">Score: 0</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+
+        <div class="quiz-body">
+            <div class="question-meta">
+                Progress: Question <span id="curr-q-num">1</span> / <span id="total-q-num">10</span>
+            </div>
+
+            <div class="question-text" id="q-text"></div>
+            <div class="options-grid" id="opt-container"></div>
+
+            <div id="explanation-container" class="explanation-box hidden">
+                <div class="insight-title">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Cartographer's Notes
+                </div>
+                <div id="expl-text" class="expl-text"></div>
+            </div>
+            
+            <div class="action-row">
+                <button class="btn exit-btn" onclick="quitQuiz()">✖ Abandon Expedition</button>
+                <button class="btn next-btn hidden" id="next-btn" onclick="nextQuestion()">Chart Next Course &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="paper-container hidden">
+        <h2 class="res-title">Expedition Complete!</h2>
+        <div class="res-subtitle" id="rank-title">Explorer</div>
+
+        <div class="score-display" id="score-circle-el">
+            <div class="score-inner">
+                <div class="score-num" id="final-score">0</div>
+                <div class="score-label">DISCOVERIES</div>
+            </div>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 15px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px;">Journey Logbook</div>
+        <div class="review-section" id="review-list"></div>
+
+        <button class="btn next-btn" style="width: 100%; max-width: 350px; padding: 15px;" onclick="backToMainMenu()">Return to Atlas Map</button>
+    </div>
+</div>
+
+<script>
+// --- DATA (Explanations & Questions kept exactly as provided) ---
+const exp1 = "The given theory is called the Chamberlain-Moulton planetesimal hypothesis.<br>Nebular theory of formation of solar system(4 a) by Immanuel Kant(1755) Nebular theory of formation of solar system(4.8 bn years ago) – by Immanuel Kant(1755), modified by Laplace(1796){Nebula is a giant cloud of dust and gases}<br>Origin of Universe - Big Bang theory(13.8 bn Origin of Universe - Big Bang theory(13.8 bn years ago) – George Lemaitre & Edwin Hubble(1931)";
+const exp2 = "Three characteristics of dwarf planets - orbits the Sun, have a nearly spherical body and shouldn’t be able to clear their orbit of debris. Eg. of the dwarf planets are Ceres, Eris, Makemake, Pluto, Haumea.<br><br>Recall the characteristics of each dwarf planet. Do you know that Pluto is the largest and the brightest dwarf planet?";
+const exp5 = "Pluto is a dwarf planet in Kuiper belt(belt outside the orbit of Neptune containing asteroids, rocks, comets). It was removed from the list of planets in 2006 International Astronomical Union(HQ - Paris, France). Pluto’s largest satellite - Charon, revolution - 248 Earth years";
+const exp8 = "Venus(Lucifer, brightest, evening star, morning star, Earth’s twin) is the hottest planet as clouds of $\\mathrm{H}_2\\mathrm{SO}_4$ and $\\mathrm{CO}_2$ absorb radiations.<br>Slowest rotation - 243 years. Highest albedo(fraction of light that a surface reflects)";
+const exp9 = "Saturn - second largest(Jupiter largest), least dense, 146 moons (max) – largest - Titan, has the biggest and brightest rings{Rings discovered by - Huygens(1655), Cassini(1675) - discovered gaps between rings}<br>Sequence of planets according to their distance from the Sun - Mercury Venus Earth Mars Jupiter Saturn Uranus Neptune";
+const exp12 = "Terrestrial planets - Rocky surface, solid, don’t have rings, very few moons, small in size<br>Jovian planets - composed of gas and ice, have rings, large no. of moons, big in size<br>Do you know that Jupiter and Saturn are called Gas Giants while Uranus and Neptune are called Ice Giants?";
+const exp16 = "Celestial object is the naturally occurring body in the Universe.<br>They are of 2 types - Luminous(stars) and Non-luminous(planets, satellites, meteors, asteroids, comets).<br>Asteroid - small, rocky objects orbiting the Sun<br>Meteor - enters Earth’s atmosphere and burn in Mesosphere<br>Comet - made up of ice, orbits the Sun and burn upon reaching it";
+const exp19 = "Cassiopeia - W shaped<br>Cygnus - cross shaped<br>January evenings - hourglass shaped<br>Asterism is the pattern of stars smaller than constellation";
+const exp20 = exp8 + "<br>Jupiter - winter planet, largest, 3rd brightest after Venus and Moon, shortest rotation(10 hrs), 95 moons(Galilean moons - Lo, Europa, Ganymede{largest}, Calisto), has unclear rings";
+const exp33 = "Moon is the Earth’s natural satellite. Radius - $1.74 \\times 10^6$ m, distance - 3,84,000 km, gravity = 1/6 of Earth’s gravity, light from moon to Earth - 1.26 sec.<br>Do you know that India recently launched Chandrayaan 3 mission on Moon with Vikram lander and Pragyan rover. The point is named as Shiv Shakti point?";
+
+const QUESTIONS_DB = [
+    // ==========================================
+    // UNIVERSE - TYPE 1
+    // ==========================================
+    { level: "Level_1", q: "1. In 1905, who concluded with Thomas Chamberlain that the planets of the Solar System originated from an encounter between the Sun and another star?[SSC CPO 27/06/2024]", o: ["Forest Moulton", "Inge Lehmann", "Charles Lyell", "James Hutton"], c: 0, e: exp1 },
+    { level: "Level_1", q: "2 Which dwarf planet orbits the sun in 310 years at a distance between 38.5 to 53 AU?[SSC CHSL 03/07/2024]", o: ["Ceres", "Eris", "Makemake", "Pluto"], c: 2, e: exp2 },
+    { level: "Level_1", q: "3. Which of the following statement is correct?<br>[SSC CHSL 04/07/2024]", o: ["The density of Saturn is similar to that of Earth.", "The Size of Earth and Venus is almost similar.", "The size of Jupiter and Mars is similar.", "Mars is the warmest planet."], c: 1, e: "Saturn is the least dense planet while Earth is the densest planet (5.51 g/cm³).<br><br>Size of planets - Jupiter > Saturn > Uranus > Neptune > Earth > Venus > Mars > Mercury.<br>Venus(Lucifer) is the warmest planet not that Venus(Lucifer) is the warmest planet not the Mars." },
+    { level: "Level_1", q: "4. Which of the following does NOT have rings?<br>[SSC CHSL 11/07/2024]", o: ["Venus", "Uranus", "Saturn", "Jupiter"], c: 0, e: "Rings are the characteristics of Jovian planets(Jupiter, Saturn, Uranus, Neptune) while Venus is a terrestrial planet(Mercury, Venus, Earth, Mars).<br>Recall the difference between Terrestrial and Jovian planets.<br>Do you know Terrestrial and Jovian planets are separated by Asteroid belt?" },
+    { level: "Level_1", q: "5. ______oblong orbit overlaps the orbit of Neptune.<br>[SSC CHSL 10/07/2024]", o: ["Venus’", "Mars’", "Pluto’s", "Jupiter’s"], c: 2, e: exp5 },
+    { level: "Level_1", q: "6. Which of the following rocky planets is the fastest planet in our solar system-travelling through space at 29 miles(47 Kilometers) per second?[SSC CHSL 05/07/2024]", o: ["Earth", "Mercury", "Venus", "Mars"], c: 1, e: "Mercury is the fastest planet(revolution - 88 days). It is also the smallest and the closest planet to the Sun. It has no satellite, water, and gases($\\mathrm{O}_2$, $\\mathrm{N}_2$, $\\mathrm{H}_2$, $\\mathrm{CO}_2$). Recall the characteristics of Venus, Earth and Mars." },
+    { level: "Level_1", q: "7. The length of a day on____is approximately 16 hours.<br>[SSC CHSL 05/07/2024]", o: ["Mars", "Mercury", "Venus", "Neptune"], c: 3, e: "Neptune(ice giant) – discovery - Johann Galle and Urbain Le Verrier (1846) - only planet to be discovered by mathematical predictions. 14 satellites(famous - Triton). Windiest planet. Colour - Bluish(due to Methane). Atmoshphere - Hydrogen and Helium. Farthest planet.<br>Rotation - 16 hours. Revolution - 165 days(slowest)" },
+    { level: "Level_1", q: "8. Which of the following planets’ atmosphere is made up of thick white and yellowish clouds of sulphuric acid?[SSC CHSL 03/10/2020]", o: ["Jupiter", "Neptune", "Venus", "Mars"], c: 2, e: exp8 },
+    { level: "Level_1", q: "9. Which of the following statements about planet Saturn is true?[SSC CHSL 04/07/2024]", o: ["Saturn is the fourth planet from the Sun and the largest planet in our Solar system.", "Satellites like Enceladus and Titan of Saturn are home to internal oceans, could possibly support life.", "Saturn is a massive ball made up mostly of nitrogen.", "Saturn’s environment Is conductive to life."], c: 1, e: exp9 },
+    { level: "Level_1", q: "10. Which planet is the second largest planet in our solar system and also has the biggest and brightest rings around it?<br>[SSC CHSL 10/07/2024]", o: ["Jupiter", "Earth", "Uranus", "Saturn"], c: 3, e: exp9 },
+    { level: "Level_1", q: "11. Which is the most widely accepted model to explain the formation and evolution of the solar system?[SSC CPO 03/10/2023]", o: ["Cloud hypothesis", "Gas hypothesis", "Nebular hypothesis", "Solar hypotheses"], c: 2, e: exp1 },
+    { level: "Level_1", q: "12. Terrestrial planets are composed of _____.<br>[SSC CPO 03/10/2023]", o: ["Metals and air", "Rocks and metals", "Metals and gas", "Rocks and gas"], c: 1, e: exp12 },
+    { level: "Level_1", q: "13. Which trend is found about the distance between the galaxies?<br>[SSC CPO 04/10/2023]", o: ["Unpredictable", "Decreasing", "Constant", "Increasing"], c: 3, e: "Galaxies are moving away from each other at a constant rate. It is called Hubble’s law.<br>Nearest galaxy - Andromeda<br>Study of Universe - Cosmology" },
+    { level: "Level_1", q: "14. Which scientist thought of the concept of the steady state of the universe?<br>[SSC CGL 14/07/2023]", o: ["Harold Jeffrey", "Edwin Hubble", "Fred Hoyle", "Pierre-Laplace"], c: 2, e: "Steady state theory - universe is eternal with no beginning or end and new matter is continuously formed to maintain its density.<br>" + exp1 },
+    { level: "Level_1", q: "15. Which among the following is another word for universe?<br>[SSC CHSL 10/03/2023]", o: ["Blg Crunch", "Astronomy", "Cosmos", "Supernova"], c: 2, e: "Universe is also called Cosmos and its study is called Cosmology.<br>Big crunch(opposite of Big Bang) - contraction of Universe to a state of infinite density and temperature Astronomy is the study of everything in the universe beyond Earth’s atmosphere.<br><br>Supernova - explosion of stars<br>Pulsar - a neutron star<br>Black hole - a place in space with infinite density" },
+    { level: "Level_1", q: "16. Which of the following is a part of celestial objects?<br>[SSC CPO 09/11/2022]<br>I. Stars II. Planets<br>III. Moon", o: ["Only I and III", "Only I and II", "I, II and III", "Only II and III"], c: 2, e: exp16 },
+    { level: "Level_1", q: "17. The bodies glowing in the night sky are known as ______.<br>[SSC CGL 03/03/2020]", o: ["Celestial bodies", "Asteroids", "Planetarium", "Meteorite"], c: 0, e: "Planetarium - a building with curved ceiling built for educational and entertaining purpose<br>Meteorite - meteor hitting the Earth surface<br>Meteoroid - any solid debris of asteroid, comet or other celestial objects that floats through interplanetary space<br>Meteor(shooting/falling star) - streak of light that appears when a meteoroid enters the atmosphere(mesosphere)<br>" + exp16 },
+    { level: "Level_1", q: "18. Cosmic snowballs of frozen gases, rock and dust that orbit the Sun are known as____.[SSC MTS 16/05/2023]", o: ["Meteors", "Star", "Meteorites", "Comets"], c: 3, e: exp16 + "<br>Stars - luminous bodies, their colour depends on temperature<br>Group of stars - Constellation(Largest - Hydra, Ursa Major - Sapt Rishi).<br>Do you know that Rigel is the brightest star in Orion constellation while overall Sirius(dog star) is the brightest star?<br>Closest star to Earth - Sun(150 mn km), 2nd closest - Proxima Centuri" },
+    { level: "Level_1", q: "19. Which of the following constellations is also called the hunter?<br>[SSC CHSL 10/03/2023]", o: ["Cassiopeia", "Leo Major", "Ursa Major", "Orion"], c: 3, e: exp19 },
+    { level: "Level_1", q: "20. Which among the following planets is also known as “Morning Star”?[SSC MTS 10/05/2023]", o: ["Jupiter", "Neptune", "Venus", "Earth"], c: 2, e: exp20 },
+    { level: "Level_1", q: "21. Which among the following is the coldest planet in the solar system?[SSC MTS 16/05/2023]", o: ["Mars", "Neptune", "Saturn", "Uranus"], c: 3, e: "Uranus - Green planet(due to $\\text{CH}_4$), rolling/lopsided planet(tilted $98^\\circ$), discovered by William Herschel(1781)<br>Mars - Red planet(iron oxide), 2 moons - Phobos and Deimos, largest volcano and tallest mountain - Olympus Mons" },
+    { level: "Level_1", q: "22. The Kuiper Belt is a ring of icy rocks & dust bodies just outside the orbit of____.[SSC MTS 17/05/2023]", o: ["Saturn", "Venus", "Jupiter", "Neptune"], c: 3, e: exp5 },
+    { level: "Level_1", q: "23. The asteroid belt lies between which two planets?<br>[SSC CHSL 21/03/2023]", o: ["Jupiter and Saturn", "Mars and Jupiter", "Saturn and Uranus", "Mercury and Venus"], c: 1, e: "" },
+    { level: "Level_1", q: "24. In approximately how much time does Mars complete one spin on its axis?<br>[SSC CHSL 15/03/2023]", o: ["16 hours", "8 hours", "1 day 18 hours", "1 day"], c: 3, e: "Martian day(sol) is of about 24.6 hours.<br>Rotation time of other planets is - Venus - 243 days(slowest), Earth - 24 hours, Jupiter - 10 hours(fastest)" },
+    { level: "Level_1", q: "25. On which planet has a rotating oval of clouds, twice as wide as Earth, called the ‘Great Red Spot’ been observed for more than 300 years?<br>[SSC CHSL 08/08/2023]", o: ["Neptune", "Mercury", "Jupiter", "Venus"], c: 2, e: "Great Red Spot is a storm system on Jupiter,<br>" + exp20 + "<br>Sunspots are temporary phenomena on the photosphere of the Sun appearing as dark spots as they are 500-1500°C cooler than the surrounding chromosphere." },
+    { level: "Level_1", q: "26. The distance of the Sun from the Earth is about____light minutes.<br>[SSC CHSL 20/03/2023]", o: ["6", "4.3", "12", "8"], c: 3, e: "Sun - 99% mass of the solar system, 109 time of Earth, composed of Hydrogen(73%) and Helium(25%), outer layer - Corona, visible part - Photosphere<br>Light year($9.46 \\times 10^{12}$ km) is the distance travelled by light in one year. 1 Parsec = 3.26 light year.<br>Do you know that Aditya L1 is the first solar mission of India?" },
+    { level: "Level_1", q: "27. Who was the first to accurately describe the rings of Saturn as a disc around the planet in 1655?[SSC CGL 06/12/2022]", o: ["Hideki Yukawa", "Galileo Galilei", "Christiaan Huygens", "Giovanni Cassini"], c: 2, e: exp9 },
+    { level: "Level_1", q: "28. From the given alternatives, identify the dwarf planet.<br>[SSC CHSL 30/06/2023]", o: ["Pluto", "Mercury", "Neptune", "Mars"], c: 0, e: exp5 + "<br>" + exp2 },
+    { level: "Level_1", q: "29. The____radiation belts are giant swaths of magnetically trapped highly energetic charged particles that surround Earth.<br>[SSC CGL 13/04/2022]", o: ["Van Allen", "Aurora", "Kuiper", "Chinook"], c: 0, e: "Van Allen belts are two radiation belts of charged particles located In Earth’s magnetic field.<br>Location - inner belt - 3,000 km above Earth; outer belt - 15,000-20,000 km above Earth.<br>These belts are dangerous for humans and spacecrafts and the energetic electrons in them are called “killer” electrons as they can damage spacecrafts.<br>Aurora - It is a display of light in the sky at the poles.<br>Chinook(aka snow eater) - Local warm wind of Northern America, blows on the eastern side of Rocky mountains" },
+    { level: "Level_1", q: "30. Which of the following is the windiest planet in the solar system?[SSC MTS 14/10/2021]", o: ["Neptune", "Uranus", "Saturn", "Mars"], c: 0, e: "Neptune is the windiest planet in the solar system." },
+    { level: "Level_1", q: "31. Lucifer is another name for the planet____.<br>[SSC CGL 03/03/2020]", o: ["Jupiter", "Mars", "Venus", "Saturn"], c: 2, e: "Venus is also called as Lucifer, Earth’s twin, morning star, evening star." },
+    { level: "Level_1", q: "32. Minal wrote an essay on the largest moon of Saturn. Which among the following moons is it?[SSC MTS 19/06/2023]", o: ["Atlas", "Titan", "Carme", "Europa"], c: 1, e: "Titan is the largest moon of Saturn." },
+    { level: "Level_1", q: "33. The moon moves around the earth in about____days.<br>[SSC MTS 14/06/2023]", o: ["21", "23", "27", "25"], c: 2, e: exp33 },
+    { level: "Level_1", q: "34. In early 1610, who discovered with his newly invented telescope that Jupiter has four moons?[SSC CGL 06/12/2022]", o: ["Simon Marlys", "Tycho Brahe", "Galileo Galilei", "Johannes Kepler"], c: 2, e: "Galileo discovered 4 moons(Lo, Europa, Ganymede, Calisto) of Jupiter which are called Galilean moons." },
+    { level: "Level_1", q: "35. Which of the following celestial bodies has a natural satellite named ‘Charon’?[SSC MTS 05/10/2021]", o: ["Haumea", "Pluto", "Mars", "Saturn"], c: 1, e: "Charon is the satellite of Pluto.<br>" + exp5 },
+    { level: "Level_1", q: "36. What is the radius of the moon?[SSC CHSL 19/03/2020]", o: ["$1.78 \\times 10^6$ m", "$1.79 \\times 10^6$ m", "$1.74 \\times 10^5$ m", "$1.74 \\times 10^6$ m"], c: 3, e: exp33 },
+    { level: "Level_1", q: "37. Planetary scientists call the gaseous envelope around the Moon as the____.[SSC CGL 04/03/2020]", o: ["lunar exosphere", "lunar stratosphere", "lunar thermosphere", "lunar endosphere"], c: 0, e: "The gaseous envelope around the Moon is called Lunar Exosphere.<br>Argon 40 is an important constituent of it.<br>The gaseous envelope around the Earth is called Atmosphere.<br>Recall the layers of Earth’s atmosphere with their characteristics." },
+    { level: "Level_1", q: "38. In which of the following periods is the meteor shower named Quadrantids generally visible from Earth?<br>[SSC MTS 20/10/2021]", o: ["August/September", "October/November", "May/June", "December/January"], c: 3, e: "Quadrantids are generally active between the end of December and the second week of January and peaks around 3-4 January." },
+    { level: "Level_1", q: "39. In which of the following months may the meteor shower named Lyrids be seen from Earth?[SSC MTS 20/10/2021]", o: ["April", "February", "June", "August"], c: 0, e: "" },
+    { level: "Level_1", q: "40. Each orbit of the International Space Station(ISS) takes____minutes.<br>[SSC CHSL 13/03/2023]", o: ["80 - 82", "85 - 87", "90 - 93", "83 - 86"], c: 2, e: "International Space Station(ISS) - partner countries - Europe, USA, Russia, Canada, Japan. The largest structure put in space by humans.<br>In 24 hours, the ISS orbits Earth 16 times. Speed - 28,000 km/hr." },
+    { level: "Level_1", q: "41. The moon completes____rotation on its axis as it completes one-revolution around the Earth[SSC CPO 09/11/2022]", o: ["3", "2", "1", "4"], c: 2, e: "The time taken by Moon for 1 rotation is same as that for 1 revolution so only one side is visible to us.<br>Rotation = Revolution = 27 days.<br>More info about moon - " + exp33 },
+    { level: "Level_1", q: "42. A distinctive cross-shaped constellation best seen in the northern hemisphere during the summer and fall months around September is[SSC CHSL 02/07/2024]", o: ["Cygnus", "Pegasus", "Ursa Major", "Cassiopeia"], c: 0, e: exp19 },
+    { 
+        level: "Level_1", 
+        q: "1. Geoid is the____of the Earth.[SSC CHSL 01/07/2024]", 
+        o: ["Orbit", "Shape", "Colour", "Axis"], 
+        c: 1, 
+        e: "The shape of Earth is Geoid/Oblate spheroid(flat from top and bottom and bulges at centre)<br><br>Reason for geoid shape - more centrifugal force at equator due to rotation.<br><br>2 types of forces act on a revolving body - Centripetal force(towards the centre) and Centrifugal force(away from centre)" 
+    },
+    { 
+        level: "Level_1", 
+        q: "2. Which of the following statements is INCORRECT regarding the Coriolis force?[SSC CHSL 02/07/2024]", 
+        o: ["It deflects the wind to the right in the north and left in the south.", "It is absent at the equator.", "Deflection is less when the wind is high.", "It is directly proportional to the angle of altitude."], 
+        c: 2, 
+        e: "Coriolis force is the apparent force experienced due to rotation of Earth. It deflects the wind to the right in the NH and to the left in the SH. It is max at poles and absent at equator. It is directly proportional to the speed of wind. Geostrophic winds - winds which blow parallel to isobars due to balance of Coriolis force and pressure gradient" 
+    },
+    { 
+        level: "Level_1", 
+        q: "3. Which is the Standard Meridian of India?<br>[SSC CHSL 05/07/2024]", 
+        o: ["$83^\\circ 30‘$ E", "$82^\\circ 30‘$ E", "$81^\\circ 30‘$ E", "$84^\\circ 40‘$ E"], 
+        c: 1, 
+        e: "Meridian(longitude) is the imaginary vertical lines running from North to South. It is the angular distance of a place from prime meridian. Distance between meridians - max at equator(111.32 km) and least at poles. Total meridians = 360.<br><br>Important meridians – Prime meridian/GMT(0°) - passes through Greenwich, London; International Date Line(180°)<br><br>GMT passes through 8 countries - UK, France, Spain, Algeria, Mali, Burkina Faso, Togo, Ghana{TRICK - BSF GAMe in TOGO Kingdom}.<br>Moving from W to E on IDL – day gained and date lost.<br><br>Do you know that all longitudes are great circles(largest circle which can be drawn on a sphere dividing it into two equal halves) but only 1 latitude(equator) is a great circle?<br><br>Tropic of Cancer and Indian Standard Meridian intersect each other at Koriya district in Chattisgarh." 
+    },
+    { 
+        level: "Level_1", 
+        q: "4. Which of the following statement/statements is/are true regarding the light year?[SSC CHSL 27/06/2024]<br>1. Light year is a unit of distance.<br>2. Light year is a unit of time.<br>3. A light year is the distance that light travels in one Earth year.<br>4. Light year is the measurement of light intensity.", 
+        o: ["Only 1 and 3 are correct", "Only 1 and 2 are correct", "Only 1 is correct", "Only 2 is correct"], 
+        c: 0, 
+        e: "Light year($9.46 \\times 10^{12}$ years) is the distance travelled by light in 1 Earth year. Hence, it is a unit of distance.<br><br>1 Parsec = 3.26 light years." 
+    },
+    { 
+        level: "Level_1", 
+        q: "5. Perihelion is when Earth is ______.[SSC PHASE XII 24/07/2024]", 
+        o: ["Farthest from the sun", "Under the sun", "Nearest to the sun", "Above the sun"], 
+        c: 2, 
+        e: "Perihelion(3 January) - Earth is nearest to the Sun(147.5 mn km)<br>Aphelion(4 July) - Earth is farthest from the Sun(152.5 mn km)<br>Distance between Sun and Earth(avg) - 150 mn km<br><br>Perigee - moon closest to Earth Apogee - moon farthest from Earth" 
+    },
+    { 
+        level: "Level_1", 
+        q: "6. What makes countries near the equator hotter than those which are away from the equator?[SSC JE 06/02/2024]", 
+        o: ["The equator is near the earth’s core.", "The equator is a hot line.", "Areas near the equator have more volcanoes.", "Areas near the equator receive direct and more sunlight"], 
+        c: 3, 
+        e: "Equator($0^\\circ$ latitude) divides the Earth in two equal halves - NH and SH.<br><br>Latitudes - imaginary horizontal lines running East to West. It Is the angular distance of a place from equator.<br><br>$1^\\circ$. latitude = 111 km. Total latitudes = 181. Distance between each latitude is same.<br><br>Important latitudes – 0° - Equator, 23.5° N - Tropic of Cancer, 23.5° S - Tropic of Capricorn, 66.5° N - Arctic circle, 66.5° S - Antarctic circle<br><br>Do you know that the direct sunlight only falls between 23.5° N and 23.5° S. Beyond these, only slant rays fall?<br><br>The temperature in subtropical regions is more than that at equator due to factors like less cloudiness in subtropics and absence of large water bodies." 
+    },
+    { 
+        level: "Level_1", 
+        q: "7. What is the radius of the Earth?[SSC CHSL 09/03/2023]", 
+        o: ["7456 km", "6371 km", "5619 km", "4728 km"], 
+        c: 1, 
+        e: "Equatorial radius=6378 km, Equatorial circumference=40,075 km<br>Polar radius = 6357 km, Polar circumference = 40,007 km<br>Mean radius = 6371 km, Mean circumference = 40,040 km<br><br>Equatorial speed > Polar speed, Equatorial radii > Polar radii, Equatorial circumference > Polar circumference" 
+    },
+    { 
+        level: "Level_1", 
+        q: "8. Which among the following is not a type of solar eclipse?<br>[SSC CHSL 15/03/2023]", 
+        o: ["Annular", "Partial", "Penumbral", "Total"], 
+        c: 2, 
+        e: "Solar Eclipse - moon is between Sun and Earth and blocks the sunlight. Occurs during New moon(amavasya).<br><br>It is of 3 types - total, annular, partial Lunar Eclipse - earth is between Sun and moon and blocks the sunlight. Occurs during Full moon(purnima) Blue moon is when there are 2 purnima in one month Lunar eclipse + perigee = bigger moon(super moon)" 
+    },
+    { 
+        level: "Level_1", 
+        q: "9. Which of the following statements regarding the moon is correct?[SSC CPO 11/11/2022]<br>I. The size of the illuminated part of the moon vislble from the Earth increases each day after the new moon day.<br>II. After the full moon day, the sunlit part of the moon visible from the Earth decreases in size every day.", 
+        o: ["Both I and II", "Only I", "Neither I nor II", "Only II"], 
+        c: 0, 
+        e: "Full moon(purnima) - moon appears as a full circle<br><br>New moon(amavasya) - moon is invisible<br><br>After purnima, illuminated part of moon decreases(waning phase) each day and in nearly 15 days it becomes invisible thereby causing amavasya." 
+    },
+    { 
+        level: "Level_1", 
+        q: "10. During the phenomenon of aphelion, the approximate distance between the Earth and the Sun is:[SSC CHSL 12/10/2020]", 
+        o: ["137 million km", "152 million km", "147 million km", "142 million km"], 
+        c: 1, 
+        e: "Perihelion(3 January) - Earth is nearest to the Sun(147.5 mn km)<br>Aphelion(4 July) - Earth is farthest from the Sun(152.5 mn km)" 
+    },
+    { 
+        level: "Level_1", 
+        q: "11. How many degrees does the Earth rotate about its own axis in one hour?<br>[SSC CGL 06/03/2020]", 
+        o: ["10", "20", "24", "15"], 
+        c: 3, 
+        e: "Each hour, Earth rotates about $15^\\circ$ and hence in 24 hours it completes one rotation($24 \\times 15^\\circ = 360^\\circ$).<br><br>Moving 15° East from prime meridian - time increases by 1 hour<br>Moving 15° West from prime meridian - time decreases by 1 hour<br>Rotation causes day and night while revolution and tilt cause change in seasons." 
+    },
+    { 
+        level: "Level_1", 
+        q: "12. Which of the following sets of statements are correct about the Inter-Tropical Convergence Zone(ITCZ)?<br>[SSC CPO 05/10/2023]<br>I. The ITCZ is a broad trough of low pressure in equatorial latitudes.<br>II. This is where the northeast and the southeast trade winds converge.<br>III. The ITCZ is the equatorial trough normally positioned about $5^\\circ\\mathrm{N}$ of the equator and remains there throughout the year.<br>IV. The ITCZ moves over to the plane of Ganga in Summer.", 
+        o: ["Only I and III", "I, II and III", "Only II and III", "I, II and IV"], 
+        c: 3, 
+        e: "ITCZ(doldrum) is a low pressure belt between $10^\\circ$ N and $10^\\circ$ S. It Is a zone of convergence of airmass. It moves north and south with the apparent shift of Sun. Cell - representation of general circulation of atmosphere, 3 cells - Hadley cell, Ferrel cell, Polar cell" 
+    },
+    { 
+        level: "Level_1", 
+        q: "13. During October-November, the apparent movement of the sun is towards the____.[SSC MTS 18/05/2023]", 
+        o: ["North", "North-East", "North-West", "South"], 
+        c: 3, 
+        e: "During October-November, the apparent movement of the Sun is towards the South because during this time, Earth is tilted away from the Sun in NH and towards the Sun in SH.<br>Earth is tilted at 23.5° on its axis and 66.5° on its orbital plane.<br>Summer solstice - 21 June, Winter solstice - 22 December" 
+    },
+    { 
+        level: "Level_1", 
+        q: "14. On which of the following two dates does the equinox fall?<br>[SSC CHSL 15/03/2023]", 
+        o: ["21 June and 23 September", "21 March and 21 June", "21 March and 23 September", "23 September and 22 December"], 
+        c: 2, 
+        e: "Equinox - sunlight fall vertically on equator, so equal day and night. Vernal/Spring equinox-21 march, Autumnal/fall equinox - 23 september. Recall about summer and winter solstice." 
+    },
+    { 
+        level: "Level_1", 
+        q: "15. What is the zone between the Arctic Circle and North Pole called?<br>[SSC CHSL 21/03/2023]", 
+        o: ["Torrid zone", "Frigid zone", "North temperate zone", "South temperate zone"], 
+        c: 1, 
+        e: "Frigid zone – 66.5° N - 90° N and 66.5° S - 90° S<br>Torrid zone – 23.5° N - 23.5° S<br>Temperate zone – 23.5° N - 66.5° N and 23.5° S - 66.5° S<br>Recall all the important latitudes.<br><br>Arctic circle - 66.5° N, Antarctic circle - 66.5° S, Tropic of Cancer - 23.5° N, Tropic of Capricorn - 23.5° S<br><br>Do you know that longitudes Intersect each other at North and South poles whereas latitudes don’t intersect each other?" 
+    },
+    { 
+        level: "Level_1", 
+        q: "16. 1° latitude is equal to approximately ______km.<br>[SSC CHSL 16/10/2020]", 
+        o: ["111", "145", "133", "122"], 
+        c: 0, 
+        e: "$1^\\circ$ latitude = 111 km" 
+    },
+    { 
+        level: "Level_1", 
+        q: "17. Lines joining locations at equal travel time from a common center are called:[SSC CHSL 21/10/2020]", 
+        o: ["Isohalines", "Isochrones", "Isobar", "Isobronts"], 
+        c: 1, 
+        e: "Isochrones - line joining locations at equal travel time<br>Isohalines - line joining places of same salinity<br>Isobar - line joining places of same atmospheric pressure<br>Isobronts - line joining places where thunderstorms are in a specific phase at a specific time<br>Isohyets - line joining places with same amount of rainfall<br>Isonephs - line joining places with same amount of cloud cover<br>Iobaths - line joining places with same depth below water" 
+    },
+    { 
+        level: "Level_1", 
+        q: "18. All parallel circles from the Equator to the poles are known as<br>[SSC CHSL 26/10/2020]", 
+        o: ["Parallels of Latitude", "Arctic Circle", "Tropic of Cancer", "Antarctic Circle"], 
+        c: 0, 
+        e: "Equator($0^\\circ$ latitude) divides the Earth in two equal halves - NH and SH.<br><br>Latitudes - imaginary horizontal lines running East to West. It Is the angular distance of a place from equator.<br><br>$1^\\circ$. latitude = 111 km. Total latitudes = 181. Distance between each latitude is same.<br><br>Important latitudes – 0° - Equator, 23.5° N - Tropic of Cancer, 23.5° S - Tropic of Capricorn, 66.5° N - Arctic circle, 66.5° S - Antarctic circle<br><br>Do you know that the direct sunlight only falls between 23.5° N and 23.5° S. Beyond these, only slant rays fall?<br><br>The temperature in subtropical regions is more than that at equator due to factors like less cloudiness in subtropics and absence of large water bodies." 
+    },
+    { 
+        level: "Level_1", 
+        q: "19. Which country has the most time zones in the world?<br>[SSC MTS 13/10/2021]", 
+        o: ["France", "United States of America", "Russia", "United Kingdom"], 
+        c: 0, 
+        e: "France has 13 time zones due to its overseas territories.<br>Russia - 11 USA - 6 UK - 1<br><br>India has only 1 time zone i.e. 82°30‘E" 
+    },
+    { 
+        level: "Level_1", 
+        q: "20. Which of the following pressure belts is known as the horse latitude?<br>[SSC CHSL 13/03/2023]", 
+        o: ["Equatorial Low Pressure", "Sub-Polar Low Pressure", "High Pressure", "Subtropical High Pressure"], 
+        c: 3, 
+        e: "**Pressure belts are of 4 types** - Equatorial low pressure belt, Subtropical high pressure belt(30°N and 30°S), Subpolar low pressure belt(60°N and 60°S) and Polar high pressure belt(80-90°N and 80-90°S) Do you know that major hot deserts in the NH are located between 20°-30°N because of subtropical high pressure(the subsiding air is warm and dry)?" 
+    },
+    { 
+        level: "Level_1", 
+        q: "21. On which day of the year is the earth farthest from the sun, at a position called aphelion?[SSC CHSL 19/10/2020]", 
+        o: ["19 August", "23 October", "12 May", "4 July"], 
+        c: 3, 
+        e: "Perihelion(3 January) - Earth is nearest to the Sun(147.5 mn km)<br>Aphelion(4 July) - Earth is farthest from the Sun(152.5 mn km)" 
+    },
+    { 
+        level: "Level_1", 
+        q: "22. When does the entire earth experience equal days and nights?<br>[SSC CGL 04/03/2020]", 
+        o: ["Days of winter solstice", "Days of summer solstice", "At orbital plane", "Day of equinox"], 
+        c: 3, 
+        e: "Equinox - sunlight fall vertically on equator, so equal day and night.<br>Vernal/Spring equinox - 21 march, Autumnal/fall equinox - 23 september" 
+    },
+
+    // ==========================================
+    // UNIVERSE - TYPE 2 (Moved from Lithosphere)
+    // ==========================================
+    { level: "Level_2", q: "1. Which one among the following planets has the largest number of known satellites?<br>[CDS II 2022]", o: ["Mars", "Neptune", "Jupiter", "Saturn"], c: 3, e: "Saturn has 146 moon(satellites), maximum till now.<br>" + exp9 },
+    { level: "Level_2", q: "2. Which of the following groups of planets is termed as ‘gas planets’ as they are composed primarily of lighter ices, liquids and gases?<br>[CDS I 2023]", o: ["Mars, Jupiter, Neptune, Uranus", "Jupiter, Uranus, Neptune, Saturn", "Saturn, Mars, Jupiter, Neptune", "Neptune, Saturn, Mars, Uranus"], c: 1, e: "Jovian planets are composed primarily of ice, gas and liquids while terrestrial planets are composed of rocks and metals.<br>" + exp12 },
+    { level: "Level_2", q: "3. Consider the following statements about some planets in the solar system:<br>1. Mercury has no atmosphere.<br>2. Venus has two moons.<br>3. There is no land on Jupiter.<br>4. Rings of Saturn are composed of lumps of ice and dust.<br>Which of the statements given above are correct?<br>[CDS II 2023]", o: ["1 and 2 only", "3 and 4 only", "1, 2 and 3", "1, 3 and 4"], c: 3, e: "Mercury doesn’t have any atmosphere because of its small size, weak gravity and its proximity to the Sun. Venus doesn’t have any moon.<br><br>Jupiter being a jovian planet is made up of gases, hence lacking any solid surface." },
+    { level: "Level_2", q: "4. In Sun-earth system, the Sun, the Earth and Lagrange point L4 form:[CDS II 2024]", o: ["An isosceles triangle", "An equilateral triangle", "A straight line", "A scalene triangle"], c: 1, e: "Lagrange point - a point in space where the gravitational pull of two big masses equals the centripetal force of a small mass. Total 5 points - L1, L2, L3, L4, L5<br>L1, L2, L3 - Unstable<br>L4, L5 - Stable, located at same distance from both Sun and Earth." },
+    { level: "Level_2", q: "5. In Sun-Earth system, the distance between Lagrange points L2 and L3 is about[CAPF 2024]", o: ["15 lakh kilometres", "30 lakh kilometres", "16 crore kilometres", "32 crore kilometres"], c: 3, e: "Do you know that the James Web space telescope is placed in the L2 lagrange point?" },
+    { level: "Level_2", q: "6. Which one of the following statements about the solstices, an event that occurs when the Sun appears to reach most northerly or southerly, is correct?<br>[CAPF 2024]", o: ["The winter solstice takes place on June 21 In both the northern and southern hemispheres.", "The summer solstice takes place on December 21 In both the northern and southern hemispheres.", "The summer solstice occurs in northern hemisphere on June 21 and on December 21 in southern hemisphere.", "The summer solstice occurs in northern hemisphere on December 21 and on June 21 in southern hemisphere."], c: 2, e: "Summer solstice(21 June) - rays of Sun fall vertically on Tropic of Cancer($23.5^\\circ$ N) - summer in NH, winter in SH<br>Winter solstice(22 Dec) - rays of Sun fall vertically on Tropic of Capricorn($23.5^\\circ$ S) - winter in NH, summer in SH<br>Equinox(21 March & 23 Sept) - rays of Sun fall vertically on equator - equal day and night" },
+    { level: "Level_2", q: "7. Which one of the following statements with reference to the Nebular Hypothesis for the origin of the Solar System is correct?<br>[CAPF 2024]", o: ["The initial hypothesis was that the Solar System formed from a rotating disk of gas and dust.", "As a result of rotation and expansion, a disk is formed with matter concentrated in the centre.", "Expansion continues with the formation of the proto-Sun and the rings of material are left behind.", "The material in the rings get condensed and form the planets that revolve in orbits around the Sun."], c: 3, e: "" },
+    { level: "Level_2", q: "8. According to the Big Bang theory of the origin of the Universe, the age of the Universe is estimated at about:[CISF AC 2023]", o: ["0 - 3 million years", "4 - 6 billion years", "7 - 10 billion years", "13 - 18 billion years"], c: 3, e: exp1 },
+    { level: "Level_2", q: "9. Which one of the following planets has the highest density?<br>[NDA I 2021]", o: ["Mercury", "Venus", "Jupiter", "Earth"], c: 3, e: "Saturn is the least dense planet while Earth is the densest planet (5.51 g/cm³)." },
+    { level: "Level_2", q: "10. Which one from among the following planets is largest in size?<br>[NDA I 2023]", o: ["Earth", "Venus", "Mars", "Mercury"], c: 0, e: "Earth is the largest planet among the given options.<br>Size of planets - Jupiter > Saturn > Uranus > Neptune > Earth > Venus > Mars > Mercury." },
+    { level: "Level_2", q: "11. Which one of the following astronomers proved that the Earth and other planets revolve around the Sun?[NDA I 2023]", o: ["Copernicus", "Kepler", "Galileo", "Newton"], c: 0, e: "Copernicus gave Heliocentric model of universe meaning that the Earth and other planets revolve around the Sun. Do you know that before Copernicus, Ptolemy gave Geocentric model which said that Earth is at the centre of the universe and Sun, moon revolve around it? Laws of Kepler -(1) planets move in elliptical orbits with the Sun as a focus,(2) a planet covers the same area of space in the same amount of time, and(3) a planet’s orbital period is proportional to the size of its semi-major axis." },
+    { level: "Level_2", q: "12. Which one of the following is the correct sequence of arrangement of the given planets in descending order of their density(in gm/$\\text{cm}^3$)?<br>[NDA I 2023]", o: ["Earth > Jupiter > Venus > Saturn", "Jupiter > Earth > Saturn > Venus", "Earth > Venus > Jupiter > Saturn", "Earth > Venus > Saturn > Jupiter"], c: 2, e: "Planets as per their density(lowest to highest) – Saturn < Uranus < Jupiter < Neptune < Mars < Venus < Mercury < Earth." },
+    { level: "Level_2", q: "13. Which of the following are called ‘terrestrial planets’?<br>[GEOSCIENTIST 2022]", o: ["Earth, Mars, Jupiter, Mercury", "Jupiter, Mercury, Saturn, Earth", "Earth, Mercury, Mars, Venus", "Mercury, Mars, Earth, Saturn"], c: 2, e: "Terrestrial planets - Mercury, Venus, Earth, Mars<br>Jovian planets - Jupiter, Saturn, Uranus, Neptune" },
+    { 
+        level: "Level_2", 
+        q: "1. Which of the following statements is/are correct?<br>1. Angular velocity for all locations on the Earth’s surface Is the same while linear velocity varies.<br>2. Linear velocity is maximum at the equator and minimum at the poles.<br><br>Select the correct answer using the code given below.<br>[CDS I 2024]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 2, 
+        e: "Angular velocity - how fast an object moves relative to a point(in Earth’s case relative to its axis). It is same(24 hours) for all locations on Earth.<br><br>Linear velocity - rate at which an object moves along its path. It is max at equator and min at poles(due to bulge at the equator)" 
+    },
+    { 
+        level: "Level_2", 
+        q: "2. In order to find out the absolute location of a place on the map, which of the following will be required?[CAPF 2021]", 
+        o: ["Latitude of the place alone", "Longitude of the place alone", "Both latitude and longitude of the place", "Neither latitude nor longitude of the place"], 
+        c: 2, 
+        e: "We can easily find the absolute location of a place by the intersection point of latitude and longitude. So, both are required.<br><br>Recall all info about latitude and longitude." 
+    },
+    { 
+        level: "Level_2", 
+        q: "3. Which of the following statements about maps are correct?<br>1. Maps that maintain the true shapes of areas are known as conformal maps.<br>2. Maps are used to show spatial relationships.<br>3. Maps cannot show route from one place to another.<br>Select the correct answer using the code given below.<br>[CAPF 2022]", 
+        o: ["2 and 3 only", "1 and 3 only", "1 and 2 only", "1, 2 and 3"], 
+        c: 2, 
+        e: "Conformal maps - these maps keep the shape same but may change the size.(Imagine drawing a small square on a balloon. If you blow up the balloon, the square gets bigger, but its corners still make 90° angles.) Maps can show route from one place to another. Such maps are called road maps." 
+    },
+    { 
+        level: "Level_2", 
+        q: "4. Which one of the following statements about ‘great circle’ is not correct?[CAPF 2022]", 
+        o: ["Every great circle divides the Earth into equal halves.", "Every great circle is a circumference of the Earth.", "Great circles mark the longest travel routes between locations on the Earth’s surface.", "Great circle is the largest circle that can be drawn around the Earth through two particular."], 
+        c: 2, 
+        e: "Great circle is the largest circle which can be drawn on. It divides the Earth in two equal halves. It marks the shortest distance between two points along the sphere.<br><br>Do you know that equator is the only latitude which is a great circle whereas all longitudes are great circles?" 
+    },
+    { 
+        level: "Level_2", 
+        q: "5. Which one of the following statements is correct about Spring tides?[CAPF 2023]", 
+        o: ["High tide is higher than average high tide and Low tide is higher than average low tide.", "High tide is lower than average high tide and Low tide is higher than average low tide.", "High tide is higher than average high tide and Low tide is lower than average low tide.", "High tide is lower than average high tide and Low tide is lower than average low tide."], 
+        c: 2, 
+        e: "Spring tide - creates the greatest difference in water levels between high and low tides.<br><br>Neap tide - creates the smallest difference in water levels between high and low tides. Occurs approx 2 times a month(during the first and third quarter moon phase)" 
+    },
+    { 
+        level: "Level_2", 
+        q: "6. Which one of the following correctly explains the change in seasons on Earth?[CAPF 2023]", 
+        o: ["Tilt of the Earth’s axis", "Rotation of the Earth on its own axis", "Revolution of the Moon around the Sun", "Interaction of the Earth with other planets"], 
+        c: 0, 
+        e: "Change in season on Earth is caused by tilt of Earth’s axis and revolution around the Sun while day and night are caused due to rotation of Earth on its axis.<br>Recall the axial and orbital tilt of Earth.<br><br>Which planet is called the rolling planet due to its tilt of 98°?" 
+    },
+    { 
+        level: "Level_2", 
+        q: "7. Consider the following statements regarding the rotation of the Earth:<br>1. Since the Earth rotates by 15° each hour, time zones normally differ by one hour.<br>2. At the International Date Line, the calendar day changes - advancing a day for eastward travel, dropping back a day for westward travel.<br>3. Daylight saving time advances the clock by one hour.<br>4. The Moon rotates and revolves about the Earth in the same direction that the Earth revolves around the Sun.<br><br>Which of the statements given above is/are correct?<br>[CAPF 2024]", 
+        o: ["1 only", "3 and 4 only", "1, 3 and 4", "2, 3 and 4"], 
+        c: 2, 
+        e: "Earth rotates $360^\\circ$ in 24 hours. So, 1 hour = $15^\\circ$. Hence, time zones normally differ by one hour.<br><br>At the IDL, day is dropped back for eastward travel and advanced for westward travel.<br><br>Daylight saving time - it is the practice of forwarding clock by 1 hour in summers and back again by 1 hour in fall to make the better use of daylight.<br><br>The moon also rotates and revolves around the Earth in the same direction that the Earth revolves around the Sun(Earth rotates from W to E)" 
+    },
+    { 
+        level: "Level_2", 
+        q: "8. If it is 31st December, 2023 in New Zealand, at the same time what will be the date in the Hawaiian Islands and Alaska?<br>[CAPF 2024]", 
+        o: ["Both have 01 January, 2024", "Both have 30 December, 2023", "31 December, 2023 in Alaska and 01 January, 2024 Hawaiian Islands", "31 December, 2023 in Hawaiian Islands and 01 January, 2024 in Alaska"], 
+        c: 1, 
+        e: "New Zealand is located just west of IDL while Hawaiian Islands and Alaska are located to the east of IDL. On moving from west to east on IDL, day is dropped back." 
+    },
+    { 
+        level: "Level_2", 
+        q: "9. Tropic of Capricorn passes through which one of the following countries?[CISF AC 2022]", 
+        o: ["Bolivia", "Botswana", "Zimbabwe", "Uruguay"], 
+        c: 1, 
+        e: "Tropic of Capricorn($23.5^\\circ$ S) passes through 10 countries.<br>South America: Argentina, Brazil, Chile, Paraguay<br>Africa: Namibia, Botswana, South Africa, Mozambique, Madagascar<br>Australia: Western Australia, Northern Territory, Queensland<br>Do you know that Africa is the only continent through which $23.5^\\circ$ N, $0^\\circ$, $23.5^\\circ$ S all three pass?" 
+    },
+    { 
+        level: "Level_2", 
+        q: "10. 50° South Latitude passes through[CISF AC 2021]", 
+        o: ["South Africa.", "Australia.", "Argentina.", "Uruguay."], 
+        c: 2, 
+        e: "50° S latitude passes through Argentina." 
+    },
+    { 
+        level: "Level_2", 
+        q: "11. Consider the following statements with respect to ‘tides’:<br>1. The tidal bulges on wide continental shelves have greater height.<br>2. When tides are channeled between islands, they are called tidal currents.<br>Which of the statements given above is/are correct?<br>[CISF AC 2021]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 2, 
+        e: "The tidal bulge on wide continent shelves have greater helght because water depth decreases abruptly. Hence, height increases to conserve the energy. When the tide is channeled between Islands or into bays and estuaries they are called tidal currents. Tides are the periodic rise and fall of sea level, once or twice a day, mainly due to the attraction of the Sun and the moon." 
+    },
+    { 
+        level: "Level_2", 
+        q: "12. If it is 12:00 Noon in India, on which meridian will it be 7:00 am of the same day?[NDA I 2021]", 
+        o: ["7.5 degree E. Longitude", "7.5 degree W. Longitude", "75 degree E. Longitude", "75 degree W. Longitude"], 
+        c: 0, 
+        e: "Since $15^\\circ = 1$ hour, so 5 hours($12-7 = 5$ hours) $= 75^\\circ$, IST is $82.5^\\circ$ E so to go back 5 hours $= 82.5^\\circ$ E - $75^\\circ = 7.5^\\circ$ E" 
+    },
+    { 
+        level: "Level_2", 
+        q: "13. Which one of the following is the longest Latitude?<br>[NDA I 2021]", 
+        o: ["90 degree Latitude", "23.5 degree Latitude", "0.0 degree Latitude", "66.5 degree Latitude"], 
+        c: 2, 
+        e: "Equator(0°) is the longest latitude while poles(90°) are the smallest latitudes." 
+    },
+    { 
+        level: "Level_2", 
+        q: "14. Which one of the following is the longest parallel of latitude?<br>[NDA II 2021]", 
+        o: ["Tropic of Cancer", "Tropic of Capricorn", "Arctic Circle", "Equator"], 
+        c: 3, 
+        e: "Equator(0°) is the longest latitude while poles(90°) are the smallest latitudes." 
+    },
+    { 
+        level: "Level_2", 
+        q: "15. Which one of the following countries has the maximum time difference from Greenwich Mean Time(GMT)?[NDA II 2021]", 
+        o: ["India", "Nepal", "Sri Lanka", "Bhutan"], 
+        c: 3, 
+        e: "Time difference from GMT increases as we move away from it. Bhutan is farthest from it among the options.<br>Moving West from GMT - time decreases<br>Moving East from GMT - time increases" 
+    },
+    { 
+        level: "Level_2", 
+        q: "16. Inhabitants are unaware of the speed of rotation of the planet Earth because<br>1. The angular velocity is constant for each place on the Earth’s surface.<br>2. The atmosphere rotates with the Earth.<br>3. There are no nearby objects, either stationary or moving at a rate different from that of the Earth.<br>Which of the above ls/are the correct explanation(s)?<br>[NDA I 2021]", 
+        o: ["1 only", "1 and 2 only", "2 and 3 only", "1, 2 and 3"], 
+        c: 3, 
+        e: "Angular velocity is same for all the places on Earth.<br>All objects on Earth and atmosphere moves with Earth, so we are unaware of Earth’s rotation.<br>1 rotation = 23 hours 56 mins 4 sec; Rotational speed is max at equator and min at poles." 
+    },
+    { 
+        level: "Level_2", 
+        q: "17. Which one of the following statements with respect to Global Positioning System(GPS) is not correct?[NDA I 2021]", 
+        o: ["It is based on network of satellites orbiting above the Earth.", "It is based on the system of triangulation.", "GPS receivers provide location in terms of latitude, longitude and altitude.", "It provides information exclusively for military operations."], 
+        c: 3, 
+        e: "GPS is a system of interconnected satellites used to provide location. It was developed for military operations but now is freely available for civilian use.<br><br>A system of triangulation is a surveying method where a network of interconnected triangles is established to determine the location of points by measuring angles between them.<br>NavIC(Navigation with Indian Constellation) - it is Indian navigation system similar to GPS." 
+    },
+    { 
+        level: "Level_2", 
+        q: "18. While watching the news, you hear about a place, of which you had never heard of before. You want to know more about the place and you want to locate it on the map. Which of the following is/are required for you to be able to locate the place on the map?<br>[NDA I 2021]", 
+        o: ["Only latitude of the place", "Only longitude of the place", "Both longitude and latitude of the place", "Latitude, longitude and altitude of the place"], 
+        c: 2, 
+        e: "We can easily find the absolute location of a place by the intersection point of latitude and longitude. So, both are required." 
+    },
+    { 
+        level: "Level_2", 
+        q: "19. In a group discussion on shape and size of the Earth, three students stated the following points:<br>1. Student 1: The shape of the Earth is basically an oblate spheroid.<br>2. Student 2: The polar diameter of the Earth is more than the equatorial diameter.<br>3. Student 3: Bulge along the equatorial region is due to the revolution of the Earth.<br>Who among the above students is/are correct?[NDA I 2022]", 
+        o: ["Student 1 only", "Student 1 and Student 2 only", "Student 2 and Student 3 only", "Student 1, Student 2 and Student 3"], 
+        c: 0, 
+        e: "The shape of Earth is Geoid/Oblate spheroid(flat from top and bottom and bulges at centre)<br><br>Reason for geoid shape - more centrifugal force at equator due to rotation.<br><br>Equatorial speed > Polar speed, Equatorial radii > Polar radii, Equatorial circumference > Polar circumference" 
+    },
+    { 
+        level: "Level_2", 
+        q: "20. The periodic rise and fall of ocean water in response to gravitational forces is called[NDA II 2021]", 
+        o: ["Current", "Waves", "Tides", "Tsunami"], 
+        c: 2, 
+        e: "Tides based on frequency - Semi diurnal tide - 2 high and 2 low tides each day; Diurnal tide - 1 high and 1 low tide each day; Mixed tide.<br><br>Tides based on height – Spring tide - greatest difference between high and low tide; Neap tide - smallest difference between high and low tide.<br><br>Tsunamis are giant waves caused by earthquakes or volcanic eruptions under the sea." 
+    },
+    { 
+        level: "Level_2", 
+        q: "21. The Prime Meridian does not pass through which one of the following African countries?[NDA II 2022]", 
+        o: ["Morocco", "Algeria", "Mali", "Ghana"], 
+        c: 0, 
+        e: "GMT passes through 8 countries - UK, France, Spain, Algeria, Mali, Burkina Faso, Togo, Ghana{TRICK - BSF GAMe in TOGO Kingdom}." 
+    },
+    { 
+        level: "Level_2", 
+        q: "22. Which one of the following cities of the world would represent the greatest linear velocity of rotation of the Earth?<br>[NDA II 2022]", 
+        o: ["Kampala, Uganda", "St. Petersburg, Russia", "Madrid, Spain", "Stockholm, Sweden"], 
+        c: 0, 
+        e: "Linear velocity is higher near equator due to larger radius at equator. Kampala is located near equator so it would represent the greatest linear velocity among the given options.<br>Recall about angular velocity." 
+    },
+    { 
+        level: "Level_2", 
+        q: "23. What will happen if you are flying east across the International Date Line?<br>[NDA II 2022]", 
+        o: ["You will lose 12 hours", "You will gain 12 hours", "You will gain 24 hours", "You will lose 24 hours"], 
+        c: 2, 
+        e: "When we fly east across the International Date Line, we gain 24 hours." 
+    },
+    { 
+        level: "Level_2", 
+        q: "24. If it is 12 noon in New Delhi, what will be the time in London, UK?<br>[NDA I 2023]", 
+        o: ["6: 30 A.M.", "6: 30 P.M.", "5: 30 A.M.", "5: 30 P.M."], 
+        c: 0, 
+        e: "Difference between New Delhi and London is $82.5^\\circ$ which translates to 5.5 hours. Since London is to the west of New Delhi so time there will be behind. So $12 - 5.5 = 6:30$ A.M." 
+    },
+    { 
+        level: "Level_2", 
+        q: "25. Which of the following positions of Sun, Earth and Moon is/are suitable for Spring Tide?<br>1. SYZYGY Conjunction<br>2. SYZYGY Opposition<br>3. Quadrature<br>Select the correct answer using the code given below:<br>[NDA I 2023]", 
+        o: ["1 only", "2 only", "1 and 2", "1 and 3"], 
+        c: 2, 
+        e: "Spring tide occurs when Sun, Earth and Moon are in straight line (SYZYGY condition).<br>Syzygy conjunction - Moon between Sun and Earth<br>Syzygy opposition - Earth between Sun and moon<br>Quadrature means when Sun, Earth and moon are at $90^\\circ$. It is associated with Neap tides." 
+    },
+    { 
+        level: "Level_2", 
+        q: "26. Consider the following statements:<br>1. Distance between the longitudes becomes zero on the North Pole and South Pole.<br>2. Distance between the longitudes is maximum on the Equator.<br>3. Number of longitudes is more than the number of latitudes.<br>Which of the statements given above is/are correct?<br>[NDA I 2023]", 
+        o: ["1 only", "2 only", "1 and 3 only", "1, 2 and 3"], 
+        c: 3, 
+        e: "Meridian(longitude) is the imaginary vertical lines running from North to South. Distance between meridians - max at equator(111.32 km) and least at poles. Total meridians = 360.<br><br>Total latitudes = 181. Distance between each latitude is same." 
+    },
+    { 
+        level: "Level_2", 
+        q: "27. A geographical grid has:<br>1. Lines that run east to west around the globe to mark latitude.<br>2. Lines that run north to south from north pole to south pole indicate longitude.<br><br>Which of the statements given above is/are correct?<br>[NDA II 2023]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 2, 
+        e: "Geographical grid is formed when latitudes and longitudes intersect each other forming a grid. It is used to locate a place on the map.<br>Recall about latitudes and longitudes." 
+    },
+    { 
+        level: "Level_2", 
+        q: "28. Consider the following statements regarding the International Date Line:<br>1. It is roughly 180° meridian, which deviates slightly East and West to avoid land areas surrounded by the Atlantic Ocean.<br>2. The date to the East of this line is(24 hours) earlier than to the West.<br><br>Which of the statements given above is/are correct?<br>[NDA I 2024]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 1, 
+        e: "Moving from W to E on IDL – day gained and date lost.<br><br>Statement 1 is partially correct. IDL moves East or West to avoid land areas surrounded by Pacific ocean and not the Atlantic ocean." 
+    },
+    { 
+        level: "Level_2", 
+        q: "29. Which of the following statements regarding neap tides is/are correct?<br>1. It occurs every 14–15 days, which coincides with the first and third quarter of the Moon.<br>2. This tide has a small tidal range because the gravitational forces of the Moon and the Sun are in quadrature.<br>Select the answer using the code given below:[NDA I 2024]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 2, 
+        e: "Neap tide - creates the smallest difference in water levels between high and low tides. Occurs approx 2 times a month(during the first and third quarter moon phase).<br><br>Quadrature means when Sun, Earth and moon are at $90^\\circ$. It is associated with Neap tides." 
+    },
+    { 
+        level: "Level_2", 
+        q: "30. In which among the following states in India, the Sun rays are never perpendicular?<br>1. Bihar<br>2. Chhattisgarh<br>3. Manipur<br>4. Rajasthan<br>Select the answer using the code given below:[NDA II 2024]", 
+        o: ["1 and 2", "1 and 3", "2 and 3", "2 and 4"], 
+        c: 1, 
+        e: "Sun rays are perpendicular between 23.5°N(Tropic of Cancer) and 23.5°S(Tropic of Capricorn). Bihar and Manipur lie above Tropic of Cancer, so they always experience slant rays.<br>Tropic of Cancer passes through 8 Indian states - Gujarat, Rajasthan, MP, Chattisgarh, Jharkhand, West Bengal, Tripura and Mizoram.<br>Do you know that Mahi is the only Indian river to cross Tropic of Cancer twice?" 
+    },
+    { 
+        level: "Level_2", 
+        q: "31. Consider the following statements with respect to ‘tides’:<br>1. The tidal bulges on wide continental shelves have greater height.<br>2. When tides are channeled between islands, they are called tidal currents.<br>Which of the statements given above is/are correct?<br>[CBI 2023]", 
+        o: ["1 only", "2 only", "Both 1 and 2", "Neither 1 nor 2"], 
+        c: 2, 
+        e: "The tidal bulge on wide continent shelves have greater helght because water depth decreases abruptly. Hence, height increases to conserve the energy. When the tide is channeled between Islands or into bays and estuaries they are called tidal currents. Tides are the periodic rise and fall of sea level, once or twice a day, mainly due to the attraction of the Sun and the moon." 
+    },
+    { 
+        level: "Level_2", 
+        q: "32. Which one of the following deserts is not located around 20° - $30^\\circ$ latitude North or South of the Equator?", 
+        o: ["Atacama", "Kalahari", "Great Victoria", "Gobi"], 
+        c: 3, 
+        e: "Gobl desert is not a tropical desert. It is located on the border of China and Mongolia.<br><br>Locations of other deserts – Atacama desert - Northern Chile, Kalahari - South Africa, Great Victoria - Australia<br>3 major deserts of Australia - Sandy, Gibson, Victoria(TRICK - 7GB)" 
+    },
+    { 
+        level: "Level_2", 
+        q: "33. Which one of the following statements about North-facing slopes and South-facing slopes in the Northern Hemi-sphere is not correct?[GEOSCIENTIST 2022]", 
+        o: ["North-facing slopes are snow covered while South-facng slopes are bare.", "North-facing slopes get less intense radiation as compared to South-facing slopes.", "Snow on North-facing slopes is found at a lower altitude than South-facing slopes.", "Tree line characteristics on North facing slopes and South-facing slopes are similar."], 
+        c: 3, 
+        e: "In NH, the northern slope of mountains receive less sunlight as compared to the southern slope, hence northern slope is snow covered. North facing sloped have lower tree line as compared to south facing slopes(tree line is the line on a mountain above which the trees don’t grow)." 
+    },
+    { 
+        level: "Level_2", 
+        q: "34. You are located at 40° N latitude and 90° W longitude. You travel due North 40°, then due East 60°. What are your new coordinates?<br>[GEOSCIENTIST 2022]", 
+        o: ["30° N and 80° E", "80° S and 30° E", "80° N and 30° W", "80° N and 30° E"], 
+        c: 2, 
+        e: "**Current location** - 90°W. When we move 60° east then we are moving towards the prime meridian so now our current position will be 90°W - 60°E = 30°W" 
+    },
+    { 
+        level: "Level_2", 
+        q: "35. The Prime Meridian(zero degree longitude) does not pass through which of the following country/countries?<br>1. England 2. France<br>3. Portugal 4. Scotland<br>Select the correct answer using the code given below:<br>[GEOSCIENTIST 2024]", 
+        o: ["1 and 2", "2 and 3", "3 and 4", "3 only"], 
+        c: 2, 
+        e: "The prime meridian passes through UK, France, Spain, Algeria, Mali, Burkina Faso, Togo, Ghana." 
+    },
+    { 
+        level: "Level_2", 
+        q: "36. In the northern hemisphere, the longest day of the year normally occurs in the:[IAS 2022]", 
+        o: ["First half of the month of June.", "Second half of the month of June.", "First half of the month of July.", "Second half of the month of July."], 
+        c: 1, 
+        e: "In the NH, the longest day is on 21 June(summer solstice) while in the SH, the longest day is on 22 December(winter solstice). On equinox, day and night are equal." 
+    },
+    { 
+        level: "Level_2", 
+        q: "37. On June 21 every year, which of the following latitude(s) experience(s) a sunlight of more than 12 hours?[IAS 2024]<br>1. Equator 2. Tropic of Cancer<br>3. Tropic of Capricorn 4. Arctic Circle<br><br>Select the correct answer using the code given below:", 
+        o: ["1 only", "2 only", "3 and 4", "2 and 4"], 
+        c: 3, 
+        e: "On 21 June(summer solstice), Sun is vertically over Tropic of Cancer(23.5°N). Hence NH experiences the longest day which lasts over 12 hours. During this time, North Pole experiences daylight of 24 hours, a phenomena known as ‘Midnight sun’.<br>Equator experiences the daylight of nearly 12 hours regardless of the position of the Sun.<br>Sun is vertically over Tropic of Capricorn(23.5°S) on 22 December(winter solstice)." 
+    },
+    { 
+        level: "Level_2", 
+        q: "38. If it is 10:00 a.m. at Greenwich Mean Time(GMT), then what will be the time at $90^\\circ$ E longitude?[CDS I 2023]", 
+        o: ["5: 00 a.m.", "4: 00 a.m.", "3: 00 p.m.", "4: 00 p.m."], 
+        c: 3, 
+        e: "Since $15^\\circ = 1$ hour so $90^\\circ = 6$ hours. Adding 6 hours to 10:00 a.m. we get 4:00 p.m." 
+    }
+];
+
+// --- APP LOGIC ---
+let activeQuizData = [];
+let currentIndex = 0;
+let score = 0;
+let userAnswers = [];
+
+// Navigation functions
+function showUniverseSubmenu() {
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('submenu-screen').classList.remove('hidden');
+}
+
+function backToMainMenu() {
+    document.getElementById('submenu-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.add('hidden');
+    document.getElementById('menu-screen').classList.remove('hidden');
+}
+
+function alertVacant(topicName) {
+    alert(`The '${topicName}' sector is currently uncharted. Data will be available in future updates.`);
+}
+
+function startQuiz(levelCode) {
+    activeQuizData = QUESTIONS_DB.filter(q => q.level === levelCode);
+    
+    if(activeQuizData.length === 0) {
+        alert("No data available for this selection yet.");
+        return;
+    }
+
+    currentIndex = 0;
+    score = 0;
+    userAnswers = [];
+
+    document.getElementById('submenu-screen').classList.add('hidden');
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.remove('hidden');
+
+    const levelLabels = {
+        'Level_1': "Universe - Type 1",
+        'Level_2': "Universe - Type 2"
+    };
+    
+    document.getElementById('topic-label').innerText = levelLabels[levelCode] || "Quiz";
+    loadQuestion();
+}
+
+function loadQuestion() {
+    if(currentIndex >= activeQuizData.length) { 
+        showResults(); 
+        return; 
+    }
+
+    const q = activeQuizData[currentIndex];
+    const pct = (currentIndex / activeQuizData.length) * 100;
+    
+    document.getElementById('progress-bar').style.width = `${pct}%`;
+    document.getElementById('curr-q-num').innerText = currentIndex + 1;
+    document.getElementById('total-q-num').innerText = activeQuizData.length;
+    document.getElementById('score-badge').innerText = `Score: ${score}`;
+
+    document.getElementById('explanation-container').classList.add('hidden');
+    document.getElementById('next-btn').classList.add('hidden');
+
+    document.getElementById('q-text').innerHTML = q.q;
+    const container = document.getElementById('opt-container');
+    container.innerHTML = '';
+
+    q.o.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-card';
+        // Using a marker like 'A)' for options
+        btn.innerHTML = `<span style="margin-right: 12px; font-weight: 800; color: var(--accent-blue);">${String.fromCharCode(65 + i)}.)</span> ${opt}`;
+        btn.onclick = () => handleAnswer(btn, i, q.c);
+        container.appendChild(btn);
+    });
+}
+
+function handleAnswer(btn, selected, correct) {
+    const btns = document.querySelectorAll('.option-card');
+    btns.forEach(b => b.disabled = true);
+
+    const q = activeQuizData[currentIndex];
+    const isCorrect = selected === correct;
+    
+    userAnswers.push({ 
+        q: q.q, 
+        user: q.o[selected], 
+        correct: q.o[correct], 
+        isCorrect: isCorrect 
+    });
+
+    if(isCorrect) {
+        btn.classList.add('correct');
+        score++;
+    } else {
+        btn.classList.add('wrong');
+        btns[correct].classList.add('correct');
+    }
+    
+    document.getElementById('score-badge').innerText = `Score: ${score}`;
+
+    const explBox = document.getElementById('explanation-container');
+    const explText = document.getElementById('expl-text');
+    
+    if (q.e && q.e.trim() !== "") {
+        explText.innerHTML = q.e;
+        explBox.classList.remove('hidden');
+    } else {
+        explText.innerHTML = "<em>No additional notes recorded for this entry.</em>";
+        explBox.classList.remove('hidden');
+    }
+    
+    document.getElementById('next-btn').classList.remove('hidden');
+}
+
+function nextQuestion() {
+    currentIndex++;
+    loadQuestion();
+}
+
+function showResults() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    
+    const pct = Math.round((score / activeQuizData.length) * 100);
+    document.getElementById('final-score').innerText = `${score} / ${activeQuizData.length}`;
+    document.getElementById('score-circle-el').style.setProperty('--pct', `${pct}%`);
+    
+    let rank = "Novice Surveyor";
+    if(pct >= 50) rank = "Competent Cartographer";
+    if(pct >= 80) rank = "Master Navigator";
+    if(pct === 100) rank = "Legendary Atlas Keeper";
+    
+    document.getElementById('rank-title').innerText = rank;
+
+    const revContainer = document.getElementById('review-list');
+    revContainer.innerHTML = userAnswers.map((a, i) => `
+        <div class="review-item">
+            <div class="rev-q">${i + 1}. ${a.q}</div>
+            <div class="rev-a" style="color: ${a.isCorrect ? 'var(--success)' : 'var(--danger)'}">
+               ${a.isCorrect ? '✅ Correct Selection: ' + a.user : '❌ You selected: ' + a.user + '<br><span style="color:var(--success); margin-top:8px; display:inline-block; font-weight:800;">✅ Correct Answer: ' + a.correct + '</span>'}
+            </div>
+        </div>
+    `).join('');
+}
+
+function quitQuiz() {
+    if(confirm("Are you sure you want to abandon the current expedition? Progress will be lost.")) {
+        backToMainMenu();
+    }
+}
+</script>
+</body>
+</html>

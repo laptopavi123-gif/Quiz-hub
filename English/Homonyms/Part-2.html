@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Day 2 Homonyms Quiz (Balanced & Visual)</title>
+  <style>
+    /* Floating Back Button Style */
+    .app-back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000; /* Ensures it stays on top */
+        transition: transform 0.2s;
+        text-decoration: none; /* In case you use <a> tag */
+    }
+    
+    .app-back-btn:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+</style>
+  <style>
+    :root{
+      --primary:#007bff;
+      --bg:#f4f4f9;
+      --card:#ffffff;
+      --text:#333;
+      
+      /* COLORS */
+      --correct-bg: #28a745; 
+      --correct-text: #ffffff; 
+      --wrong-bg: #dc3545; 
+      --wrong-text: #ffffff; 
+      --timer-color: #ffc107;
+    }
+    body{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      display:flex;justify-content:center;align-items:center;
+      min-height:100vh;margin:0;padding:20px;
+    }
+    
+    .quiz-container{
+      background: var(--card);
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      width:100%;max-width:900px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* HEADER */
+    .header{
+      display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;
+    }
+    .score-board{font-weight:bold;color:var(--primary); font-size: 1.1em;}
+    h2{color:var(--text);margin:10px 0 4px;}
+    .question{font-size:1.2em;color:#222;margin:0 0 20px; line-height: 1.5;}
+    
+    /* CONTROLS */
+    .controls{
+      display:flex;gap:15px;align-items:center;flex-wrap:wrap;
+      background:#f0f2f5; padding:10px 15px; border-radius:10px; margin-bottom: 15px;
+    }
+    .control-group{display:flex;align-items:center;gap:6px;}
+    select { padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff; font-size:14px; }
+
+    /* OPTIONS */
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media (max-width:560px){ .options{grid-template-columns:1fr;} }
+    
+    button.option{
+      padding:15px 12px;font-size:16px;cursor:pointer;
+      border:2px solid #ddd;border-radius:8px;background:#fff;transition:0.2s; text-align:left;
+      font-weight: 500; color: #444;
+    }
+    button.option:hover{background-color:#eef; border-color:#bbb;}
+    button.option:disabled{cursor: not-allowed; opacity: 1;}
+    
+    .correct { background-color: var(--correct-bg) !important; border-color: #1e7e34 !important; color: white !important; }
+    .wrong { background-color: var(--wrong-bg) !important; border-color: #bd2130 !important; color: white !important; }
+
+    /* --- VISUAL FEEDBACK CARDS --- */
+    .feedback{
+      margin-top:25px; display:none; animation: fadeIn 0.4s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .feedback h4 {
+      text-align: center; margin: 0 0 15px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9em;
+    }
+
+    .comparison-container {
+      display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+      background: #fff; border: 2px solid #eef0f3; border-radius: 12px; padding: 20px;
+    }
+
+    .comparison-card {
+      flex: 1; min-width: 160px; max-width: 240px;
+      background: #fdfdfd; border: 1px solid #e0e0e0; border-radius: 10px;
+      padding: 10px; text-align: center;
+      display: flex; flex-direction: column;
+    }
+
+    /* Highlight the correct card */
+    .is-correct-card { border: 2px solid #28a745; background: #f0fff4; transform: scale(1.02); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15); }
+    .is-correct-card .word-title { background: #d4edda; color: #155724; }
+
+    .word-title {
+      display: block; font-size: 1.1em; font-weight: 800; text-transform: uppercase;
+      color: #333; margin-bottom: 8px; letter-spacing: 0.5px;
+      background: #f0f2f5; padding: 6px; border-radius: 6px;
+    }
+
+    /* UPDATED: Image Container Styles for Clickability */
+    .img-container {
+      width: 100%; height: 140px; background: #eee; border-radius: 8px; margin-bottom: 10px;
+      overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; /* Pointer to indicate click */
+      transition: transform 0.2s;
+    }
+    .img-container:hover {
+      transform: scale(1.02);
+      border: 2px solid var(--primary);
+    }
+    .img-container:active {
+      transform: scale(0.98);
+    }
+    
+    .comparison-img {
+      width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s;
+    }
+    .comparison-img.loaded { opacity: 1; }
+
+    /* Spinner */
+    .loader {
+      border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%;
+      width: 20px; height: 20px; animation: spin 1s linear infinite; position: absolute;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .word-def { font-size: 0.9em; color: #555; line-height: 1.4; flex-grow: 1; }
+    
+    /* FOOTER / NEXT BTN */
+    .next-btn {
+      margin-top:20px; background-color:var(--primary); color:white; border:none;
+      padding:12px 24px; border-radius:30px; cursor:pointer; display:none; 
+      font-size:16px; font-weight:bold; width: 100%;
+    }
+    .next-btn:hover{background-color:#0056b3;}
+    
+    /* TIMER */
+    .timer-container { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin: 10px 0 20px; overflow: hidden; display: none; }
+    .timer-bar { height: 100%; background-color: var(--timer-color); width: 100%; transition: width 1s linear; }
+
+    /* NOTIFICATION */
+    .top-notification {
+      position: fixed; top: -80px; left: 0; width: 100%; padding: 16px; text-align: center;
+      font-size: 1.1rem; font-weight: bold; color: white; z-index: 9999; transition: top 0.3s;
+      background-color: #dc3545; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .top-notification.show { top: 0; }
+
+    /* RESULTS */
+    #review-area { text-align: center; }
+    .stat-box { display: inline-block; padding: 10px 20px; margin: 5px; border-radius: 8px; font-weight: bold; background: #eee;}
+    .stat-correct { background: #d4edda; color: #155724; }
+    .stat-wrong { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <button class="app-back-btn" onclick="history.back()">❮ Back to Menu</button>
+
+  <div id="top-notification" class="top-notification"></div>
+
+  <div class="quiz-container" id="quiz-app">
+    <div class="header">
+      <div class="score-board">Score: <span id="score">0</span></div>
+      <div class="progress">Question <span id="current">1</span> / <span id="total">0</span></div>
+      
+      <div class="controls">
+        <div class="control-group">
+          <label><b>Level:</b></label>
+          <select id="level" onchange="startQuiz()">
+            <option value="1">Level 1: Easy</option>
+            <option value="2">Level 2: Moderate</option>
+            <option value="3">Level 3: Hard</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label><b>Timer:</b></label>
+          <select id="timer" onchange="startQuiz()">
+            <option value="10">10 Sec</option>
+            <option value="15">15 Sec</option>
+            <option value="0">No Limit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-container" id="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <div id="game-area">
+      <h2 id="question-number">Question 1</h2>
+      <p class="question" id="question-text">Loading...</p>
+      <div class="options" id="options-container"></div>
+      
+      <div class="feedback" id="feedback-box"></div>
+      
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question ➝</button>
+    </div>
+
+    <div id="review-area" style="display:none;">
+      <h2>Quiz Complete!</h2>
+      <div id="result-summary" style="margin-bottom:20px;"></div>
+      <button class="next-btn" style="display:inline-block; width:auto;" onclick="startQuiz()">Play Again</button>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    //  VISUAL DEFINITIONS (Day 2 Words)
+    // ==========================================
+    const D = {
+      beside: [
+        {w:"Beside", d:"By the side of", img:"two people sitting next to each other on bench"}, 
+        {w:"Besides", d:"In addition to", img:"an apple plus an orange math addition"}
+      ],
+      bear: [
+        {w:"Bear", d:"Animal / Tolerate", img:"grizzly bear animal nature"}, 
+        {w:"Bare", d:"Naked / Uncovered", img:"bare feet walking on grass"}, 
+        {w:"Borne", d:"Carried (Past Participle)", img:"person carrying heavy load on back"}, 
+        {w:"Born", d:"To take birth", img:"newborn baby in blanket stork"}
+      ],
+      bail: [
+        {w:"Bail", d:"Security / Release", img:"judge gavel and money jail release"}, 
+        {w:"Bale", d:"Bundle", img:"large bundle of hay on farm"}
+      ],
+      beatific: [
+        {w:"Beatific", d:"Joyful / Peaceful", img:"saint with glowing face smiling peace"}, 
+        {w:"Beatitude", d:"State of bliss", img:"monk meditating in total bliss"}
+      ],
+      caste: [
+        {w:"Caste", d:"Social class", img:"pyramid of social hierarchy classes"}, 
+        {w:"Cast", d:"To throw", img:"fisherman casting a net into water"}, 
+        {w:"Cost", d:"Price", img:"price tag with dollar sign money"}
+      ],
+      child: [
+        {w:"Childlike", d:"Innocent / Simple", img:"child smiling innocently playing flowers"}, 
+        {w:"Childish", d:"Silly / Immature", img:"adult acting like baby crying tantrum"}
+      ],
+      canvass: [
+        {w:"Canvass", d:"Seek votes", img:"politician asking for votes door to door"}, 
+        {w:"Canvas", d:"Rough cloth / Painting", img:"artist painting on blank canvas easel"}
+      ],
+      cite: [
+        {w:"Cite", d:"To quote", img:"person reading a quote from a book"}, 
+        {w:"Site", d:"Location", img:"construction site with cranes"}, 
+        {w:"Sight", d:"Vision / Scenery", img:"eye looking at beautiful mountain scenery"}
+      ],
+      continuous: [
+        {w:"Continuous", d:"Without break", img:"continuous line without stopping"}, 
+        {w:"Continual", d:"Recurring with breaks", img:"dripping tap water drop drop"}
+      ],
+      cemetery: [
+        {w:"Cemetery", d:"Burial place", img:"graveyard tombstones spooky"}, 
+        {w:"Symmetry", d:"Balance", img:"butterfly wings perfectly symmetrical"}
+      ],
+      career: [
+        {w:"Career", d:"Profession", img:"doctor lawyer engineer businessman icons"}, 
+        {w:"Carrier", d:"Transporter", img:"cargo ship carrying containers"}
+      ],
+      confident: [
+        {w:"Confident", d:"Sure / Certain", img:"superhero standing confidently hands on hips"}, 
+        {w:"Confidant", d:"Secret keeper", img:"two friends whispering secrets"}
+      ],
+      compliment: [
+        {w:"Compliment", d:"Praise", img:"person giving thumbs up clapping"}, 
+        {w:"Complement", d:"Completes something", img:"puzzle piece completing the picture"}
+      ],
+      cannon: [
+        {w:"Cannon", d:"Big gun", img:"old pirate cannon firing"}, 
+        {w:"Canon", d:"Law / Principle", img:"old scroll with laws written"}
+      ],
+      creditable: [
+        {w:"Creditable", d:"Praiseworthy", img:"person receiving trophy applause"}, 
+        {w:"Credible", d:"Believable", img:"detective finding true evidence"}, 
+        {w:"Credulous", d:"Gullible", img:"person believing a fairy tale blindly"}
+      ],
+      coma: [
+        {w:"Coma", d:"Unconsciousness", img:"patient in hospital bed monitor"}, 
+        {w:"Comma", d:"Punctuation (,)", img:"giant comma punctuation mark"}
+      ],
+      corporal: [
+        {w:"Corporal", d:"Physical body", img:"teacher hitting student hand ruler punishment"}, 
+        {w:"Corporeal", d:"Material / Having body", img:"ghost vs solid human body"}
+      ],
+      comprehensive: [
+        {w:"Comprehensive", d:"Exhaustive / All-inclusive", img:"encyclopedia set all volumes"}, 
+        {w:"Comprehensible", d:"Understandable", img:"simple math equation 1+1=2"}
+      ],
+      contagious: [
+        {w:"Contagious", d:"Spreads by contact", img:"person sneezing germs spreading"}, 
+        {w:"Contiguous", d:"Adjacent / Touching", img:"two houses sharing a wall"}
+      ],
+      censure: [
+        {w:"Censure", d:"Criticize / Blame", img:"judge pointing finger blaming"}, 
+        {w:"Censor", d:"Restrict / Cut", img:"film strip with black bar censorship"}
+      ],
+      collision: [
+        {w:"Collision", d:"Crash", img:"two cars crashing accident"}, 
+        {w:"Collusion", d:"Secret illegal agreement", img:"two villains shaking hands secret deal"}
+      ],
+      contempt: [
+        {w:"Contemptible", d:"Deserving contempt", img:"thief stealing from baby mean"}, 
+        {w:"Contemptuous", d:"Scornful look", img:"person looking down nose arrogant"}
+      ],
+      considerable: [
+        {w:"Considerable", d:"Large amount", img:"huge pile of gold coins"}, 
+        {w:"Considerate", d:"Thoughtful", img:"person holding umbrella for someone else"}
+      ],
+      ceremonious: [
+        {w:"Ceremonious", d:"Formal", img:"royal guard standing stiffly"}, 
+        {w:"Ceremonial", d:"Of ceremony", img:"ribbon cutting ceremony scissors"}
+      ],
+      complaisant: [
+        {w:"Complaisant", d:"Pleasing / Obliging", img:"waiter bowing politely serving"}, 
+        {w:"Complacent", d:"Self-satisfied / Lazy", img:"person relaxing ignoring fire"}
+      ],
+      conscious: [
+        {w:"Conscious", d:"Aware / Awake", img:"person waking up stretching"}, 
+        {w:"Conscience", d:"Inner voice", img:"angel and devil on shoulder"}, 
+        {w:"Consensus", d:"Agreement", img:"group of people thumbs up agreeing"}, 
+        {w:"Conscientious", d:"Honest / Hardworking", img:"student studying hard diligent"}
+      ],
+      coherent: [
+        {w:"Coherent", d:"Logical / Clear", img:"clear organized flow chart"}, 
+        {w:"Inherent", d:"Inborn / Natural", img:"bird flying natural instinct"}
+      ],
+      collaborate: [
+        {w:"Collaborate", d:"Work together", img:"team working on puzzle together"}, 
+        {w:"Corroborate", d:"Confirm evidence", img:"detective finding matching fingerprint"}
+      ],
+      casual: [
+        {w:"Casual", d:"Relaxed / Occasional", img:"person wearing t-shirt and jeans relaxing"}, 
+        {w:"Causal", d:"Cause and effect", img:"domino pushing another domino"}
+      ],
+      council: [
+        {w:"Council", d:"Assembly / Group", img:"group of elders sitting in circle"}, 
+        {w:"Counsel", d:"Advice", img:"psychologist talking to patient"}
+      ],
+      councillor: [
+        {w:"Councillor", d:"Council member", img:"politician sitting at nameplate"}, 
+        {w:"Counsellor", d:"Adviser", img:"marriage counsellor talking to couple"}
+      ],
+      corpse: [
+        {w:"Corpse", d:"Dead human body", img:"coffin funeral"}, 
+        {w:"Corps", d:"Military group", img:"group of soldiers marching"}, 
+        {w:"Carcass", d:"Dead animal", img:"animal skeleton in desert"}
+      ],
+      coarse: [
+        {w:"Coarse", d:"Rough texture", img:"sandpaper rough texture"}, 
+        {w:"Course", d:"Path / Direction", img:"river flowing winding course"}
+      ],
+      century: [
+        {w:"Century", d:"100 years", img:"hourglass sands of time 100"}, 
+        {w:"Centenary", d:"100th Anniversary", img:"cake with 100 candles celebration"}
+      ],
+      conservation: [
+        {w:"Conservation", d:"Preservation", img:"saving forest planting trees"}, 
+        {w:"Conservatism", d:"Old / Orthodox ideas", img:"old fashioned person refusing change"}
+      ],
+      conform: [
+        {w:"Conform", d:"Follow rules", img:"sheep following herd lines"}, 
+        {w:"Confirm", d:"Verify", img:"stamp saying approved confirmed"}
+      ],
+      capacity: [
+        {w:"Capacity", d:"Volume / Ability to hold", img:"jug filled to brim with water"}, 
+        {w:"Capability", d:"Skill / Power", img:"person lifting heavy weight strong"}
+      ],
+      common: [
+        {w:"Commonplace", d:"Ordinary", img:"plain old grey rock"}, 
+        {w:"Common place", d:"Public place", img:"public park with people"}
+      ],
+      commandeer: [
+        {w:"Commandeer", d:"Seize for military", img:"soldier taking a civilian car"}, 
+        {w:"Commander", d:"Leader", img:"general saluting army"}
+      ],
+      disease: [
+        {w:"Disease", d:"Illness", img:"virus microscopic view sick"}, 
+        {w:"Decease", d:"Death", img:"gravestone RIP"}
+      ],
+      deny: [
+        {w:"Deny", d:"Refuse truth (Past)", img:"person shaking head saying no"}, 
+        {w:"Refuse", d:"Decline request (Future)", img:"hand pushing away food"}
+      ],
+      duel: [
+        {w:"Duel", d:"Fight between two", img:"two musketeers sword fighting"}, 
+        {w:"Dual", d:"Double", img:"dual exhaust pipes car"}
+      ],
+      deference: [
+        {w:"Deference", d:"Respect", img:"person bowing respectfully"}, 
+        {w:"Difference", d:"Distinction", img:"red apple among green apples"}, 
+        {w:"Deferment", d:"Postponement", img:"calendar date pushed back"}
+      ],
+      decent: [
+        {w:"Decent", d:"Proper / Good", img:"person dressed in suit looking proper"}, 
+        {w:"Descent", d:"Going down", img:"stairs going down dark"}, 
+        {w:"Dissent", d:"Disagreement", img:"one person holding protest sign"}
+      ],
+      desert: [
+        {w:"Desert (N)", d:"Sandy land", img:"camel in hot sandy desert"}, 
+        {w:"Desert (V)", d:"Abandon", img:"lonely dog left on road"}, 
+        {w:"Dessert", d:"Sweet dish", img:"chocolate cake slice"}
+      ],
+      dominant: [
+        {w:"Dominant", d:"Ruling / Leading", img:"lion king of the jungle"}, 
+        {w:"Domineer", d:"Bully", img:"big person shouting at small person"}
+      ],
+      drought: [
+        {w:"Drought", d:"Lack of rain", img:"cracked dry earth dead plant"}, 
+        {w:"Draught", d:"Wind / Drink", img:"open window curtains blowing wind"}
+      ]
+    };
+
+    // ==========================================
+    //  DATA SOURCE (Balanced: 105 Qs per Level)
+    // ==========================================
+    const Q = [
+      // ================= LEVEL 1 (EXACT PDF CONTENT - 105 Questions) =================
+      { l:1, t:'"He sat ________ her father."', o:["Beside","Besides","Beside of","Aside"], c:0, v:D.beside },
+      { l:1, t:'"________ English she is also learning French."', o:["Besides","Beside","Beside of","Aside"], c:0, v:D.beside },
+      { l:1, t:'"Mohan cannot ________ being insulted by his boss."', o:["Bear","Bare","Beer","Boar"], c:0, v:D.bear },
+      { l:1, t:'"He was bitten by a snake as he was ________ foot."', o:["Bare","Bear","Beer","Boar"], c:0, v:D.bear },
+      { l:1, t:'"The dead body was ________ by his friends."', o:["Borne","Born","Burn","Barn"], c:0, v:D.bear },
+      { l:1, t:'"Pearl was ________ in Ashwini Hospital at Mumbai."', o:["Born","Borne","Burn","Barn"], c:0, v:D.bear },
+      { l:1, t:'"His application for release on ________ was rejected."', o:["Bail","Bale","Bell","Ball"], c:0, v:D.bail },
+      { l:1, t:'"He was carrying a ________ of cotton on his head."', o:["Bale","Bail","Bell","Ball"], c:0, v:D.bail },
+      { l:1, t:'"The saints are always in a ________ state of mind."', o:["Beatific","Beatitude","Beautiful","Specific"], c:0, v:D.beatific },
+      { l:1, t:'"He experienced ________ before he died."', o:["Beatitude","Beatific","Attitude","Gratitude"], c:0, v:D.beatific },
+      { l:1, t:'"In ancient times people were divided into different ________ according to the work they did."', o:["Castes","Casts","Costs","Coasts"], c:0, v:D.caste },
+      { l:1, t:'"We ________ away old clothes and buy new ones."', o:["Cast","Caste","Cost","Coast"], c:0, v:D.caste },
+      { l:1, t:'"The ________ of living has risen a lot."', o:["Cost","Cast","Caste","Coast"], c:0, v:D.caste },
+      { l:1, t:'"Her ________ face has won over many hearts."', o:["Childlike","Childish","Childless","Chill"], c:0, v:D.child },
+      { l:1, t:'"Nobody likes him for his ________ habits."', o:["Childish","Childlike","Childless","Chill"], c:0, v:D.child },
+      { l:1, t:'"Because of approaching elections people are ________ for their candidates."', o:["Canvassing","Canvas","Convincing","Conversing"], c:0, v:D.canvass },
+      { l:1, t:'"While jogging he always wears ________ shoes."', o:["Canvas","Canvass","Converse","Contour"], c:0, v:D.canvass },
+      { l:1, t:'"The advocate ________ many examples to prove his case."', o:["Cited","Sited","Sighted","Seated"], c:0, v:D.cite },
+      { l:1, t:'"It is a very spacious ________ for constructing a nursing home."', o:["Site","Cite","Sight","Seat"], c:0, v:D.cite },
+      { l:1, t:'"The mutilated body of a child was a ghastly ________."', o:["Sight","Site","Cite","Side"], c:0, v:D.cite },
+      { l:1, t:'"He has been sleeping for an hour ________."', o:["Continuously","Continually","Contentiously","Connectively"], c:0, v:D.continuous },
+      { l:1, t:'"It has been drizzling ________ since last night."', o:["Continually","Continuously","Contentiously","Connectively"], c:0, v:D.continuous },
+      { l:1, t:'"The dead body was taken to the ________ for burial."', o:["Cemetery","Symmetry","Seminary","Ceremony"], c:0, v:D.cemetery },
+      { l:1, t:'"The building looks exquisite only because of its remarkable ________."', o:["Symmetry","Cemetery","Summary","Geometry"], c:0, v:D.cemetery },
+      { l:1, t:'"If we want to make a good ________ we must work."', o:["Career","Carrier","Carriage","Courier"], c:0, v:D.career },
+      { l:1, t:'"The goods were taken to the destination on public ________."', o:["Carrier","Career","Carriage","Courier"], c:0, v:D.career },
+      { l:1, t:'"I am very ________ of my friend\'s success in the interview."', o:["Confident","Confidant","Confined","Conformed"], c:0, v:D.confident },
+      { l:1, t:'"Once his ________, now Dinesh is the archenemy of his mentor."', o:["Confidant","Confident","Confederate","Conformist"], c:0, v:D.confident },
+      { l:1, t:'"I ________ my friend on her success."', o:["Complimented","Complemented","Commented","Completed"], c:0, v:D.compliment },
+      { l:1, t:'"Both husband and wife are ________ to each other."', o:["Complement","Compliment","Supplement","Implement"], c:0, v:D.compliment },
+      { l:1, t:'"Hundreds of ________ were shot in the battlefield."', o:["Cannons","Canons","Canyons","Canines"], c:0, v:D.cannon },
+      { l:1, t:'"________ of any religion are not easy to follow."', o:["Canons","Cannons","Canyons","Canes"], c:0, v:D.cannon },
+      { l:1, t:'"It is really ________ for a village boy to have topped the university."', o:["Creditable","Credible","Credulous","Credit"], c:0, v:D.creditable },
+      { l:1, t:'"Your excuse is not ________."', o:["Credible","Creditable","Credulous","Credit"], c:0, v:D.creditable },
+      { l:1, t:'"Children are ________ by nature."', o:["Credulous","Credible","Creditable","Crucial"], c:0, v:D.creditable },
+      { l:1, t:'"After the accident, my friend had been in state of ________ for several hours."', o:["Coma","Comma","Comer","Karma"], c:0, v:D.coma },
+      { l:1, t:'"________ is a very important part of learning punctuation."', o:["Comma","Coma","Comer","Karma"], c:0, v:D.coma },
+      { l:1, t:'"In our school the children are not given ________ punishment."', o:["Corporal","Corporeal","Capital","Corporate"], c:0, v:D.corporal },
+      { l:1, t:'"Ghosts are not ________ beings."', o:["Corporeal","Corporal","Corporate","Cooperate"], c:0, v:D.corporal },
+      { l:1, t:'"________ steps have been taken to meet with unforeseen emergency."', o:["Comprehensive","Comprehensible","Compromising","Apprehensive"], c:0, v:D.comprehensive },
+      { l:1, t:'"The talk of the new student in our class was not ________ to us at all."', o:["Comprehensible","Comprehensive","Compromising","Apprehensible"], c:0, v:D.comprehensive },
+      { l:1, t:'"Smallpox is a ________ disease."', o:["Contagious","Contiguous","Contentious","Courageous"], c:0, v:D.contagious },
+      { l:1, t:'"New Delhi and Noida are ________."', o:["Contiguous","Contagious","Continuous","Contentious"], c:0, v:D.contagious },
+      { l:1, t:'"________ motion tabled by the opposition fell through."', o:["Censure","Censor","Sensor","Census"], c:0, v:D.censure },
+      { l:1, t:'"The film \'The Bandit Queen\' has not been approved of by the ________ board."', o:["Censor","Censure","Sensor","Census"], c:0, v:D.censure },
+      { l:1, t:'"Due to heavy fog the car met with a ________."', o:["Collision","Collusion","Coalition","Corrosion"], c:0, v:D.collision },
+      { l:1, t:'"There was a ________ between the smugglers and the political leaders."', o:["Collusion","Collision","Coalition","Colhesion"], c:0, v:D.collision },
+      { l:1, t:'"The conduct of the taxi driver was highly mean and ________."', o:["Contemptible","Contemptuous","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:1, t:'"She dismissed the servant with ________ gesture."', o:["Contemptuous","Contemptible","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:1, t:'"The industrialist spent ________ amount of money to uplift the living conditions of his workers."', o:["Considerable","Considerate","Consumable","Constable"], c:0, v:D.considerable },
+      { l:1, t:'"He is beneficent and ________ to his subordinates."', o:["Considerate","Considerable","Consumable","Confederate"], c:0, v:D.considerable },
+      { l:1, t:'"One should not be very ________ in the marriage of daughters."', o:["Ceremonious","Ceremonial","Ceramic","Certain"], c:0, v:D.ceremonious },
+      { l:1, t:'"I could not attend the ________ function of his marriage."', o:["Ceremonial","Ceremonious","Ceramic","Serial"], c:0, v:D.ceremonious },
+      { l:1, t:'"He is popular with his friends on account of his ________ nature."', o:["Complaisant","Complacent","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:1, t:'"Most of the students of my class are ________ in their outlook and will not revolt against the principal."', o:["Complacent","Complaisant","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:1, t:'"We should always be ________ of what is going on around the world."', o:["Conscious","Conscience","Consensus","Cautious"], c:0, v:D.conscious },
+      { l:1, t:'"I always act according to my ________."', o:["Conscience","Conscious","Consensus","Science"], c:0, v:D.conscious },
+      { l:1, t:'"Government should be run by ________."', o:["Consensus","Conscience","Conscious","Census"], c:0, v:D.conscious },
+      { l:1, t:'"Being a ________ worker he never shirks work."', o:["Conscientious","Conscious","Conscience","Consensus"], c:0, v:D.conscious },
+      { l:1, t:'"She was so nervous that her words were not ________."', o:["Coherent","Inherent","Adherent","Current"], c:0, v:D.coherent },
+      { l:1, t:'"Sincerity is ________ in her character."', o:["Inherent","Coherent","Adherent","Inherit"], c:0, v:D.coherent },
+      { l:1, t:'"Indian industries are compelled to ________ with multinational companies for survival."', o:["Collaborate","Corroborate","Calibrate","Decorate"], c:0, v:D.collaborate },
+      { l:1, t:'"The principal ________ the teacher\'s statement made to the police."', o:["Corroborated","Collaborated","Cooperated","Correlated"], c:0, v:D.collaborate },
+      { l:1, t:'"He is on ________ leave today."', o:["Casual","Causal","Coastal","Casuality"], c:0, v:D.casual },
+      { l:1, t:'"There is definite ________ relationship between population and poverty."', o:["Causal","Casual","Casuality","Crucial"], c:0, v:D.casual },
+      { l:1, t:'"The legislative ________ has passed the Bill."', o:["Council","Counsel","Consul","Cancel"], c:0, v:D.council },
+      { l:1, t:'"His ________ proved very beneficial in the end."', o:["Counsel","Council","Consul","Cancel"], c:0, v:D.council },
+      { l:1, t:'"He is a ________ of the Legislative Council."', o:["Councillor","Counsellor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:1, t:'"I have engaged a noted ________ to defend my case."', o:["Counsellor","Councillor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:1, t:'"A mutilated ________ was found in a locked house."', o:["Corpse","Corps","Carcass","Crop"], c:0, v:D.corpse },
+      { l:1, t:'"He is serving in Army Ordnance ________."', o:["Corps","Corpse","Carcass","Core"], c:0, v:D.corpse },
+      { l:1, t:'"A ________ of a dog was lying in the road."', o:["Carcass","Corpse","Corps","Car"], c:0, v:D.corpse },
+      { l:1, t:'"Though he is quite rich, he wears ________ clothes."', o:["Coarse","Course","Curse","Cause"], c:0, v:D.coarse },
+      { l:1, t:'"He has given up immoral ________ of life."', o:["Course","Coarse","Curse","Cause"], c:0, v:D.coarse },
+      { l:1, t:'"Twentieth ________ will be known as the age of science."', o:["Century","Centenary","Centurion","Sentry"], c:0, v:D.century },
+      { l:1, t:'"________ of Indian National Movement was celebrated in 1985 AD."', o:["Centenary","Century","Centurion","Sanctuary"], c:0, v:D.century },
+      { l:1, t:'"________ of forests is very important for our survival."', o:["Conservation","Conservatism","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:1, t:'"I am quite liberal and do not believe in ________."', o:["Conservatism","Conservation","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:1, t:'"You must ________ to the rules laid down by your company."', o:["Conform","Confirm","Confer","Comfort"], c:0, v:D.conform },
+      { l:1, t:'"I shall ________ my programme tomorrow."', o:["Confirm","Conform","Confer","Comfort"], c:0, v:D.conform },
+      { l:1, t:'"The hall has a seating ________ for five hundred students."', o:["Capacity","Capability","Captivity","Capital"], c:0, v:D.capacity },
+      { l:1, t:'"My friend has ________ to do any difficult task."', o:["Capability","Capacity","Captivity","Capital"], c:0, v:D.capacity },
+      { l:1, t:'"We are fed up with the ________ speeches of our leaders."', o:["Commonplace","Common place","Common sense","Commonality"], c:0, v:D.common },
+      { l:1, t:'"The street is a ________ for everyone."', o:["Common place","Commonplace","Common room","Commons"], c:0, v:D.common },
+      { l:1, t:'"When martial law was imposed in Pakistan huge area of vacant land was ________ for building airstrip."', o:["Commandeered","Commanded","Commended","Commented"], c:0, v:D.commandeer },
+      { l:1, t:'"The ________ of the army ordered the soldiers to capture the fort."', o:["Commander","Commandeer","Commender","Commodore"], c:0, v:D.commandeer },
+      { l:1, t:'"My friend is suffering from an incurable ________."', o:["Disease","Decease","Decrease","Desist"], c:0, v:D.disease },
+      { l:1, t:'"On account of the ________ of his father, the burden of the family fell on his shoulders."', o:["Decease","Disease","Decrease","Cease"], c:0, v:D.disease },
+      { l:1, t:'"She ________ that she had gone to the movie last night."', o:["Denied","Refused","Declined","Decried"], c:0, v:D.deny },
+      { l:1, t:'"Meeta ________ that she would not return the money."', o:["Refused","Denied","Declined","Diffused"], c:0, v:D.deny },
+      { l:1, t:'"In ancient times, many ________ were fought in order to settle disputes."', o:["Duels","Duals","Dwells","Deals"], c:0, v:D.duel },
+      { l:1, t:'"She follows ________ policy and misguides her husband."', o:["Dual","Duel","Dwell","Dull"], c:0, v:D.duel },
+      { l:1, t:'"All children should have ________ for their elders."', o:["Deference","Difference","Deferment","Reference"], c:0, v:D.deference },
+      { l:1, t:'"There is no ________ among the basic concepts of all the religions."', o:["Difference","Deference","Deferment","Diffidence"], c:0, v:D.deference },
+      { l:1, t:'"His application for ________ of hearing was turned down."', o:["Deferment","Deference","Difference","Detriment"], c:0, v:D.deference },
+      { l:1, t:'"She always wears ________ clothes."', o:["Decent","Descent","Dissent","Recent"], c:0, v:D.decent },
+      { l:1, t:'"The ________ of the hill is very dangerous."', o:["Descent","Decent","Dissent","Descant"], c:0, v:D.decent },
+      { l:1, t:'"Only a few members expressed ________ to my suggestion."', o:["Dissent","Descent","Decent","Descend"], c:0, v:D.decent },
+      { l:1, t:'"The government has greatly solved the problem of pure drinking water in the ________."', o:["Desert","Dessert","Desist","Descant"], c:0, v:D.desert },
+      { l:1, t:'"She was ________ by her husband."', o:["Deserted","Desserted","Desisted","Descended"], c:0, v:D.desert },
+      { l:1, t:'"________ was served after dinner."', o:["Dessert","Desert","Dissert","Desist"], c:0, v:D.desert },
+      { l:1, t:'"Sohan is very ________ in our class."', o:["Dominant","Domineer","Dormant","Domain"], c:0, v:D.dominant },
+      { l:1, t:'"Mothers in law try to ________ over their daughters in law."', o:["Domineer","Dominant","Dominate","Domain"], c:0, v:D.dominant },
+      { l:1, t:'"Last year most of the areas of Uttar Pradesh suffered from a severe ________."', o:["Drought","Draught","Draft","Drift"], c:0, v:D.drought },
+      { l:1, t:'"A ________ of cool wind was very refreshing."', o:["Draught","Drought","Draft","Drift"], c:0, v:D.drought },
+
+      // ================= LEVEL 2 (MODERATE - 105 Questions) =================
+      { l:2, t:'"Park the car ________ the red truck."', o:["Beside","Besides","Aside","Beside of"], c:0, v:D.beside },
+      { l:2, t:'"________ hiking, he also enjoys swimming."', o:["Besides","Beside","Aside","Inside"], c:0, v:D.beside },
+      { l:2, t:'"I cannot ________ the noise from the construction site any longer."', o:["Bear","Bare","Beer","Boar"], c:0, v:D.bear },
+      { l:2, t:'"The trees were ________ of leaves in winter."', o:["Bare","Bear","Beer","Boar"], c:0, v:D.bear },
+      { l:2, t:'"The judge granted him ________ pending trial."', o:["Bail","Bale","Bell","Ball"], c:0, v:D.bail },
+      { l:2, t:'"The farmer stacked the ________ of hay in the barn."', o:["Bale","Bail","Bell","Ball"], c:0, v:D.bail },
+      { l:2, t:'"She has a ________ smile that lights up the room."', o:["Beatific","Beatitude","Beautiful","Specific"], c:0, v:D.beatific },
+      { l:2, t:'"He threw the fishing line, hoping to ________ it far."', o:["Cast","Caste","Cost","Coast"], c:0, v:D.caste },
+      { l:2, t:'"The strict ________ system has evolved over centuries."', o:["Caste","Cast","Cost","Coast"], c:0, v:D.caste },
+      { l:2, t:'"He showed a ________ wonder at the magic trick."', o:["Childlike","Childish","Childless","Chill"], c:0, v:D.child },
+      { l:2, t:'"Stop being so ________ and share your toys!"', o:["Childish","Childlike","Childless","Chill"], c:0, v:D.child },
+      { l:2, t:'"The volunteers went door-to-door to ________ votes."', o:["Canvass","Canvas","Convince","Converse"], c:0, v:D.canvass },
+      { l:2, t:'"The artist bought a new ________ for his painting."', o:["Canvas","Canvass","Converse","Contour"], c:0, v:D.canvass },
+      { l:2, t:'"Please ________ the sources you used in your essay."', o:["Cite","Site","Sight","Seat"], c:0, v:D.cite },
+      { l:2, t:'"The construction ________ was closed for safety."', o:["Site","Cite","Sight","Seat"], c:0, v:D.cite },
+      { l:2, t:'"The Grand Canyon is a magnificent ________."', o:["Sight","Site","Cite","Side"], c:0, v:D.cite },
+      { l:2, t:'"The ________ noise of the fan kept me awake all night."', o:["Continuous","Continual","Connective","Contentious"], c:0, v:D.continuous },
+      { l:2, t:'"We had ________ interruptions during the meeting."', o:["Continual","Continuous","Connective","Contentious"], c:0, v:D.continuous },
+      { l:2, t:'"They visited the ________ to pay respects to their ancestors."', o:["Cemetery","Symmetry","Seminary","Ceremony"], c:0, v:D.cemetery },
+      { l:2, t:'"The garden was designed with perfect ________."', o:["Symmetry","Cemetery","Summary","Geometry"], c:0, v:D.cemetery },
+      { l:2, t:'"She chose a ________ in medicine."', o:["Career","Carrier","Carriage","Courier"], c:0, v:D.career },
+      { l:2, t:'"Mosquitoes are a ________ of malaria."', o:["Carrier","Career","Carriage","Courier"], c:0, v:D.career },
+      { l:2, t:'"He is ________ that he will pass the exam."', o:["Confident","Confidant","Confined","Conformed"], c:0, v:D.confident },
+      { l:2, t:'"She is my closest ________; I tell her everything."', o:["Confidant","Confident","Confederate","Conformist"], c:0, v:D.confident },
+      { l:2, t:'"That tie is a nice ________ to your suit."', o:["Complement","Compliment","Supplement","Implement"], c:0, v:D.compliment },
+      { l:2, t:'"He gave her a nice ________ on her new haircut."', o:["Compliment","Complement","Comment","Complete"], c:0, v:D.compliment },
+      { l:2, t:'"The ship was armed with a powerful ________."', o:["Cannon","Canon","Canyon","Canine"], c:0, v:D.cannon },
+      { l:2, t:'"The ________ of literature include Shakespeare and Dickens."', o:["Canons","Cannons","Canyons","Canes"], c:0, v:D.cannon },
+      { l:2, t:'"His performance in the play was ________."', o:["Creditable","Credible","Credulous","Credit"], c:0, v:D.creditable },
+      { l:2, t:'"The witness provided a ________ account of the accident."', o:["Credible","Creditable","Credulous","Credit"], c:0, v:D.creditable },
+      { l:2, t:'"Don\'t be so ________; not everything online is true."', o:["Credulous","Credible","Creditable","Crucial"], c:0, v:D.creditable },
+      { l:2, t:'"He slipped into a ________ after the head injury."', o:["Coma","Comma","Comer","Karma"], c:0, v:D.coma },
+      { l:2, t:'"Use a ________ to separate items in a list."', o:["Comma","Coma","Comer","Karma"], c:0, v:D.coma },
+      { l:2, t:'"The school has banned ________ punishment."', o:["Corporal","Corporeal","Capital","Corporate"], c:0, v:D.corporal },
+      { l:2, t:'"Angels are spiritual, not ________ beings."', o:["Corporeal","Corporal","Corporate","Cooperate"], c:0, v:D.corporal },
+      { l:2, t:'"We need a ________ plan to tackle the issue."', o:["Comprehensive","Comprehensible","Compromising","Apprehensive"], c:0, v:D.comprehensive },
+      { l:2, t:'"His handwriting is barely ________."', o:["Comprehensible","Comprehensive","Compromising","Apprehensible"], c:0, v:D.comprehensive },
+      { l:2, t:'"Yawning is often ________."', o:["Contagious","Contiguous","Contentious","Courageous"], c:0, v:D.contagious },
+      { l:2, t:'"The two farms are ________ to each other."', o:["Contiguous","Contagious","Continuous","Contentious"], c:0, v:D.contagious },
+      { l:2, t:'"The parliament voted to ________ the minister."', o:["Censure","Censor","Sensor","Census"], c:0, v:D.censure },
+      { l:2, t:'"The government may ________ sensitive information."', o:["Censor","Censure","Sensor","Census"], c:0, v:D.censure },
+      { l:2, t:'"The asteroid is on a ________ course with Earth."', o:["Collision","Collusion","Coalition","Corrosion"], c:0, v:D.collision },
+      { l:2, t:'"The price fixing was a result of ________ between companies."', o:["Collusion","Collision","Coalition","Colhesion"], c:0, v:D.collision },
+      { l:2, t:'"Stealing from the poor is a ________ act."', o:["Contemptible","Contemptuous","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:2, t:'"He gave a ________ laugh at their feeble attempts."', o:["Contemptuous","Contemptible","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:2, t:'"It took a ________ amount of time to finish."', o:["Considerable","Considerate","Consumable","Constable"], c:0, v:D.considerable },
+      { l:2, t:'"Please be ________ of your neighbors and keep the noise down."', o:["Considerate","Considerable","Consumable","Confederate"], c:0, v:D.considerable },
+      { l:2, t:'"The queen gave a ________ wave to the crowd."', o:["Ceremonious","Ceremonial","Ceramic","Certain"], c:0, v:D.ceremonious },
+      { l:2, t:'"The sword is purely ________; it is not for battle."', o:["Ceremonial","Ceremonious","Ceramic","Serial"], c:0, v:D.ceremonious },
+      { l:2, t:'"The waiter was very ________ and helpful."', o:["Complaisant","Complacent","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:2, t:'"We cannot afford to be ________ about safety."', o:["Complacent","Complaisant","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:2, t:'"He remained ________ despite the pain."', o:["Conscious","Conscience","Consensus","Cautious"], c:0, v:D.conscious },
+      { l:2, t:'"His ________ bothered him after lying."', o:["Conscience","Conscious","Consensus","Science"], c:0, v:D.conscious },
+      { l:2, t:'"There is a general ________ that we need change."', o:["Consensus","Conscience","Conscious","Census"], c:0, v:D.conscious },
+      { l:2, t:'"She is a ________ student who always does her homework."', o:["Conscientious","Conscious","Conscience","Consensus"], c:0, v:D.conscious },
+      { l:2, t:'"His argument was logical and ________."', o:["Coherent","Inherent","Adherent","Current"], c:0, v:D.coherent },
+      { l:2, t:'"There are risks ________ in any investment."', o:["Inherent","Coherent","Adherent","Inherit"], c:0, v:D.coherent },
+      { l:2, t:'"The two artists decided to ________ on a project."', o:["Collaborate","Corroborate","Calibrate","Decorate"], c:0, v:D.collaborate },
+      { l:2, t:'"Can anyone ________ his alibi?"', o:["Corroborate","Collaborate","Cooperate","Correlated"], c:0, v:D.collaborate },
+      { l:2, t:'"He wore ________ clothes to the party."', o:["Casual","Causal","Coastal","Casuality"], c:0, v:D.casual },
+      { l:2, t:'"Scientists are investigating the ________ link between smoking and cancer."', o:["Causal","Casual","Casuality","Crucial"], c:0, v:D.casual },
+      { l:2, t:'"The city ________ voted on the new park."', o:["Council","Counsel","Consul","Cancel"], c:0, v:D.council },
+      { l:2, t:'"He sought legal ________ before signing."', o:["Counsel","Council","Consul","Cancel"], c:0, v:D.council },
+      { l:2, t:'"The town ________ proposed a new tax."', o:["Councillor","Counsellor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:2, t:'"She works as a marriage ________."', o:["Counsellor","Councillor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:2, t:'"The detective examined the ________."', o:["Corpse","Corps","Carcass","Crop"], c:0, v:D.corpse },
+      { l:2, t:'"The Marine ________ is a branch of the military."', o:["Corps","Corpse","Carcass","Core"], c:0, v:D.corpse },
+      { l:2, t:'"Vultures circled the ________ in the desert."', o:["Carcass","Corpse","Corps","Car"], c:0, v:D.corpse },
+      { l:2, t:'"The sand was ________ and scratchy."', o:["Coarse","Course","Curse","Cause"], c:0, v:D.coarse },
+      { l:2, t:'"The ship changed its ________ to avoid the storm."', o:["Course","Coarse","Curse","Cause"], c:0, v:D.coarse },
+      { l:2, t:'"The castle is over a ________ old."', o:["Century","Centenary","Centurion","Sentry"], c:0, v:D.century },
+      { l:2, t:'"The university celebrated its ________ last year."', o:["Centenary","Century","Centurion","Sanctuary"], c:0, v:D.century },
+      { l:2, t:'"Wildlife ________ is essential for biodiversity."', o:["Conservation","Conservatism","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:2, t:'"His political ________ often clashes with modern views."', o:["Conservatism","Conservation","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:2, t:'"The product does not ________ to safety standards."', o:["Conform","Confirm","Confer","Comfort"], c:0, v:D.conform },
+      { l:2, t:'"Please ________ your reservation by email."', o:["Confirm","Conform","Confer","Comfort"], c:0, v:D.conform },
+      { l:2, t:'"The stadium has a ________ of 50,000."', o:["Capacity","Capability","Captivity","Capital"], c:0, v:D.capacity },
+      { l:2, t:'"She has the ________ to become a great leader."', o:["Capability","Capacity","Captivity","Capital"], c:0, v:D.capacity },
+      { l:2, t:'"Smartphones have become ________ in modern life."', o:["Commonplace","Common place","Common sense","Commonality"], c:0, v:D.common },
+      { l:2, t:'"The government had to ________ private vehicles for the emergency."', o:["Commandeer","Commanded","Commended","Commented"], c:0, v:D.commandeer },
+      { l:2, t:'"The ________ led the troops into battle."', o:["Commander","Commandeer","Commender","Commodore"], c:0, v:D.commandeer },
+      { l:2, t:'"Vaccines help prevent the spread of ________."', o:["Disease","Decease","Decrease","Desist"], c:0, v:D.disease },
+      { l:2, t:'"Upon his ________, the estate was divided."', o:["Decease","Disease","Decrease","Cease"], c:0, v:D.disease },
+      { l:2, t:'"He ________ the allegations against him."', o:["Denied","Refused","Declined","Decried"], c:0, v:D.deny },
+      { l:2, t:'"She ________ to accept the gift."', o:["Refused","Denied","Declined","Diffused"], c:0, v:D.deny },
+      { l:2, t:'"The knights challenged each other to a ________."', o:["Duel","Dual","Dwell","Deals"], c:0, v:D.duel },
+      { l:2, t:'"The car has ________ airbags for safety."', o:["Dual","Duel","Dwell","Dull"], c:0, v:D.duel },
+      { l:2, t:'"He bowed in ________ to the king."', o:["Deference","Difference","Deferment","Reference"], c:0, v:D.deference },
+      { l:2, t:'"Can you spot the ________ between these two pictures?"', o:["Difference","Deference","Deferment","Diffidence"], c:0, v:D.deference },
+      { l:2, t:'"He requested a ________ of his student loan payments."', o:["Deferment","Deference","Difference","Detriment"], c:0, v:D.deference },
+      { l:2, t:'"It is hard to find ________ housing at this price."', o:["Decent","Descent","Dissent","Recent"], c:0, v:D.decent },
+      { l:2, t:'"The submarine began its ________ into the deep."', o:["Descent","Decent","Dissent","Descant"], c:0, v:D.decent },
+      { l:2, t:'"Political ________ is the lifeblood of democracy."', o:["Dissent","Descent","Decent","Descend"], c:0, v:D.decent },
+      { l:2, t:'"The soldier was lost in the ________."', o:["Desert","Dessert","Desist","Descant"], c:0, v:D.desert },
+      { l:2, t:'"To ________ one\'s post is a serious offense."', o:["Desert","Dessert","Desist","Descend"], c:0, v:D.desert },
+      { l:2, t:'"The pastry chef created a stunning ________."', o:["Dessert","Desert","Dissert","Desist"], c:0, v:D.desert },
+      { l:2, t:'"The alpha male is the ________ member of the pack."', o:["Dominant","Domineer","Dormant","Domain"], c:0, v:D.dominant },
+      { l:2, t:'"A good leader does not ________ his team."', o:["Domineer","Dominant","Dominate","Domain"], c:0, v:D.dominant },
+      { l:2, t:'"The reservoir dried up during the ________."', o:["Drought","Draught","Draft","Drift"], c:0, v:D.drought },
+      { l:2, t:'"The door created a cold ________ in the room."', o:["Draught","Drought","Draft","Drift"], c:0, v:D.drought },
+      { l:2, t:'"He was held in ________ without trial."', o:["Captivity","Capability","Capacity","Capital"], c:0, v:D.capacity },
+      { l:2, t:'"Please ________ your attendance by replying to the email."', o:["Confirm","Conform","Confer","Comfort"], c:0, v:D.conform },
+      { l:2, t:'"The local ________ meets every month to discuss city planning."', o:["Council","Counsel","Consul","Cancel"], c:0, v:D.council },
+      { l:2, t:'"Camels are well adapted to life in the ________."', o:["Desert","Dessert","Desist","Descend"], c:0, v:D.desert },
+      { l:2, t:'"He took a long ________ of cold water."', o:["Draught","Drought","Draft","Drift"], c:0, v:D.drought },
+
+      // ================= LEVEL 3 (HARD - 105 Questions) =================
+      { l:3, t:'"The philosophical concept exists ________ the physical realm."', o:["Besides","Beside","Beside of","Aside"], c:0, v:D.beside },
+      { l:3, t:'"________ the obvious financial benefits, the merger has strategic value."', o:["Besides","Beside","Beside of","Aside"], c:0, v:D.beside },
+      { l:3, t:'"The bridge could not ________ the weight of the truck."', o:["Bear","Bare","Beer","Boar"], c:0, v:D.bear },
+      { l:3, t:'"The scandal laid ________ the corruption in the system."', o:["Bare","Bear","Beer","Boar"], c:0, v:D.bear },
+      { l:3, t:'"The responsibilities were ________ with great dignity."', o:["Borne","Born","Burn","Barn"], c:0, v:D.bear },
+      { l:3, t:'"Ideas ________ of necessity are often the most durable."', o:["Born","Borne","Burn","Barn"], c:0, v:D.bear },
+      { l:3, t:'"The CEO was released on ________ pending the investigation."', o:["Bail","Bale","Bell","Ball"], c:0, v:D.bail },
+      { l:3, t:'"The textile factory processed a massive ________ of wool."', o:["Bale","Bail","Bell","Ball"], c:0, v:D.bail },
+      { l:3, t:'"The monk\'s face held a ________ expression during meditation."', o:["Beatific","Beatitude","Beautiful","Specific"], c:0, v:D.beatific },
+      { l:3, t:'"The sermon focused on the eighth ________."', o:["Beatitude","Beatific","Attitude","Gratitude"], c:0, v:D.beatific },
+      { l:3, t:'"The rigid ________ structure impeded social mobility."', o:["Caste","Cast","Cost","Coast"], c:0, v:D.caste },
+      { l:3, t:'"The dice are ________; there is no turning back."', o:["Cast","Caste","Cost","Coast"], c:0, v:D.caste },
+      { l:3, t:'"The opportunity ________ was too high to ignore."', o:["Cost","Cast","Caste","Coast"], c:0, v:D.caste },
+      { l:3, t:'"Her ________ innocence belied a sharp intellect."', o:["Childlike","Childish","Childless","Chill"], c:0, v:D.child },
+      { l:3, t:'"His refusal to compromise was seen as petulant and ________."', o:["Childish","Childlike","Childless","Chill"], c:0, v:D.child },
+      { l:3, t:'"The committee will ________ the neighborhood for opinions."', o:["Canvass","Canvas","Convince","Converse"], c:0, v:D.canvass },
+      { l:3, t:'"The political landscape is a complex ________ to paint on."', o:["Canvas","Canvass","Converse","Contour"], c:0, v:D.canvass },
+      { l:3, t:'"The academic paper failed to ________ primary sources."', o:["Cite","Site","Sight","Seat"], c:0, v:D.cite },
+      { l:3, t:'"The archaeologist identified the ancient ________."', o:["Site","Cite","Sight","Seat"], c:0, v:D.cite },
+      { l:3, t:'"The army remained in ________ of the enemy forces."', o:["Sight","Site","Cite","Side"], c:0, v:D.cite },
+      { l:3, t:'"The brain requires a ________ supply of oxygen."', o:["Continuous","Continual","Connective","Contentious"], c:0, v:D.continuous },
+      { l:3, t:'"His ________ complaints about the weather were annoying."', o:["Continual","Continuous","Connective","Contentious"], c:0, v:D.continuous },
+      { l:3, t:'"The gothic ________ was shrouded in mist."', o:["Cemetery","Symmetry","Seminary","Ceremony"], c:0, v:D.cemetery },
+      { l:3, t:'"The mathematical equation lacked ________."', o:["Symmetry","Cemetery","Summary","Geometry"], c:0, v:D.cemetery },
+      { l:3, t:'"Diplomacy was his chosen ________."', o:["Career","Carrier","Carriage","Courier"], c:0, v:D.career },
+      { l:3, t:'"The aircraft ________ is the flagship of the fleet."', o:["Carrier","Career","Carriage","Courier"], c:0, v:D.career },
+      { l:3, t:'"The market remained ________ despite the rumors."', o:["Confident","Confidant","Confined","Conformed"], c:0, v:D.confident },
+      { l:3, t:'"The spy was a trusted ________ of the general."', o:["Confidant","Confident","Confederate","Conformist"], c:0, v:D.confident },
+      { l:3, t:'"Her skills are a perfect ________ to the team\'s weaknesses."', o:["Complement","Compliment","Supplement","Implement"], c:0, v:D.compliment },
+      { l:3, t:'"He paid her a backhanded ________."', o:["Compliment","Complement","Comment","Complete"], c:0, v:D.compliment },
+      { l:3, t:'"The rebels seized the ________ from the fortress."', o:["Cannon","Canon","Canyon","Canine"], c:0, v:D.cannon },
+      { l:3, t:'"The ________ of western philosophy are often debated."', o:["Canons","Cannons","Canyons","Canes"], c:0, v:D.cannon },
+      { l:3, t:'"His academic record is highly ________."', o:["Creditable","Credible","Credulous","Credit"], c:0, v:D.creditable },
+      { l:3, t:'"The threat was deemed ________ by intelligence agencies."', o:["Credible","Creditable","Credulous","Credit"], c:0, v:D.creditable },
+      { l:3, t:'"The scam targeted the elderly and ________."', o:["Credulous","Credible","Creditable","Crucial"], c:0, v:D.creditable },
+      { l:3, t:'"The patient remained in a deep ________."', o:["Coma","Comma","Comer","Karma"], c:0, v:D.coma },
+      { l:3, t:'"The clause was separated by a ________."', o:["Comma","Coma","Comer","Karma"], c:0, v:D.coma },
+      { l:3, t:'"The prisoner was subjected to severe ________ punishment."', o:["Corporal","Corporeal","Capital","Corporate"], c:0, v:D.corporal },
+      { l:3, t:'"He is focused on ________ pleasures rather than spiritual ones."', o:["Corporeal","Corporal","Corporate","Cooperate"], c:0, v:D.corporal },
+      { l:3, t:'"The report was ________ covering every detail."', o:["Comprehensive","Comprehensible","Compromising","Apprehensive"], c:0, v:D.comprehensive },
+      { l:3, t:'"The jargon was barely ________ to the layman."', o:["Comprehensible","Comprehensive","Compromising","Apprehensible"], c:0, v:D.comprehensive },
+      { l:3, t:'"Panic is often more ________ than the virus itself."', o:["Contagious","Contiguous","Contentious","Courageous"], c:0, v:D.contagious },
+      { l:3, t:'"The parking lot is ________ to the building."', o:["Contiguous","Contagious","Continuous","Contentious"], c:0, v:D.contagious },
+      { l:3, t:'"The senator faced a vote of ________."', o:["Censure","Censor","Sensor","Census"], c:0, v:D.censure },
+      { l:3, t:'"The regime tries to ________ the internet."', o:["Censor","Censure","Sensor","Census"], c:0, v:D.censure },
+      { l:3, t:'"The particles high-speed ________ created energy."', o:["Collision","Collusion","Coalition","Corrosion"], c:0, v:D.collision },
+      { l:3, t:'"They were accused of ________ to fix prices."', o:["Collusion","Collision","Coalition","Colhesion"], c:0, v:D.collision },
+      { l:3, t:'"His betrayal was a ________ act of cowardice."', o:["Contemptible","Contemptuous","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:3, t:'"He holds a ________ view of modern art."', o:["Contemptuous","Contemptible","Contemplative","Contemporary"], c:0, v:D.contempt },
+      { l:3, t:'"The project requires ________ resources."', o:["Considerable","Considerate","Consumable","Constable"], c:0, v:D.considerable },
+      { l:3, t:'"He is always ________ of other people\'s time."', o:["Considerate","Considerable","Consumable","Confederate"], c:0, v:D.considerable },
+      { l:3, t:'"The greeting was stiff and ________."', o:["Ceremonious","Ceremonial","Ceramic","Certain"], c:0, v:D.ceremonious },
+      { l:3, t:'"The native tribes performed a ________ dance."', o:["Ceremonial","Ceremonious","Ceramic","Serial"], c:0, v:D.ceremonious },
+      { l:3, t:'"The host was ________ almost to a fault."', o:["Complaisant","Complacent","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:3, t:'"Success can make a company ________."', o:["Complacent","Complaisant","Complaint","Compliant"], c:0, v:D.complaisant },
+      { l:3, t:'"He made a ________ effort to improve."', o:["Conscious","Conscience","Consensus","Cautious"], c:0, v:D.conscious },
+      { l:3, t:'"A guilty ________ needs no accuser."', o:["Conscience","Conscious","Consensus","Science"], c:0, v:D.conscious },
+      { l:3, t:'"Reaching a ________ in such a divided group is impossible."', o:["Consensus","Conscience","Conscious","Census"], c:0, v:D.conscious },
+      { l:3, t:'"She is a ________ objector to the war."', o:["Conscientious","Conscious","Conscience","Consensus"], c:0, v:D.conscious },
+      { l:3, t:'"The witness failed to give a ________ account."', o:["Coherent","Inherent","Adherent","Current"], c:0, v:D.coherent },
+      { l:3, t:'"The desire for freedom is ________ in human nature."', o:["Inherent","Coherent","Adherent","Inherit"], c:0, v:D.coherent },
+      { l:3, t:'"The scientists will ________ on the research."', o:["Collaborate","Corroborate","Calibrate","Decorate"], c:0, v:D.collaborate },
+      { l:3, t:'"Physical evidence is needed to ________ the testimony."', o:["Corroborate","Collaborate","Cooperate","Correlated"], c:0, v:D.collaborate },
+      { l:3, t:'"His ________ attitude towards work got him fired."', o:["Casual","Causal","Coastal","Casuality"], c:0, v:D.casual },
+      { l:3, t:'"Correlation does not imply ________ connection."', o:["Causal","Casual","Casuality","Crucial"], c:0, v:D.casual },
+      { l:3, t:'"The security ________ meets on Tuesdays."', o:["Council","Counsel","Consul","Cancel"], c:0, v:D.council },
+      { l:3, t:'"Keep your own ________; do not listen to rumors."', o:["Counsel","Council","Consul","Cancel"], c:0, v:D.council },
+      { l:3, t:'"The ________ was re-elected for another term."', o:["Councillor","Counsellor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:3, t:'"The camp ________ helped the kids adjust."', o:["Counsellor","Councillor","Chancellor","Consular"], c:0, v:D.councillor },
+      { l:3, t:'"The ________ was transported to the morgue."', o:["Corpse","Corps","Carcass","Crop"], c:0, v:D.corpse },
+      { l:3, t:'"The Diplomatic ________ maintains international relations."', o:["Corps","Corpse","Carcass","Core"], c:0, v:D.corpse },
+      { l:3, t:'"The ________ of the whale washed ashore."', o:["Carcass","Corpse","Corps","Car"], c:0, v:D.corpse },
+      { l:3, t:'"His ________ language offended the guests."', o:["Coarse","Course","Curse","Cause"], c:0, v:D.coarse },
+      { l:3, t:'"In the ________ of human events, change is inevitable."', o:["Course","Coarse","Curse","Cause"], c:0, v:D.coarse },
+      { l:3, t:'"We are living in the 21st ________."', o:["Century","Centenary","Centurion","Sentry"], c:0, v:D.century },
+      { l:3, t:'"The brand celebrated its ________ with a grand gala."', o:["Centenary","Century","Centurion","Sanctuary"], c:0, v:D.century },
+      { l:3, t:'"Energy ________ is a priority for the new policy."', o:["Conservation","Conservatism","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:3, t:'"His fiscal ________ prevented him from spending."', o:["Conservatism","Conservation","Conversation","Conversion"], c:0, v:D.conservation },
+      { l:3, t:'"Non-conformists refuse to ________ to societal norms."', o:["Conform","Confirm","Confer","Comfort"], c:0, v:D.conform },
+      { l:3, t:'"The data seems to ________ our hypothesis."', o:["Confirm","Conform","Confer","Comfort"], c:0, v:D.conform },
+      { l:3, t:'"The factory is operating at full ________."', o:["Capacity","Capability","Captivity","Capital"], c:0, v:D.capacity },
+      { l:3, t:'"The nuclear ________ of the nation is a deterrent."', o:["Capability","Capacity","Captivity","Capital"], c:0, v:D.capacity },
+      { l:3, t:'"Air travel has become ________ these days."', o:["Commonplace","Common place","Common sense","Commonality"], c:0, v:D.common },
+      { l:3, t:'"The government had to ________ private vehicles for the emergency."', o:["Commandeer","Commanded","Commended","Commented"], c:0, v:D.commandeer },
+      { l:3, t:'"The ________ led the troops into battle."', o:["Commander","Commandeer","Commender","Commodore"], c:0, v:D.commandeer },
+      { l:3, t:'"The prevention of ________ is better than cure."', o:["Disease","Decease","Decrease","Desist"], c:0, v:D.disease },
+      { l:3, t:'"The assets were frozen upon his ________."', o:["Decease","Disease","Decrease","Cease"], c:0, v:D.disease },
+      { l:3, t:'"He ________ having any knowledge of the plot."', o:["Denied","Refused","Declined","Decried"], c:0, v:D.deny },
+      { l:3, t:'"The bank ________ to grant the loan."', o:["Refused","Denied","Declined","Diffused"], c:0, v:D.deny },
+      { l:3, t:'"Hamilton died in a ________ with Burr."', o:["Duel","Dual","Dwell","Deals"], c:0, v:D.duel },
+      { l:3, t:'"She holds ________ citizenship."', o:["Dual","Duel","Dwell","Dull"], c:0, v:D.duel },
+      { l:3, t:'"He treated the veteran with utmost ________."', o:["Deference","Difference","Deferment","Reference"], c:0, v:D.deference },
+      { l:3, t:'"There is a subtle ________ in meaning here."', o:["Difference","Deference","Deferment","Diffidence"], c:0, v:D.deference },
+      { l:3, t:'"The student sought a ________ of his admission."', o:["Deferment","Deference","Difference","Detriment"], c:0, v:D.deference },
+      { l:3, t:'"It is hard to find ________ housing at this price."', o:["Decent","Descent","Dissent","Recent"], c:0, v:D.decent },
+      { l:3, t:'"The submarine began its ________ into the deep."', o:["Descent","Decent","Dissent","Descant"], c:0, v:D.decent },
+      { l:3, t:'"Political ________ is the lifeblood of democracy."', o:["Dissent","Descent","Decent","Descend"], c:0, v:D.decent },
+      { l:3, t:'"The soldier was lost in the ________."', o:["Desert","Dessert","Desist","Descant"], c:0, v:D.desert },
+      { l:3, t:'"To ________ one\'s post is a serious offense."', o:["Desert","Dessert","Desist","Descend"], c:0, v:D.desert },
+      { l:3, t:'"The pastry chef created a stunning ________."', o:["Dessert","Desert","Dissert","Desist"], c:0, v:D.desert },
+      { l:3, t:'"The alpha male is the ________ member of the pack."', o:["Dominant","Domineer","Dormant","Domain"], c:0, v:D.dominant },
+      { l:3, t:'"A good leader does not ________ his team."', o:["Domineer","Dominant","Dominate","Domain"], c:0, v:D.dominant },
+      { l:3, t:'"The reservoir dried up during the ________."', o:["Drought","Draught","Draft","Drift"], c:0, v:D.drought },
+      { l:3, t:'"The door created a cold ________ in the room."', o:["Draught","Drought","Draft","Drift"], c:0, v:D.drought },
+      { l:3, t:'"Out of ________ to her age, we offered her the best seat."', o:["Deference","Difference","Deferment","Reference"], c:0, v:D.deference }
+    ];
+
+    // ==========================================
+    //  APP STATE
+    // ==========================================
+    let activeQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timerInterval = null;
+    let timeLimit = 0;
+    let userResults = [];
+
+    // Init
+    startQuiz(); 
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    // -----------------------------------------------------
+    // TEXT TO SPEECH HELPER
+    // -----------------------------------------------------
+    function speakWord(word) {
+      // Prevent bubbling if user clicks child elements
+      if(window.event) window.event.stopPropagation();
+      
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US'; 
+        utterance.rate = 0.9; 
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("Audio playback is not supported in this browser.");
+      }
+    }
+
+    function startQuiz() {
+      // 1. Get Settings
+      const level = document.getElementById('level').value;
+      const timerVal = document.getElementById('timer').value;
+      const lvlNum = parseInt(level);
+      timeLimit = parseInt(timerVal);
+
+      // 2. Filter & Setup Data
+      let rawData = Q.filter(q => q.l === lvlNum);
+      
+      activeQuestions = JSON.parse(JSON.stringify(rawData));
+      // Randomize options for each question but keep track of correct answer
+      activeQuestions.forEach(q => {
+        const correctText = q.o[q.c];
+        shuffleArray(q.o);
+        q.c = q.o.indexOf(correctText);
+      });
+      // Randomize question order
+      shuffleArray(activeQuestions);
+
+      // 3. Reset State
+      currentQuestionIndex = 0;
+      score = 0;
+      userResults = [];
+      document.getElementById('score').innerText = score;
+      
+      // 4. Reset UI
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('review-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = (timeLimit > 0) ? 'block' : 'none';
+      document.getElementById('timer-bar').style.width = '100%';
+      document.getElementById('top-notification').classList.remove('show');
+
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if(timerInterval) clearInterval(timerInterval);
+
+      const q = activeQuestions[currentQuestionIndex];
+      document.getElementById('total').innerText = activeQuestions.length;
+      document.getElementById('current').innerText = currentQuestionIndex + 1;
+      document.getElementById('question-number').innerText = `Question ${currentQuestionIndex + 1}`;
+      document.getElementById('question-text').innerText = q.t;
+
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      
+      // Hide feedback from previous
+      document.getElementById('feedback-box').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
+
+      q.o.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(index, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      if(timeLimit > 0) runTimer(timeLimit);
+    }
+
+    function runTimer(seconds) {
+      let timeLeft = seconds;
+      const bar = document.getElementById('timer-bar');
+      bar.style.width = '100%';
+      bar.style.backgroundColor = 'var(--timer-color)';
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const percentage = (timeLeft / seconds) * 100;
+        bar.style.width = percentage + '%';
+
+        if(percentage < 30) bar.style.backgroundColor = '#dc3545';
+
+        if(timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function showTopBanner(text) {
+      const banner = document.getElementById('top-notification');
+      banner.innerText = text;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 2500);
+    }
+
+    function handleTimeOut() {
+      const q = activeQuestions[currentQuestionIndex];
+      showTopBanner(`Time's Up! Answer: ${q.o[q.c]}`);
+
+      userResults.push({ qIndex: currentQuestionIndex, status: 'skipped', userAnswer: null });
+      disableOptions(q.c);
+      showFeedback(q, true);
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+      if(timerInterval) clearInterval(timerInterval);
+
+      const q = activeQuestions[currentQuestionIndex];
+      const isCorrect = (selectedIndex === q.c);
+      
+      userResults.push({
+        qIndex: currentQuestionIndex,
+        status: isCorrect ? 'correct' : 'wrong',
+        userAnswer: q.o[selectedIndex]
+      });
+
+      if (isCorrect) {
+        score++;
+        document.getElementById('score').innerText = score;
+        nextQuestion(); // Auto-advance on correct
+      } else {
+        btnElement.classList.add('wrong');
+        showTopBanner(`Wrong! Answer: ${q.o[q.c]}`);
+        disableOptions(q.c);
+        showFeedback(q, true); // Show visuals for wrong answer
+      }
+    }
+
+    function disableOptions(correctIndex) {
+      const btns = document.querySelectorAll('.option');
+      btns.forEach((b, idx) => {
+        b.disabled = true;
+        if(idx === correctIndex) b.classList.add('correct');
+      });
+    }
+
+    function showFeedback(questionData, showVisuals) {
+      if(!showVisuals) return;
+
+      const feedbackBox = document.getElementById('feedback-box');
+      feedbackBox.innerHTML = `<h4>Visual Comparison</h4><div class="comparison-container" id="cards-container"></div>`;
+      const container = document.getElementById('cards-container');
+      
+      const correctWord = questionData.o[questionData.c];
+
+      questionData.v.forEach(v => {
+        // AI Image Generation Logic
+        const seed = Math.floor(Math.random() * 9000) + 1000;
+        const prompt = encodeURIComponent(`${v.img} cartoon vector flat illustration minimalist`);
+        const imgSrc = `https://image.pollinations.ai/prompt/${prompt}?width=240&height=140&nologo=true&seed=${seed}`;
+
+        const isCorrectCard = (v.w === correctWord) ? 'is-correct-card' : '';
+
+        const card = document.createElement('div');
+        card.className = `comparison-card ${isCorrectCard}`;
+        
+        // ADDED: onclick for audio, removed visual cues (clean version)
+        card.innerHTML = `
+          <div class="word-title">${v.w}</div>
+          <div class="img-container" onclick="speakWord('${v.w}')">
+            <div class="loader"></div>
+            <img class="comparison-img" src="${imgSrc}" alt="${v.w}" 
+                 onload="this.classList.add('loaded'); this.parentElement.querySelector('.loader').style.display='none';">
+          </div>
+          <div class="word-def">${v.d}</div>
+        `;
+        container.appendChild(card);
+      });
+      
+      feedbackBox.style.display = 'block';
+      document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < activeQuestions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = 'none';
+      document.getElementById('top-notification').classList.remove('show');
+      document.getElementById('review-area').style.display = 'block';
+
+      const skipped = userResults.filter(r => r.status === 'skipped').length;
+      const wrong = userResults.filter(r => r.status === 'wrong').length;
+      const correct = userResults.filter(r => r.status === 'correct').length;
+
+      const summaryHTML = `
+        <div class="stat-box stat-correct">Correct: ${correct}</div>
+        <div class="stat-box stat-wrong">Wrong: ${wrong}</div>
+        <div class="stat-box" style="background:#e2e3e5;">Timeouts: ${skipped}</div>
+        <h3>Total Score: ${score} / ${activeQuestions.length}</h3>
+      `;
+      document.getElementById('result-summary').innerHTML = summaryHTML;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GK Quiz: Geography & Solar System (61 Questions)</title>
+  <style>
+    /* Floating Back Button Style */
+    .app-back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000; /* Ensures it stays on top */
+        transition: transform 0.2s;
+        text-decoration: none; /* In case you use <a> tag */
+    }
+    
+    .app-back-btn:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+</style>
+  <style>
+    :root{
+      --primary: #4361ee;
+      --primary-dark: #3f37c9;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --text: #212529;
+      --subtext: #6c757d;
+      
+      /* STATUS COLORS */
+      --correct-bg: #d4edda;
+      --correct-border: #c3e6cb;
+      --correct-text: #155724;
+      
+      --wrong-bg: #f8d7da;
+      --wrong-border: #f5c6cb;
+      --wrong-text: #721c24;
+      
+      --timer-color: #f72585;
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      display:flex; justify-content:center; align-items:center;
+      min-height:100vh; margin:0; padding:20px;
+    }
+    
+    /* NOTIFICATION BAR */
+    .top-notification {
+      position: fixed; top: -100px; left: 0; width: 100%;
+      padding: 16px; text-align: center; font-size: 1.1rem; font-weight: 600;
+      color: white; z-index: 9999; transition: top 0.3s ease-in-out;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .top-notification.show { top: 0; }
+    .top-notification.error { background-color: #e63946; }
+    .top-notification.success { background-color: #2a9d8f; }
+    
+    .quiz-container{
+      background: var(--card);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      width: 100%; max-width: 800px;
+      position: relative; overflow: hidden;
+    }
+    
+    /* ANIMATIONS */
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-8px); }
+      100% { transform: translateX(0); }
+    }
+    .apply-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+    .header{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom: 20px; border-bottom: 2px solid #f1f3f5; padding-bottom: 15px;
+    }
+    .score-badge {
+      background: #e7f5ff; color: var(--primary);
+      padding: 5px 12px; border-radius: 20px; font-weight: bold;
+    }
+    
+    /* TIMER */
+    .timer-container {
+      width: 100%; height: 6px; background-color: #e9ecef;
+      border-radius: 3px; margin: 0 0 25px; overflow: hidden;
+    }
+    .timer-bar {
+      height: 100%; background-color: var(--timer-color);
+      width: 100%; transition: width 0.1s linear;
+    }
+
+    .question-area h2 {
+      font-size: 1.2rem; color: var(--text); margin-bottom: 20px; line-height: 1.5;
+    }
+
+    /* PAUSE OVERLAY & STATS */
+    .paused-content {
+      filter: blur(5px);
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .pause-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); 
+      z-index: 100; display: none;
+      flex-direction: column; justify-content: center; align-items: center;
+      color: white;
+    }
+    .pause-card {
+      background: rgba(33, 37, 41, 0.95);
+      padding: 30px; border-radius: 16px;
+      text-align: center; min-width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .pause-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px; color: #fff; }
+    
+    .pause-stat-row {
+      display: flex; justify-content: space-between;
+      margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 5px; font-size: 1.1rem;
+    }
+    .stat-val { font-weight: bold; color: #4cc9f0; }
+
+    /* Resume Button Inside Pause Screen */
+    .btn-resume {
+      background-color: var(--primary); color: white; border: none;
+      padding: 12px 24px; border-radius: 8px; cursor: pointer;
+      font-size: 1.1rem; font-weight: 600; width: 100%; margin-top: 20px;
+      transition: background 0.2s;
+    }
+    .btn-resume:hover { background-color: var(--primary-dark); }
+
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    /* Mobile or long text layout */
+    @media (max-width: 600px){ .options{ grid-template-columns: 1fr; } }
+    .options.single-col { grid-template-columns: 1fr; }
+
+    button.option {
+      padding: 16px 20px; font-size: 1rem; cursor: pointer;
+      border: 2px solid #e9ecef; border-radius: 10px; background: #fff;
+      transition: all 0.2s; text-align: left; color: var(--text); font-weight: 500;
+      height: 100%; display: flex; align-items: center;
+    }
+    button.option:hover:not(:disabled) { border-color: var(--primary); background-color: #f8f9fa; }
+    button.option:disabled { cursor: not-allowed; opacity: 0.9; }
+    
+    /* ANSWER STATES */
+    button.option.correct {
+      background-color: var(--correct-bg) !important;
+      border-color: var(--correct-border) !important;
+      color: var(--correct-text) !important;
+    }
+    button.option.correct::after { content: " ✓"; margin-left: auto; font-weight: bold; }
+
+    button.option.wrong {
+      background-color: var(--wrong-bg) !important;
+      border-color: var(--wrong-border) !important;
+      color: var(--wrong-text) !important;
+    }
+    button.option.wrong::after { content: " ✕"; margin-left: auto; font-weight: bold; }
+
+    /* EXPLANATION BOX */
+    .feedback {
+      margin-top: 20px; background: #f1f3f5; padding: 20px;
+      border-radius: 10px; border-left: 5px solid var(--primary);
+      display: none; animation: fadeIn 0.3s;
+    }
+    .feedback h4 { margin: 0 0 8px; color: var(--primary-dark); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+    .feedback p { margin: 0; line-height: 1.6; color: #495057; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .controls { margin-top: 20px; display: flex; justify-content: flex-end; }
+    
+    .btn-primary {
+      background-color: var(--primary); color: white; border: none;
+      padding: 12px 24px; border-radius: 8px; cursor: pointer;
+      font-size: 1rem; font-weight: 600; transition: background 0.2s;
+    }
+    .btn-primary:hover { background-color: var(--primary-dark); }
+    .btn-primary.paused-state { background-color: #f72585; }
+    
+    .settings-bar {
+      background: #f8f9fa; padding: 10px; border-radius: 8px;
+      margin-bottom: 20px; display: flex; gap: 15px; align-items: center; justify-content: flex-end;
+    }
+    select { padding: 5px 10px; border-radius: 5px; border: 1px solid #ced4da; }
+
+    /* RESULTS */
+    .result-summary { text-align: center; margin-bottom: 30px; }
+    .stat-box { display: inline-block; padding: 15px 25px; margin: 5px; border-radius: 10px; font-weight: bold; background: #f8f9fa; border: 1px solid #e9ecef; }
+    .review-item { border-bottom: 1px solid #e9ecef; padding: 15px 0; }
+    .review-item:last-child { border-bottom: none; }
+    .badge-wrong { background: #ffe3e3; color: #c92a2a; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; display: inline-block; }
+  </style>
+</head>
+<body>
+
+  <button class="app-back-btn" onclick="history.back()">❮ Back to Menu</button>
+
+  <div id="top-notification" class="top-notification"></div>
+
+  <div class="quiz-container">
+    
+    <div id="pause-overlay" class="pause-overlay">
+      <div class="pause-card">
+        <div class="pause-title">PAUSED</div>
+        <div id="pause-stats-content">
+          </div>
+        <button class="btn-resume" onclick="togglePause()">Resume Quiz</button>
+      </div>
+    </div>
+
+    <div class="header">
+      <div>
+        <span class="score-badge">Score: <span id="score">0</span></span>
+      </div>
+      <div style="color: var(--subtext); font-size: 0.9rem;">
+        Question <span id="current">1</span> / <span id="total">61</span>
+      </div>
+    </div>
+    
+    <div class="settings-bar" id="settings-area">
+      <label for="timer"><b>Timer Mode:</b></label>
+      <select id="timer">
+        <option value="auto">Auto (Smart)</option>
+        <option value="10">10 sec</option>
+        <option value="20">20 sec</option>
+        <option value="30">30 sec</option>
+      </select>
+      <button class="btn-primary" id="pause-btn" onclick="togglePause()" style="padding: 6px 15px; font-size: 0.9rem; min-width: 80px;">Pause</button>
+    </div>
+
+    <div class="timer-container" id="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <div id="game-area">
+      <div class="question-area">
+        <h2 id="question-text">Loading...</h2>
+      </div>
+      <div class="options" id="options-container"></div>
+      
+      <div class="feedback" id="feedback-box">
+        <h4>Explanation</h4>
+        <p id="explanation-text"></p>
+      </div>
+      
+      <div class="controls">
+        <button class="btn-primary" id="next-btn" onclick="nextQuestion()" style="display:none;">Next Question</button>
+      </div>
+    </div>
+
+    <div id="review-area" style="display:none;">
+      <div class="result-summary">
+        <h2>Quiz Complete!</h2>
+        <div id="final-stats"></div>
+      </div>
+      
+      <div style="text-align:center; margin-bottom:20px; display: flex; gap: 10px; justify-content: center;">
+        <button class="btn-primary" onclick="toggleReviewDetails()" id="toggle-review-btn">Review Mistakes</button>
+        <button class="btn-primary" style="background-color: #6c757d;" onclick="restartQuiz()">Play Again</button>
+      </div>
+      
+      <div id="review-details" style="display:none; text-align: left;"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    //  UPDATED DATA (Matched to PDF)
+    // ==========================================
+const rawQuestions = [
+  {
+    t: "Who gave the expanding universe hypothesis?",
+    o: ["Galileo Galilei", "Edwin Hubble", "James Clerk Maxwell", "CV Raman"],
+    c: 1,
+    e: "Edwin Hubble. The most popular argument regarding the origin of the universe is the Big Bang Theory. It is also called the expanding universe hypothesis. Edwin Hubble, in 1920, provided evidence that the universe is expanding. As time passes, galaxies move further and further apart. Galileo Galilei is known for his contributions to astronomy, particularly with the use of the telescope."
+  },
+  {
+    t: "Geoid is the ______ of earth.",
+    o: ["orbit", "axis", "colour", "shape"],
+    c: 3,
+    e: "shape. The Earth looks spherical in shape, but it is not a perfect sphere. It is slightly flattened at the top and bottom (near the South and North Poles) and bulges at the Equator due to the outward force caused by the rotation of the Earth. The Geoid shape is not perfectly spherical."
+  },
+  {
+    t: "Which is, by far, the closest dwarf planet orbiting at only 2.8 times Earth's distance from the sun?",
+    o: ["Ceres", "Makemake", "Eris", "Pluto"],
+    c: 0,
+    e: "Ceres is the largest object in the asteroid belt between Mars and Jupiter, and it is the only dwarf planet located in the inner solar system. It was the first member of the asteroid belt to be discovered when Giuseppe Piazzi spotted it in 1801."
+  },
+  {
+    t: "A ______ is a cloud of dust and gas inside a galaxy.",
+    o: ["black hole", "photosphere", "nebula", "chromosphere"],
+    c: 2,
+    e: "nebula. A nebula is an interstellar cloud of dust, hydrogen, helium and other ionized gases. Originally, nebula was a name for any diffuse astronomical object, including galaxies beyond the Milky Way."
+  },
+  {
+    t: "A distinctive cross - shaped constellation best seen in the northern hemisphere during the summer and fall months around September is:",
+    o: ["Cygnus", "Ursa Major", "Pegasus", "Cassiopeia"],
+    c: 0,
+    e: "Cygnus. It is a northern constellation on the plane of the Milky Way, deriving its name from the Latinized Greek word for swan."
+  },
+  {
+    t: "The colour of the surface of Mars is red because of the presence of large amounts of chemical compounds in it. What is the name of that compound?",
+    o: ["Magnesium oxide", "Tin oxide", "Iron oxide", "Nitrogen oxide"],
+    c: 2,
+    e: "Iron oxide. Mars appears reddish due to the presence of ferric iron in the form of red hematite $(Fe_{2}O_{3}).$ The surface pressure of Mars is 610 Pascals, and its gravity is about one third of Earth's. A Martian day lasts 24 hours and 37 minutes. Mars has two moons: Phobos and Deimos."
+  },
+  {
+    t: "Which dwarf planet orbits the sun in 310 years at a distance between 38.5 to 53 AU?",
+    o: ["Eris", "Ceres", "Makemake", "Pluto"],
+    c: 2,
+    e: "Makemake. It is the third-largest and second-brightest known dwarf planet. It was discovered in 2005. Pluto was discovered in 1930. It was initially classified as the ninth planet of the Solar System but was reclassified as a dwarf planet in 2006. Pluto has a natural satellite named 'Charon'."
+  },
+  {
+    t: "Which of the following is the second nearest star to Earth?",
+    o: ["Proxima Centauri", "Polaris", "Sirius", "Delta Velorum"],
+    c: 0,
+    e: "Proxima Centauri. It is the closest star to the sun, at a distance of 4.24 light years. A light year is the distance light travels in one year, which is about $9.461\\times10^{12}$ kilometers. Polaris (North Star) is located nearly directly above Earth's North Pole along its rotational axis. Sirius (Dog Star) is the brightest star in Earth's night sky. Delta Velorum is a triple star system in the southern constellation of Vela."
+  },
+  {
+    t: "Which of the following statements most accurately describes the planet Saturn?",
+    o: ["It is a gas giant made up mostly of hydrogen and helium and the density is less than that of water", "Its surface is reddish in colour.", "It was the seventh planet discovered in the Solar System.", "Its cloud-like outer regions consist of methane in the gaseous form and ammonia in crystalline form."],
+    c: 0,
+    e: "Saturn's density $(0.70~gm/cm^{3})$ is less than that of water, making it the least dense planet in the solar system. If there were a body of water large enough, Saturn would theoretically float. The presence of methane and ammonia is more characteristic of Uranus and Neptune."
+  },
+  {
+    t: "Which of the following is NOT a moon of Jupiter ?",
+    o: ["Callisto", "Europa", "Ganymede", "Triton"],
+    c: 3,
+    e: "Triton (largest moon of neptune). Jupiter: It is the fifth planet from the Sun. Revolution 11 years and 11 months, Rotation 9 hours 56 minutes. Natural Satellites of planets (As of October 2024) Jupiter (95), Saturn (146), Earth (1, Moon), Uranus (28), Neptune (16)."
+  },
+  {
+    t: "Which of the following rocky planets is the fastest planet in our solar system traveling through space at about 29 miles (47 kilometers) per second?",
+    o: ["Earth", "Mercury", "Venus", "Mars"],
+    c: 1,
+    e: "Mercury. It is the nearest to the sun. It takes only about 88 days to complete one round along its orbit. Venus: It is considered as 'Earth's twin' because its size and shape are very much similar to that of the earth. Venus is also known as Lucifer. Earth is the fifth largest planet (in size). It is slightly flattened at the poles and its shape is described as a Geoid. Mars The fourth planet from the Sun and it is a dusty, cold, desert world with a very thin atmosphere."
+  },
+  {
+    t: "Which of the following planets' atmosphere is made up of thick white and yellowish clouds of sulphuric acid ?",
+    o: ["Venus", "Jupiter", "Mars", "Neptune"],
+    c: 0,
+    e: "Venus, the second planet from the Sun, is the hottest and known as the \"morning star.\" Mars' atmosphere is 95.32% carbon dioxide, with methane and sulfur dioxide. Uranus is the coldest planet. The coldest planet in the Solar System is Uranus."
+  },
+  {
+    t: "Which of the following is one of the largest spiral galaxies?",
+    o: ["NGC 6872", "Milky Way", "Cygnus A", "Maffei 1"],
+    c: 0,
+    e: "NGC 6872, which is one of the largest spiral galaxies, spanning 522,000 light-years across, approximately five times the size of the Milky Way. It is located 212 million light-years from Earth in the southern constellation Pavo."
+  },
+  {
+    t: "The length of a day on ______ is approximately 16 hours.",
+    o: ["Venus", "Mercury", "Mars", "Neptune"],
+    c: 3,
+    e: "Neptune. Planet and Day Length in hours: Mercury (1,408), Venus (5,832), Earth (24), Mars (25), Jupiter (10), Saturn (11), Uranus (17). Mercury is nearest to the sun. It takes only about 88 days to complete one round along its orbit."
+  },
+  {
+    t: "Who was the first to develop a mathematical predictive heliocentric model of the solar system?",
+    o: ["Nicolaus Copernicus", "Galileo Galilei", "Pierre-Simon Laplace", "Immanuel Kant"],
+    c: 0,
+    e: "Nicolaus Copernicus. Although Aryabhatta (5th century A.D.) hinted at astronomical ideas, Copernicus (1473 1543) developed the first mathematical heliocentric model, where planets revolved around a fixed Sun. Galileo supported this model, and Johannes Kepler later refined it by introducing elliptical orbits, now known as Kepler's laws."
+  },
+  {
+    t: "Who calculated the approximate location of the planet Neptune by studying gravity- induced disturbances in the motion of Uranus?",
+    o: ["John Couch Adams", "Percival Lowell", "Johann Gottfried Galle", "Urbain-Jean-Joseph Le Verrier"],
+    c: 3,
+    e: "Urbain - Jean Joseph Le Verrier. He was a French astronomer and mathematician. Neptune is the eighth and most distant planet in our solar system, and it is the second coldest planet. It was discovered in 1846. It is the windiest planet in our solar system. One day on Neptune takes about 16 hours."
+  },
+  {
+    t: "The point in the orbit of an object (such as a satellite) orbiting the earth that is at the greatest distance from the centre of the earth is known as:",
+    o: ["perigee", "apogee", "perihelion", "aphelion"],
+    c: 1,
+    e: "Apogee. Perigee: The moon's orbit closest to the Earth. Perihelion: The Earth closest to the Sun on 3rd January. Aphelion: The Earth farthest from the Sun on 4th July."
+  },
+  {
+    t: "A flat ring of small, icy bodies that revolve around the sun beyond the orbit of the planet Neptune is called:",
+    o: ["Oort Cloud", "Bow Shock", "Asteroid Belt", "Kuiper Belt"],
+    c: 3,
+    e: "Kuiper Belt, named after Gerard Kuiper, is a region beyond Neptune in the outer solar system, proposed by him in 1951. The asteroid belt lies between the orbits of Mars and Jupiter."
+  },
+  {
+    t: "The Big Dipper is an asterism formed by the seven brightest stars in the constellation;",
+    o: ["Ursa Major", "Cassiopeia", "Leo Major", "Orion"],
+    c: 0,
+    e: "Ursa Major (Great Bear) is the third-largest constellation in the sky and the largest constellation in the Northern Hemisphere. Orion is three bright stars close together in an almost-straight line. Cassiopeia is a large constellation located in the northern sky. The Leo constellation lies in the northern sky."
+  },
+  {
+    t: "A constellation of the northern sky easily recognised by a group of five bright stars forming a slightly irregular 'W' is called:",
+    o: ["Cassiopeia", "Orion", "Ursa Major", "Cygnus"],
+    c: 0,
+    e: "Cassiopeia. It is a prominent constellation in the northern sky. It is visible during winter in the early part of the night. It looks like a distorted letter W or M."
+  },
+  {
+    t: "Which planet is the second largest planet in our solar system and also has the biggest and the brightest rings around it ?",
+    o: ["Saturn", "Jupiter", "Earth", "Uranus"],
+    c: 0,
+    e: "Saturn. Our Solar System has eight planets which orbit the sun. In order of distance from the sun they are: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. Largest to smallest: Jupiter, Saturn, Uranus, Neptune, Earth, Venus, Mars, Mercury. Saturn moon Titan is the second largest moon after Ganymede (Jupiter's moon)."
+  },
+  {
+    t: "______ oblong orbit overlaps the orbit of Neptune.",
+    o: ["Jupiter's", "Pluto's", "Venus'", "Mars'"],
+    c: 1,
+    e: "Pluto's. Neptune is the outermost Jovian planet in the solar system. Until 2006 Pluto was the farthest planet from the Sun. In 2006, The International Astronomical Union (IAU) downgraded the status of Pluto to that of a dwarf planet. The Jovian planets are Jupiter, Saturn, Uranus, and Neptune, which are also known as the gas giants."
+  },
+  {
+    t: "Which of the following statements about planet Saturn is true?",
+    o: ["Saturn is the fourth planet from the Sun and the largest planet in our solar system.", "Satellites like Enceladus and Titan of Saturn are home to internal oceans, could possibly support life.", "Saturn's environment is conducive to life.", "Saturn is a massive ball made up mostly nitrogen."],
+    c: 1,
+    e: "Saturn is the second largest planet, composed of hydrogen and helium. It has 146 moons. Titan - It is the largest moon of Saturn and the second largest moon in our solar system. Enceladus It is the second nearest of the major regular moons of Saturn and the brightest of all its moons. It was discovered in 1789 by the English astronomer William Herschel. It is found that Titan has methane in its atmosphere and Enceladus has a liquid ocean with erupting plumes of gas and water."
+  },
+  {
+    t: "Which star is also known as the 'Pole Star'?",
+    o: ["The East star", "The South star", "The West star", "The North star"],
+    c: 3,
+    e: "The North star. Polaris, also known as the North Star, is located almost directly above Earth's north pole along our planet's rotational axis. The imaginary line that runs through the Earth from the North Pole to the South Pole is called the Earth's axis of rotation. The Earth rotates around this axis, similar to how a top spins around its spindle."
+  },
+  {
+        t: "In 1905, who concluded with Thomas Chamberlain that the planets of the Solar System originated from an encounter between the Sun and another star?",
+        o: ["James Hutton", "Inge Lehmann", "Charles Lyell", "Forest Moulton"],
+        c: 3,
+        e: "Forest Moulton. He was an American astronomer and mathematician known for his contributions to celestial mechanics. He co-developed the Chamberlin-Moulton planetesimal hypothesis, which proposed a model for the formation of the solar system. According to this hypothesis, planets formed from smaller bodies called planetesimals through the process of accretion."
+      },
+      {
+        t: "Perihelion is when Earth is ______",
+        o: ["under the sun", "farthest from the sun", "nearest to the sun", "above the sun"],
+        c: 2,
+        e: "Nearest to the sun. On 3rd January, the earth is the nearest to the sun (147 million km). Aphelion is the point of the Earth's orbit that is farthest away from the Sun."
+      },
+      {
+        t: "Which is the most widely accepted model to explain the formation and evaluation of the solar system?",
+        o: ["Cloud hypothesis", "Gas hypothesis", "Nebular hypothesis", "Solar hypothesis"],
+        c: 2,
+        e: "Nebular hypothesis. The planets were formed out of a cloud of material associated with a youthful sun, which was slowly rotating. The theory was developed by Immanuel Kant. But Mathematician Laplace revised it in 1796. Other Hypothesis: Big Bang Theory - Propounded by George Lamaitre related to the origin of the universe."
+      },
+      {
+        t: "Terrestrial planets are composed of ______",
+        o: ["metals and air", "rocks and metals", "metals and gas", "rocks and gas"],
+        c: 1,
+        e: "Rocks and metals. Terrestrial Planets Mercury, Venus, Earth and Mars. They are categorised into the following: Silicate Planets, Iron Planets, Coreless Planets, Carbon (diamond) Planets."
+      },
+      {
+        t: "Which trend is found about the distance between the galaxies?",
+        o: ["Unpredictable", "Decreasing", "Constant", "Increasing"],
+        c: 3,
+        e: "Increasing. In 1929, Edwin Hubble announced that almost all galaxies appeared to be moving away from us. He found that the universe was expanding with all of the galaxies moving away from each other. This phenomenon was observed as a redshift of a galaxy's spectrum."
+      },
+      {
+        t: "On which planet has a rotating oval of clouds, twice as wide as Earth, called the 'Great Red Spot' been observed for more than 300 years?",
+        o: ["Neptune", "Mercury", "Jupiter", "Venus"],
+        c: 2,
+        e: "Jupiter is the largest planet in the solar system. It is made mostly of hydrogen and helium."
+      },
+      {
+        t: "Which scientist thought of the concept of the steady state of the universe?",
+        o: ["Harold Jeffrey", "Edwin Hubble", "Fred Hoyle", "Pierre - Laplace"],
+        c: 2,
+        e: "Fred Hoyle. Steady State Theory: It is a theoretical model in which the Universe is constantly expanding but with a fixed average density. The theory was put forward by three scientists Sir Hermann Bondi, Thomas Gold, and Sir Fred Hoyle in 1948."
+      },
+      {
+        t: "Cosmic snowballs of frozen gases, rock and dust that orbit the Sun are known as ______",
+        o: ["Meteors", "Star", "Meteorites", "Comets"],
+        c: 3,
+        e: "Comets. Meteors are bits of rock and ice that are ejected from comets as they move in their orbits about the Sun. Meteorites When a meteoroid survives its trip through the atmosphere and hits the ground, it's called a meteorite. Meteorites typically range between the size of a pebble and a fist."
+      },
+      {
+        t: "What is the radius of the earth?",
+        o: ["7456 km", "6371 km", "5619 km", "4728 km"],
+        c: 1,
+        e: "6371 km. Earth Distance from the Sun (150 million km), Surface area: 510.1 million km² Land area: 149 million km², Gravity: 9.8 m/s²"
+      },
+      {
+        t: "Each orbit of the International Space Station (ISS) takes ______ minutes.",
+        o: ["80-82", "85-87", "90-93", "83-86"],
+        c: 2,
+        e: "90-93. In 24 hours, the space station makes 16 orbits of Earth, traveling through 16 sunrises and sunsets."
+      },
+      {
+        t: "In approximately how much time does Mars complete one spin on its axis?",
+        o: ["16 hours", "8 hours", "1 day 18 hours", "1 day"],
+        c: 3,
+        e: "1 day. One spin on the axis of other planets (approximate): Earth (1 day 23 hours 56 min), Jupiter (9 hours 56 minutes), Saturn (10 hours 40 minutes), Uranus (17 hours 14 minutes) and Neptune (16 hours 7 minutes)."
+      },
+      {
+        t: "Which among the following is not a type of solar eclipse?",
+        o: ["Annular", "Partial", "Penumbral", "Total"],
+        c: 2,
+        e: "Penumbral (Lunar eclipse). A solar eclipse occurs when the Moon passes between the Earth and the Sun. Types of solar eclipse: Total (Completely blocking the face of the Sun), Hybrid (the Moon is farther away from Earth, it appears smaller than the Sun and does not completely cover the Sun) and Annular (when Sun is at or near its farthest point from Earth)."
+      },
+      {
+        t: "In early 1610, who discovered with his newly invented telescope that Jupiter has four moons?",
+        o: ["Simon Marius", "Tycho Brahe", "Galileo Galilei", "Johannes Kepler"],
+        c: 2,
+        e: "Galileo Galilei. He was an Italian astronomer and scientist. He described the rings of Saturn, the phases of Venus, sunsets, and the bumpy lunar surface. The four moons he discovered were: Io, Europa, Ganymede, and Callisto."
+      },
+      {
+        t: "Who was the first to accurately describe the rings of Saturn as a disc around the planet in 1655?",
+        o: ["Hideki Yukawa", "Galileo Galilei", "Christiaan Huygens", "Giovanni Cassini"],
+        c: 2,
+        e: "Christiaan Huygens. His other inventions include the pendulum clock, centrifugal governor, and magic lantern."
+      },
+      {
+        t: "The moon completes ______ rotation on its axis as it completes one revolution around the Earth.",
+        o: ["3", "2", "1", "4"],
+        c: 2,
+        e: "1. The Moon is Earth's only natural satellite circling the planet at an average distance of 384,400 kilometers. The Moon's presence helps stabilize our planet and moderate our climate. The radius of the Moon is 1.74 x 10⁶ m. Huygens is the Moon's tallest mountain."
+      },
+      {
+        t: "Which of the following statements regarding the moon is correct?<br> I. The size of the illuminated part of the moon visible from the Earth increases each day after the new moon day.<br>  II. After the full moon day, the sunlit part of the moon visible from the Earth decreases in size every day.",
+        o: ["Both I and II", "Only I", "Neither I nor II", "Only II"],
+        c: 0,
+        e: "Both I and II. When there are two full moons within a month, the second full moon is called a Blue Moon, When a full moon occurs at its perigee (the moon is closest to the earth) it is called a Supermoon."
+      },
+      {
+        t: "The ______ radiation belts are giant swaths of magnetically trapped highly energetic charged particles that surround Earth.",
+        o: ["Van Allen", "Aurora", "Kuiper", "Chinook"],
+        c: 0,
+        e: "Van Allen. An aurora is a natural phenomenon which is characterized by a display of a natural-coloured (green, red, yellow or white) light in the sky."
+      },
+      {
+        t: "In which of the following periods is the meteor shower named Quadrantids generally visible from Earth?",
+        o: ["August/September", "October/November", "May/June", "December/January"],
+        c: 3,
+        e: "December / January. Quadrantids are best viewed in the Northern Hemisphere during the night and predawn hours. They are also known for their bright fireball meteors. The Quadrantids can produce over 100 meteors per hour in a moonless sky."
+      },
+      {
+        t: "In which of the following months may the meteor shower named Lyrids be seen from Earth?",
+        o: ["April", "February", "June", "August"],
+        c: 0,
+        e: "April. The radiant point for the Lyrid meteor shower is near the constellation Lyra, which has the bright star Vega in the east."
+      },
+      {
+        t: "How many degrees does the Earth rotate about its own axis in one hour?",
+        o: ["10", "20", "24", "15"],
+        c: 3,
+        e: "15. On its axis, the earth rotates 360 degrees every 24 hours."
+      },
+      {
+        t: "The torrid zone lies between ______",
+        o: ["Antarctic Circle and Tropic of Capricorn", "North Pole and Arctic Circle", "Tropic of Cancer and Tropic of Capricorn", "Arctic Circle and Tropic of Cancer"],
+        c: 2,
+        e: "Tropic of Cancer and Tropic of Capricorn. The Torrid Zone is the thermal zone located between the Tropic of Cancer (23.5°N) and the Tropic of Capricorn (23.5°S). It experiences high temperatures year-round due to direct sunlight. The Temperate Zones lie between the Tropics and the Arctic Circle (66.5° N) and Antarctic Circle (66.5° S), characterized by moderate temperatures with distinct seasons. The Frigid Zones are found beyond the Arctic and Antarctic Circles, extending to the North and South Poles, where temperatures are extremely cold year-round."
+      },
+      {
+        t: "At what latitude does the easterly jet stream blow over peninsular India during the summer months?",
+        o: ["24°N", "30°N", "14°N", "28°N"],
+        c: 2,
+        e: "14°N. The Jet Stream is a geostrophic wind blowing horizontally through the upper layers of the troposphere, generally from west to east. The tropical easterly jet stream, located between 8 and 35 degrees north latitude, is connected to the southwest monsoon in India."
+      },
+      {
+        t: "In which month is the Inter Tropical Convergence Zone (ITCZ) located around 20°N-25°N latitude (over the Gangetic plain) ?",
+        o: ["May", "August", "June", "July"],
+        c: 3,
+        e: "July. The Inter Tropical Convergence Zone (ITCZ) is a low pressure zone located at the equator where trade winds converge, and so, it is a zone where air tends to ascend. The Inter-Tropical Convergence Zone located around 20°N-25°N latitudes (over the Gangetic plain) in July month is sometimes called the monsoon trough."
+      },
+      {
+        t: "Which of the following statements is INCORRECT regarding the Coriolis force?",
+        o: ["It deflects the wind to the right in the north and left in the south.", "It is directly proportional to the angle of altitude", "Deflection is less when the wind is high", "It is absent at the equator."],
+        c: 2,
+        e: "Deflection is less when the wind is high. Coriolis force: An apparent force caused by the earth's rotation. The Coriolis force acts perpendicular to the pressure gradient force (pressure gradient force is perpendicular to an isobar). It is maximum at the poles and is absent at the equator. The Coriolis force also affects ocean currents."
+      },
+      {
+        t: "Which is the Standard Meridian of India?",
+        o: ["81°30' E", "82°30' E", "83°30' E", "84°40' E"],
+        c: 1,
+        e: "82°30' E. The Standard Meridian of India, which passes through Mirzapur in Uttar Pradesh, also crosses the following states: Madhya Pradesh, Chhattisgarh, Odisha, and Andhra Pradesh."
+      },
+      {
+        t: "Which is the waterbody that separates Andaman Islands and Nicobar Islands?",
+        o: ["Eight Degree Channel", "Eleven Degree Channel", "Nine Degree Channel", "Ten Degree Channel"],
+        c: 3,
+        e: "Ten Degree Channel. The 8 Degree Channel (north latitude) separates the islands of Minicoy (India) and Maldives. The 9 Degree Channel (north latitude) separates the Minicoy from the main Lakshadweep archipelago. The 11 degree channel (north latitude) separates the Amindivi Islands subgroup from the Cannanore Islands in Lakshadweep Islands."
+      },
+
+
+{
+        t: "Identify a factor that does NOT determine the temperature of ocean waters.",
+        o: ["Unequal distribution of land and water", "Latitude", "Longitude", "Ocean currents"],
+        c: 2,
+        e: "Longitude. Factors determining ocean water temperature: Latitude Affects the amount of solar radiation received. Unequal distribution of land and water Affects heat absorption and distribution. Ocean currents Transport heat and cold water masses globally. Longitude does not directly influence ocean water temperature."
+      },
+      {
+        t: "Which of the following sets of statements are correct about Inter Tropical Convergence Zone (ITCZ) ?<br> a. The ITCZ is a broad trough of low pressure in equatorial latitudes.<br>  b. This is where the northeast and the southeast trade winds converge.<br>  c. The ITCZ is the equatorial trough normally positioned about 5°N of the equator and remains there throughout the year.<br>  d. The ITCZ moves over to the plane of Ganga in Summer.",
+        o: ["Only a and c", "a, b and c", "Only b and c", "a, b and d"],
+        c: 3,
+        e: "a, b and d. Intertropical Convergence Zone (ITCZ) The region that circles the Earth, near the equator, where the trade winds of the Northern and Southern Hemispheres come together. Seasonal shifts in the location of the ITCZ drastically affects rainfall in many equatorial nations, resulting in the wet and dry seasons of the tropics rather than the cold and warm seasons of higher latitudes."
+      },
+      {
+        t: "During October-November, the apparent movement of the sun is towards the ______",
+        o: ["North", "North-East", "North-West", "South"],
+        c: 3,
+        e: "South. The position of the rising sun keeps on moving towards the south in the period from 21st June to 22nd December. This period is called Dakshinayan. From 22nd December to 21st June, the sun keeps on moving towards the north. This period is called Uttarayan."
+      },
+      {
+        t: "The southern part of India lies in the ______ belt.",
+        o: ["rain", "temperate", "polar", "warm"],
+        c: 3,
+        e: "Warm. The Tropic of Cancer passes through the middle of India. The southern parts being closer to the Equator, experience high temperatures throughout the year. The northern parts on the other hand lie in the warm temperate zone."
+      },
+      {
+        t: "Tropic of Cancer (23°30' N) passes through ______ state of India.",
+        o: ["Punjab", "Maharashtra", "Chhattisgarh", "Kerala"],
+        c: 2,
+        e: "Chhattisgarh. The Tropic of Cancer passes through eight states in India Gujarat (Jasdan), Rajasthan (Kalinjarh), Madhya Pradesh (Shajapur), Chhattisgarh (Sonhat), Jharkhand (Lohardaga), West Bengal (Krishnanagar), Tripura (Udaipur) and Mizoram (Champhai)."
+      },
+      {
+        t: "On which of the following two dates does the equinox fall?",
+        o: ["21 June and 23 September", "21 June and 22 December", "21 March and 23 September", "23 September and 22 December"],
+        c: 2,
+        e: "21 March and 23 September. Equinox is the situation when the equator receives the vertical rays of the Sun and day and night are equal. Spring equinox - 21st March, Autumn equinox 23 September. 21st June (winter solstice in Southern Hemisphere, Summer solstice in Northern hemisphere) - The rays of the sun fall directly on the Tropic of Cancer. 22 December (Summer solstice in Southern hemisphere, winter solstice in Northern Hemisphere) The rays of the sun fall directly on the Tropic of Capricorn."
+      },
+      {
+        t: "From the north most to south most point of India, what is the extent of India?",
+        o: ["4109 km", "2914 km", "3214 km", "3785 km"],
+        c: 2,
+        e: "3214 km. Extent of India: East to west (2,933 km), land frontier (15,200 km), coastline (7,516.6 km). The westernmost point (Ghuar Moti in Kutch). The easternmost point (Kibithu in Arunachal Pradesh). Indira Col (northernmost point). Indira Point (Great Nicobar Island, Andaman sea) is the Southernmost point of India while Kanyakumari is the southernmost point of the Indian Mainland."
+      },
+      {
+        t: "What is the zone between the arctic circle and north pole called?",
+        o: ["Torrid zone", "Frigid zone", "North temperate zone", "South temperate zone"],
+        c: 1,
+        e: "Frigid zone. The North Frigid Zone, between the North Pole at $90^{\\circ}$ N and the Arctic Circle at 66°33'48.7\" N, covers 4.12% of Earth's surface."
+      },
+      {
+        t: "1º latitude is equal to approximately ______ km.",
+        o: ["111", "145", "133", "122"],
+        c: 0,
+        e: "111 km. This distance decreases marginally as one travels to poles and increases marginally as one goes towards the equator."
+      },
+      {
+        t: "Lines joining located at equal travel time from a common centre are called:",
+        o: ["Isohalines", "Isochrones", "Isobar", "Isobronts"],
+        c: 1,
+        e: "Isochrones. Isohaline - A line drawn on a map to indicate connecting points of equal salinity in the ocean. Isonomal A line on a chart connecting points of equal abundance values of a plant species sampled in different sections of an area. Isobronts A line drawn through geographical points at which a given phase of thunderstorm activity occurred simultaneously."
+      },
+      {
+        t: "Which is the largest sea located in the North Indian Ocean, covering an area of about 3.86 million square kilometres?",
+        o: ["Java Sea", "Andaman Sea", "Red Sea", "Arabian Sea"],
+        c: 3,
+        e: "Arabian Sea. The North Indian Ocean is a region of the Indian Ocean that includes the Bay of Bengal and the Arabian Sea. The Arabian Sea shows higher salinity due to high evaporation and low influx of fresh water. The Red Sea is located between Africa and Asia. The Java Sea is located in Indonesia,"
+      },
+      {
+        t: "Which of the following is the largest crustal plate on Earth with an area of over 103,000,000 km²?",
+        o: ["South American plate", "African plate", "Eurasian plate", "Pacific plate"],
+        c: 3,
+        e: "Pacific plate: It is the largest oceanic plate. Plate Tectonics theory given by McKenzie, Parker and Morgan in 1967. It proposes that the earth's lithosphere is divided into seven major and some minor plates. Major plates: Antarctica and the surrounding oceanic plate; North American (with western Atlantic floor separated from the South American plate along the Caribbean islands) plate; South American (with western Atlantic floor separated from the North American plate along the Caribbean islands) plate; Pacific plate; India-Australia-New Zealand plate; Africa with the eastern Atlantic floor plate; Eurasia and the adjacent oceanic plate."
+      },
+      {
+        t: "In the context of water bodies, Neap Tides occur:",
+        o: ["when the earth, moon and sun line up in a straight line", "when the sun and moon are on the opposite sides", "when there is so much interference by continents", "when the sun and moon are at right angles to each other"],
+        c: 3,
+        e: "During neap tide, gravitational and centrifugal forces are divided. The high tides of a neap tide are lower than the average high tide and the low tides of a Neap tide are higher than the average low tide. Spring tides - When the sun, the moon and the earth are in a straight line, the height of the tide will be higher. These are called spring tides, and they occur twice a month."
+      },
+      {
+        t: "Which of the following is a landlocked Salt Lake in South-West Asia between Israel and Jordan?",
+        o: ["Don Juan Pond", "Aral Sea", "Caspian Sea", "Dead Sea"],
+        c: 3,
+        e: "Dead Sea. Its salinity of 340 grams per litre of water. The Dead Sea seawater has a density of $1.240~kg/L$ which makes swimming in its waters similar to floating. The Caspian Sea is the world's largest saltwater lake by volume. The Aral Sea is located between Kazakhstan to the north and Uzbekistan to the south."
+      },
+      {
+        t: "Which ocean is encircling the continent of Antarctica and extends northward to 60 degrees south latitude?",
+        o: ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Southern Ocean"],
+        c: 3,
+        e: "Southern Ocean. It is the newest of the world's five oceans, officially designated as a separate ocean by the International Hydrographic Organization (IHO) in 2000. The Atlantic Ocean is between the Americas and Europe/Africa. The Indian Ocean is between Africa, Asia, and Australia. The Pacific Ocean is between Asia and the Americas."
+      },
+      {
+        t: "The name of the strait between the Pacific and Arctic oceans, separating the Chukchi Peninsula of the Russian Far East from the Seward Peninsula Alaska, is the:",
+        o: ["Davis Strait", "Florida Strait", "Bering Strait", "Strait of Messina"],
+        c: 2,
+        e: "Bering Strait. Davis Strait: It is located between Greenland and Baffin Island in Canada. It connects Baffin Bay with the Labrador Sea and is part of the Northwest Passage in the Arctic. Florida Strait It is a channel of water located between the Gulf of Mexico and the Atlantic Ocean, separating the Florida Keys and Cuba. Strait of Messina: It is a narrow passage between the eastern coast of Sicily and the western coast of Calabria in southern Italy. It connects the Tyrrhenian Sea with the lonian Sea."
+      },
+      {
+        t: "The peninsular plateau of India was a part of which continent earlier?",
+        o: ["North America", "Europe", "South America", "Africa"],
+        c: 3,
+        e: "Africa. The Peninsular Plateau is roughly triangular in shape. The peninsular plateau of India was a part of the supercontinent Gondwana, which included Africa, South America, Australia, and Antarctica. After breaking up from Gondwana, the Indian subcontinent drifted northwards and collided with Eurasia which formed the Himalayas."
+      },
+      {
+        t: "In 1596, who suggested in his work 'Thesaurus Geographicus' that the continents of the earth were not always located in their present positions?",
+        o: ["Louis Agassiz", "Georges Cuvier", "Abraham Ortelius", "Dan Peter McKenzie"],
+        c: 2,
+        e: "Abraham Ortelius was a Dutch mapmaker who proposed in his work Thesaurus Geographicus that the continents were once joined together. This idea laid the groundwork for the continental drift theory, later fully developed by Alfred Wegener in 1912. Wegener suggested that all continents formed a single landmass called Pangaea (\"all earth\"), surrounded by a vast ocean known as Panthalassa (\"all water\")."
+      },
+      {
+        t: "Which of the following is NOT a part of the ocean floor?",
+        o: ["The continental shelf", "The continental slope", "The deep sea shelf", "The deep sea plain"],
+        c: 2,
+        e: "The deep sea shelf. A continental shelf is the submerged edge of a continent beneath the ocean. The continental slope extends seaward from the shelf to the upper edge of a continental rise or the point where the slope begins to flatten. An abyssal plain, or deep sea plain, is a flat region on the ocean floor, typically found at depths between 3,000 and 6,000 meters. Oceanic deeps are the deepest parts of the ocean, covered with fine-grained sediments such as clay and silt. Examples of oceanic landforms: Abyssal plains, Submarine canyons, Deep ocean trenches, Guyots, Seamounts, Mid-ocean ridges, Abyssal plains, etc."
+      },
+      {
+        t: "The thermocline layer is the ______ layer of the ocean.",
+        o: ["second", "third", "fourth", "first"],
+        c: 0,
+        e: "Second. Scientists have divided the ocean into five main layers. Epipelagic Zone The surface layer from the surface to 200 meters. Mesopelagic Zone The twilight zone or the midwater zone. Bathypelagic Zone The midnight zone or the dark zone. Abyssopelagic Zone The water temperature is near freezing, and there is no light at all. Hadalpelagic Zone - The deepest point in the ocean is located in the Mariana Trench."
+      },
+      {
+        t: "In 1962, who published 'The History of Ocean Basins', which outlined the theory of how tectonic plates could move, later called 'sea floor spreading'?",
+        o: ["Alfred Wegener", "Louis Bauer", "Harry Hammond Hess", "George Edward Backus"],
+        c: 2,
+        e: "Harry Hammond Hess, an American geologist and naval officer. He discovered that the oceans were shallower in the middle and identified the presence of Mid Ocean Ridges, raised above the surrounding generally flat sea floor (abyssal plain) by as much as 1.5 km. Seafloor spreading is a geologic process in which tectonic plates-large slabs of Earth's lithosphere-split apart from each other."
+      },
+      {
+        t: "Which is the deepest point of Earth's oceans with a depth of 11,022 metres?",
+        o: ["Pacific Ocean's Mariana Trench", "Indian Ocean's Java Trench", "Atlantic Ocean's Puerto Rico Trench", "Arctic Ocean's Eurasian Basin"],
+        c: 0,
+        e: "Pacific Ocean's Mariana Trench. Trenches are long, narrow depressions on the seafloor that form at the boundary of tectonic plates where one plate is pushed, or subducts, beneath another. Other Trenches: Puerto Rico Trench (8,400 m) Atlantic Ocean; Tonga Trench (10,882 m) - Southwestern Pacific Ocean; South Sandwich Trench (7,432 m) Southern Ocean; Java Trench (7,187 m) - Indian Ocean."
+      },
+      {
+        t: "Which of the following is the correct match regarding elements in earth crust? <br>i. Oxygen (47%) <br>ii. Silicon (28%) <br>iii. Aluminium (8%) <br>iv. Iron (5%)",
+        o: ["i-a, ii-b, iii-c, iv-d", "i-c, ii-a, iii-b, iv-d", "i-c, ii-b, iii-a, iv-d", "i-b, ii-a, iii-c, iv-d"],
+        c: 2,
+        e: "i-c, ii-b, iii-a, iv-d. Abundances of other Element in the Earth's Crust: Calcium (Ca) 3.63%, Sodium (Na) - 2.83%, Potassium (K) 2.59%, Magnesium $(Mg)-2.09\\%$ and others 1.41%. Earth has three layers: crust (upper layer), mantle (middle layer), and core (lower layer)."
+      },
+      {
+        t: "Continental Shelf which is the shallowest part of the ocean has an average gradient of:",
+        o: ["1° or even less", "2° or even less", "8° or even less", "5° or even less"],
+        c: 0,
+        e: "1° or even less. The Continental Shelf is the extended margin of each continent occupied by relatively shallow seas and gulfs. About Continental Shelf: The shelf typically ends at a very steep slope, called the shelf break. Their width varies globally, with an average of about 80 km, but can be narrower or even absent in some regions, such as the coasts of Chile and the west coast of Sumatra."
+      },
+      {
+        t: "Living organisms have been on Earth for how much percent of Earth's history?",
+        o: ["60%", "40%", "80%", "20%"],
+        c: 2,
+        e: "80%. Taking Earth's age as nearly 4.6 Billion Years (BY), instead of 13.7 BY from the Big Bang, unicellular life appeared nearly 3.8 BY ago. This percentage is $3.8/4.6\\times100=82.6\\%,$ nearly."
+      },
+      {
+        t: "Choose the correct statement related to 'continentality'.<br>a. The sea exerts a moderating influence on climate.<br>b. As distance from the sea increases, people experience extreme weather.<br>c. Higher altitudes are less dense.",
+        o: ["b and c", "Only c", "a and c", "a and b"],
+        c: 3,
+        e: "a and b. Continentality (i.e. very hot during summers and very cold during winters) found in inland areas. Continental climates are common between $40^{\\circ}$ and $70^{\\circ}$ north latitude and experience large temperature differences between day and night."
+      },
+      {
+        t: "What does El Niño refer to?",
+        o: ["Hot water current", "Pressure water current", "High air pressure", "Low air pressure"],
+        c: 0,
+        e: "Hot water current. The term El Nino (Little Boy in Spanish) - Warming of the ocean surface, or above-average sea surface temperatures, in the central and eastern tropical Pacific Ocean on the coast of Peru. El nino leads to weakening of trade winds in a region. La Nina (Little Girl in Spanish) - The periodic cooling of ocean surface temperatures in the central and east-central equatorial Pacific."
+      },
+      {
+        t: "Which of the following oceans is surrounded by the continent of North America and South America to the east?",
+        o: ["Pacific Ocean", "Atlantic Ocean", "Indian Ocean", "Arctic Ocean"],
+        c: 0,
+        e: "Pacific Ocean (world's largest and deepest ocean): It represents 45 percent of the global ocean surface. The International Date Line (established in 1884) passes through the mid-Pacific Ocean. The Atlantic Ocean is surrounded by the continents of North and South America to the west, and Europe and Africa to the east. The Indian Ocean is bordered by Asia to the north, Africa to the west, and Australia to the east."
+      },
+      {
+        t: "Which of the following oceans extends into the Mediterranean Sea?",
+        o: ["Indian Ocean", "Pacific Ocean", "Atlantic Ocean", "Arctic Ocean"],
+        c: 2,
+        e: "Atlantic Ocean is the 2nd largest ocean in the world. The Mediterranean is an intercontinental sea spread between Europe, North Africa, and Western Asia and connected to the Atlantic Ocean through the strait of Gibraltar."
+      },
+      {
+        t: "The Mohorovicic discontinuity separates?",
+        o: ["Earth's lithosphere and asthenosphere", "Earth's atmosphere and hydrosphere", "Earth's crust and the inner core", "Earth's crust and the mantle"],
+        c: 3,
+        e: "Earth's crust and the mantle. Moho discontinuity It occurs at an average depth of about 8 kilometers beneath the ocean basins and 32 kilometers beneath continental surfaces."
+      },
+      {
+        t: "Due to the attraction of the sun and the moon, what is the frequency of up and falls of ocean water in a day?",
+        o: ["Two", "Three", "Four", "One"],
+        c: 0,
+        e: "Two. When the Earth, Sun, and Moon line up, their gravitational power combines to make exceptionally high tides where the bulges occur, called spring tides, as well as very low tides where the water has been displaced. When the Sun is at a right angle to the Moon, moderate tides, called neap tides. There are generally three types of tides: Diurnal - One high and low tide each day, Semi-diurnal Two high and low tides each day, and Mixed Two high and low tides each day of different heights."
+      },
+      {
+        t: "Which is the correct sequence of oceans according to size (from largest to smallest)?",
+        o: ["Pacific > Antarctic > Indian > Atlantic", "Pacific > Indian > Antarctic > Atlantic", "Pacific > Atlantic > Indian > Antarctic", "Pacific > Indian > Atlantic > Antarctic"],
+        c: 2,
+        e: "Pacific Ocean, the world's largest, was named by Ferdinand Magellan. The International Date Line passes through it."
+      },
+      {
+        t: "The percentage of earth's water found in the oceans is approximately:",
+        o: ["94 percent", "97.2 percent", "90.2 percent", "92.2 percent"],
+        c: 1,
+        e: "97.2 percent. Water covers 71 percent of Earth's surface. Distribution of Earth's water: Oceans (97.2%), Glaciers (2.1%), Groundwater (0.61 percent); Freshwater lakes (0.009 percent), Inland seas (0.008 percent), Soil Moisture (0.005 percent), Atmosphere (0.001 percent), Rivers (0.0001 percent). 2.7% of earth's water is fresh."
+      },
+      {
+        t: "How thick is the lithosphere?",
+        o: ["25 to 45 km", "10 to 25 km", "10 to 200 km", "5 to 10 km"],
+        c: 2,
+        e: "10 to 200 km. The lithosphere is the outermost and mechanical layer of the Earth that consists of the entire crust and the top-most portion of the mantle. Mechanically, the earth's layers can be divided into lithosphere, asthenosphere (80-200 km), mesospheric mantle, outer core, and inner core."
+      },
+      {
+        t: "The crust is the Earth's outermost layer that is less than ______ percent of Earth by mass.",
+        o: ["5", "1", "2", "10"],
+        c: 1,
+        e: "1. The average density of oceanic crust is 3.0 $g/cm^{3}$, while continental crust has an average of 2.7 $g/cm^{3}.$ The mass of the continental crust is 2.195. The continental crust (about 30 km) is composed of lighter (felsic) sodium potassium aluminum silicate rocks, like granite. The oceanic crust (about 5 km) is composed of dense (mafic) iron magnesium silicate igneous rocks, like basalt."
+      },
+      {
+        t: "Movement of fault lines can cause:",
+        o: ["a flood", "sudden rain", "an earthquake", "a storm"],
+        c: 2,
+        e: "An earthquake. It is a sudden shaking or trembling of the earth which lasts for a very short time. Earthquakes tend to occur at the boundaries of earth's plates. These boundaries are known as fault zones. Over 80 percent of earthquakes occur around the edges of the Pacific Ocean, an area known as the 'Ring of Fire'. Instrument used for measuring Earthquake: Seismograph."
+      },
+      {
+        t: "What is the average salinity of the Indian ocean?",
+        o: ["350 o/oo", "35 o/oo", "3.5 o/oo", "3 o/oo"],
+        c: 1,
+        e: "35 0/00 (35 parts per thousand). Salinity is the amount of salt present in 1000 grams of water. A salinity of 24.7% has been regarded as the upper limit to fix 'brackish water'."
+      },
+      {
+        t: "Tsunami is NOT caused by:",
+        o: ["Hurricanes", "Volcanic eruptions", "Undersea landslides", "Earthquakes"],
+        c: 0,
+        e: "Hurricanes. Tsunamis are giant waves caused by earthquakes or volcanic eruptions under the sea."
+      },
+      {
+        t: "Which of the following is a warm current?",
+        o: ["Labrador current", "Falkland current", "Canary current", "Gulf stream"],
+        c: 3,
+        e: "Gulf stream current in the North Atlantic and the Kuroshio Current in the North Pacific are warm currents. Warm Currents Alaskan Current, Tsushima Current, Brazilian Current etc. Cold Current Labrador Current, Canary Current, Benguela Current, Falkland Current, South Indian Ocean Current, Okhotsk Current, Humboldt or Peruvian Current etc."
+      },
+      {
+        t: "The plate movements on earth are classified into ______ types.",
+        o: ["three", "two", "five", "six"],
+        c: 0,
+        e: "three. The movement of the plates creates three types of tectonic boundaries: convergent, where plates move into one another, divergent, where plates move apart; and transform, where plates move sideways in relation to each other."
+      },
+      {
+        t: "Ocean acidification is the ongoing decrease in the pH of the Earth's oceans, caused by the uptake of ______ from the atmosphere.",
+        o: ["Methane", "Carbon dioxide", "Nitrogen", "Argon"],
+        c: 1,
+        e: "Carbon dioxide. Ocean acidification is the worldwide reduction in the pH of seawater as a consequence of the absorption of large amounts of carbon dioxide by the oceans. It results in the alteration of marine food chains and food supply to humans."
+      },
+      {
+        t: "The lowest known point on earth is called ______ which is present in the Pacific Ocean.",
+        o: ["Factorial Deep", "Challenger Deep", "Great Blue Hole", "Great Barrier Reef"],
+        c: 1,
+        e: "Challenger Deep. It is located beneath the western Pacific Ocean. Factorian Deep is the new deepest point in Antarctica's Southern Ocean. The Great Blue Hole is a giant marine sinkhole off the coast of Belize. The great barrier reef is the world's largest coral reef located in Australia."
+      },
+      {
+        t: "In coastal areas, during the night, wind blows from land to sea because:",
+        o: ["low pressure is created on land", "land cools slower than water", "water cools slower than land", "high pressure is created at sea"],
+        c: 2,
+        e: "water cools slower than land. The wind blowing from land towards the sea is the Land breeze. The wind blowing from the sea towards the land is a sea breeze. Both are induced by differences that occur between the heating or cooling of the water surface and the adjacent land surface."
+      },
+      {
+        t: "The process of seepage of water into the ground is called:",
+        o: ["Infiltration", "Depletion", "Storage", "Replenishment"],
+        c: 0,
+        e: "Infiltration occurs when surface water enters the soil."
+      },
+      {
+        t: "Which water body covers an area of 1,55,58,000 km² and makes up only 4.3% of the global ocean?",
+        o: ["Atlantic Ocean", "Arctic Ocean", "Southern Ocean", "Indian Ocean"],
+        c: 1,
+        e: "Arctic Ocean is the smallest and shallowest of the world's five major oceans."
+      },
+      {
+        t: "Which is the largest continental shelf in the world?",
+        o: ["The shelf of India", "The Indian Ocean shelf", "The shelf in the Pacific Ocean", "The Siberian shelf in the Arctic Ocean"],
+        c: 3,
+        e: "The Siberian shelf in the Arctic Ocean. A continental shelf is the edge of a continent that lies under the ocean. Example of a Continental Shelf Landform: Siberian Shelf, Arctic Ocean."
+      },
+      {
+        t: "Which of the following is a group of islands found in the tropical oceans consisting of coral reefs and a central depression?",
+        o: ["Guyots", "Atoll", "Seamount", "Lagoon"],
+        c: 1,
+        e: "Atoll. List of atolls: Great Chagos Bank, Macclesfield Bank, Thiladhunmathi, Sabalana Islands. Guyot is an undersea mountain. Lagoons are shallow bodies of water that are separated from the ocean by a barrier reef. Seamounts are underwater mountains that rise above the ocean floor but do not reach the surface."
+      },
+      {
+        t: "Name the only sea in the world that does NOT have a land boundary.",
+        o: ["Sargasso Sea", "Pechora Sea", "Amundsen Sea", "Iroise Sea"],
+        c: 0,
+        e: "Sargasso Sea. It is a part of the Atlantic Ocean. It is named so because of the presence of brown Sargassum seaweed."
+      },
+      {
+        t: "Which of the following was NOT a part of Gondwanaland?",
+        o: ["Australia", "South America", "India", "North America"],
+        c: 3,
+        e: "North America. The ancient supercontinent Gondwana incorporated present-day South America, Africa, Madagascar, India, Australia, and Antarctica."
+      },
+      {
+        t: "What is the normal air pressure at sea level?",
+        o: ["1013.25 millibars", "886.13 millibars", "985.14 millibars", "1100.12 millibars"],
+        c: 0,
+        e: "1013.25 millibars. The air pressure decreases as the altitude increases."
+      },
+      {
+        t: "India is divided into how many earthquake zones (seismic zones)?",
+        o: ["2", "4", "5", "6"],
+        c: 1,
+        e: "4. The Bureau of Indian Standards has classified regions in India into 4 seismic zones on the basis of historical seismic activity. These are zones II, III, IV and V. Zone V is the most seismically active region and Zone II is the least active. The magnitude scale used to measure earthquakes ranges from 1 to 12."
+      },
+      {
+        t: "The ______ is responsible for Earth's magnetic field.",
+        o: ["inner core", "mantle", "outer core", "crust"],
+        c: 2,
+        e: "outer core. On Earth, flowing liquid metal in the outer core of the planet generates electric currents. The rotation of Earth on its axis causes these electric currents to form a magnetic field which extends around the planet."
+      },
+      {
+        t: "Atmospheric temperature usually decreases with altitude, but sometimes this phenomenon gets reversed in the troposphere. This phenomenon is known as",
+        o: ["Temperature Inversion", "Adiabatic Lapse Rate", "Global Warming", "Temperature Convection"],
+        c: 0,
+        e: "Temperature Inversion occurs when the normal pattern of temperature decreasing with altitude is reversed, and the air becomes warmer as you go higher. This phenomenon can lead to air pollution problems and is often seen in valleys or areas with stagnant air. Adiabatic lapse rate: Change of temperature with a change in altitude of an air parcel without gaining or losing any heat to the environment surrounding the parcel. Temperature Convection The process by which heat is transferred through the movement of fluid (like air or water) due to temperature differences."
+      },
+      {
+        t: "What kind of radiation is absorbed by the ozone layer?",
+        o: ["Green radiation", "Infrared radiation", "Visible radiation", "Ultraviolet radiation"],
+        c: 3,
+        e: "Ultraviolet radiation. The UV radiation spectrum is divided into three types: UVA, UVB and UVC. These rays can affect our skin in different ways. Ozone layer: It is a region in the Earth's stratosphere that contains a high concentration of ozone $(O_{3})$ gas. This layer acts as a shield, protecting the Earth from the Sun's harmful ultraviolet (UV) radiation. Infrared radiation (IR), also known as thermal radiation, is that band in the electromagnetic radiation spectrum with wavelengths above red visible light between 780 nm to 1mm (0.78 µm to 1000 μm)."
+      },
+      {
+        t: "A dense mass of water drops on smoke or dust particles in the lower atmosphere layers is referred to as:",
+        o: ["mist", "blizzard", "frost", "smog"],
+        c: 3,
+        e: "smog. Fog forms when an air mass with high water vapor suddenly cools, causing condensation on fine dust particles. It is essentially a cloud at or near the ground, leading to poor visibility, often reduced to zero. Fog is denser and thicker than mist. Fog reduces visibility to less than one kilometer, while mist reduces visibility to one to two kilometers. Frost forms on cold surfaces when condensation takes place below freezing point $(0^{0}C)$, i.e. the dew point is at or below the freezing point."
+      },
+      {
+        t: "The upper portion of the earth is known as:",
+        o: ["Stratosphere", "Troposphere", "Lithosphere", "Mesosphere"],
+        c: 2,
+        e: "Lithosphere. It is bounded by the atmosphere above and the asthenosphere (another part of the upper mantle) below. The stratosphere is the second-lowest layer of Earth's atmosphere. The troposphere, the lowest layer of the atmosphere, contains about 75-80% of the atmospheric mass. Most clouds form in the troposphere, where nearly all weather occurs. The mesosphere is the third highest layer, situated between the stratosphere and the thermosphere."
+      },
+      {
+        t: "The zone separating the troposphere from the stratosphere is called the",
+        o: ["Tropopause", "stratospause", "Stratomerge", "Tropomerge"],
+        c: 0,
+        e: "Tropopause. The air temperature at the tropopause is about - $80^{\circ}($ C over the equator and about - $45^{\circ}$ C over the poles. The temperature in this region is nearly constant, and hence, it is called the tropopause. The stratosphere is found above the tropopause and extends up to a height of 50 km. One important feature of the stratosphere is that it contains the ozone layer."
+      },
+      {
+        t: "All the changes in climate and weather takes place in",
+        o: ["mesosphere", "Troposphere", "Thermosphere", "stratosphere"],
+        c: 1,
+        e: "Troposphere. It is the lowermost layer of the atmosphere and is often referred to as the \"region of mixing\". Its average height is 13 km and extends roughly to a height of 8 km near the poles and about 18 km at the equator. Stratosphere (contains the ozone layer) 2nd layer of the Earth's atmosphere, extending from about 10 to 50 km in altitude. Mesosphere - 3rd layer of the Earth's atmosphere, extending from about 50 to 85 km in altitude. Most meteors burn up in this atmospheric layer. Thermosphere $4^{th}$ layer of the Earth's atmosphere, extending from about 85 to 500 km in altitude."
+      },
+      {
+        t: "Which of the following claims about chlorofluorocarbons (CFCs) is accurate?",
+        o: ["CFCs are used as repairers of the troposphere", "CFCs are used as fuel for air crafts", "CFCs are used as repairers of the ozone layer", "CFCs are used as refrigerants"],
+        c: 3,
+        e: "CFCs, banned in India for depleting the ozone layer, were used in plastic foams, cleaning electronics, and aerosol cans. They are now replaced by HFCs, which have an ozone depletion potential of 0."
+      },
+      {
+        t: "What is the purpose of the Earth's magnetic field?",
+        o: ["To provide an energy source for life on Earth", "To control the Earth's climate", "To shield the Earth from solar wind and cosmic radiation", "To cause the tides in the ocean"],
+        c: 2,
+        e: "Earth's magnetic field (Geomagnetic field) The magnetic field that extends from Earth's interior out into space, where it interacts with the solar wind, a stream of charged particles emerging from the Sun. Earth's Magnetism Generated by convection currents of molten iron and nickel in the earth's core. These convection currents are caused by heat escaping from the core, a natural process called a geodynamo."
+      },
+      {
+        t: "What is the main objective of the 'Graded Response Action Plan'?",
+        o: ["legalizing illegal colonies", "To control the cases of malaria", "introduction of electric vehicles", "controlling air pollution"],
+        c: 3,
+        e: "Controlling air pollution. Graded Response Action Plan (GRAP): It was formulated in 2016 and notified in 2017 for Delhi and the National Capital Region (NCR) by the Ministry of Environment, Forest and Climate Change."
+      },
+      {
+        t: "Which of the following statements is NOT correct regarding the stratosphere?",
+        o: ["It lies above the mesosphere.", "It extends up to a height of 50 km.", "It contains a layer of ozone gas.", "This layer is almost free from clouds."],
+        c: 0,
+        e: "Stratosphere Its height of the bottom varies with latitude and with the seasons. Aviation & Jet Streams fly in the Stratosphere."
+      },
+      {
+        t: "In which layer of atmosphere does the meteorites burn up on entering from space?",
+        o: ["Stratosphere", "Thermosphere", "Mesosphere", "Exosphere"],
+        c: 2,
+        e: "Mesosphere. Meteorites are space rocks that fall to Earth's surface. Meteorites are the last stage in the existence of these types of space rocks."
+      },
+      {
+        t: "Which layer of atmosphere helps in radio transmission?",
+        o: ["Exosphere", "Thermosphere", "Mesosphere", "Stratosphere"],
+        c: 1,
+        e: "Thermosphere. It is a layer of Earth's atmosphere that is directly above the Mesosphere and below the Exosphere. The temperature starts increasing again with increasing height in this layer. Aurora and satellites occur in this layer."
+      },
+      {
+        t: "What is the average temperature of Chennai in the cold season?",
+        o: ["$20^{\\circ}-21^{\\circ}$ Celsius", "$32^{\\circ}-33^{\\circ}$ Celsius", "$24^{\\circ}-25^{\\circ}$ Celsius", "$29^{\\circ}-30^{\\circ}$ Celsius"],
+        c: 2,
+        e: "$24^{\\circ}-25^{\\circ}$ Celsius. Chennai has warm temperatures year round ranging between $29^{\\circ}C$ $(84^{\\circ}F)$ and $37^{\\circ}C$ $(98^{\\circ}F)$. (Coldest month (January - $29^{\\circ}C$ $(84^{\\circ}F)\\}$ Chennai features a tropical wet and dry climate. Chennai lies on the thermal equator and is also coastal, which prevents extreme variation in seasonal temperature."
+      },
+      {
+        t: "In India, from June to September which type of weather prevails?",
+        o: ["Autumn", "Winter", "Spring", "Monsoon / Rainy season"],
+        c: 3,
+        e: "Monsoon / Rainy season. Major seasons in India: Rainy (Southwest Monsoon Season) June to September), Autumn {(Season of Retreating Monsoon) October and November), Winter (Cold Weather Season) December to February), and Summer ((Hot Weather Season) March to May)."
+      },
+      {
+        t: "At what height do the Jet Streams blow in India during winter months?",
+        o: ["9-15 km", "9-17 km", "9-16 km", "9-13 km"],
+        c: 3,
+        e: "9-13 km. Jet Streams (geostrophic wind) are relatively narrow bands of strong wind. Types: Polar-Night Jet Stream, SubTropical Jet Streams (westerlies), Tropical Easterly Jet Stream."
+      },
+      {
+        t: "The climate of Assam can be described as:",
+        o: ["subtropical humid climate", "mountain climate", "tropical dry climate", "tropical monsoon rainforest climate"],
+        c: 3,
+        e: "Tropical Monsoon Rainforest Climate. Tropical monsoon climates have monthly mean temperatures above $18^{\\circ}C$ $(64^{\\circ}F)$ in every month of the year and a dry season. Tropical monsoon climate is the intermediate climate between the wet Af (or tropical wet climate) and the drier Aw (or tropical savanna climate)."
+      },
+      {
+        t: "______ is a naturally occurring phenomenon that is responsible for the heating of the Earth's surface and atmosphere.",
+        o: ["Radiation", "Global warming", "Greenhouse effect", "Global heating"],
+        c: 2,
+        e: "Greenhouse Effect. When the Sun's energy reaches the Earth's atmosphere, some of it is reflected back to space and the rest is absorbed and re-radiated by greenhouse gases. The absorbed energy warms the atmosphere and the surface of the Earth."
+      },
+      {
+        t: "The term 'monsoon' is derived from a/an ______",
+        o: ["Italian word", "Latin word", "Arabic word", "Greek word"],
+        c: 2,
+        e: "Arabic word 'mausim', meaning weather, was first used in English in British India to refer to seasonal changes in wind direction."
+      },
+      {
+        t: "The igneous, sedimentary and metamorphic rocks are interconvertible through a continuous process called:",
+        o: ["lithification", "metamorphism", "rock cycle", "weathering and erosion"],
+        c: 2,
+        e: "rock cycle. It is a series of processes that create and transform the types of rocks in Earth's crust. Lithification: This is specifically the process by which sediments are compacted and cemented to form sedimentary rocks. Metamorphism is the process by which existing rocks (Igneous, Sedimentary, or even other Metamorphic rocks) are transformed into metamorphic rocks under high pressure, and temperature. Weathering and erosion: These are processes that break down existing rocks into smaller particles."
+      },
+      {
+        t: "The layer made up of unconsolidated rock, dust, soil, etc. that is deposited on a bed rock surface like a blanket is known as:",
+        o: ["Talus", "Regolith", "Scree", "Protolith"],
+        c: 1,
+        e: "Regolith. It can be found both at the surface and at varying depths. This layer of fragmented soil material forms the outermost covering of the land and is present almost everywhere, covering the underlying bedrock. Regolith is primarily inorganic and acts like a blanket over unbroken rock."
+      },
+      {
+        t: "Layers of varying thickness are found in which type of rock?",
+        o: ["Igneous rock", "Sedimentary rock", "Metamorphic rock", "Volcanic rock"],
+        c: 1,
+        e: "Sedimentary rocks are formed by the deposition and compaction of sediments over time, often in layers. These layers, also called strata. Examples Sandstone, conglomerate, limestone, shale, loess. Igneous rocks (primary rocks) form out of magma and lava from the interior of the earth. Examples Granite, gabbro, pegmatite. Metamorphic Rocks form under the action of pressure, volume and temperature changes. Examples Gneissoid, granite, syenite, slate."
+      },
+      {
+        t: "Exfoliation is a form of",
+        o: ["physical weathering", "chemical weathering", "mass wasting", "biochemical weathering"],
+        c: 0,
+        e: "Physical weathering is caused by the effects of changing temperature on rocks, causing the rock to break apart. The process is sometimes assisted by water. Exfoliation occurs as cracks develop parallel to the land surface, a consequence of the reduction in pressure during uplift and erosion."
+      },
+      {
+        t: "The outermost part of the Earth is known as",
+        o: ["volcano", "the crust", "the core", "the mantle"],
+        c: 1,
+        e: "the crust. The Earth's crust is the thinnest of all its layers, about 35 km thick on the continental masses and only 5 km on the ocean floors. The main minerals in the continental crust are silica and alumina, while the oceanic crust consists primarily of silica and magnesium. Beneath the crust lies the mantle, which extends to a depth of 2900 km. The innermost layer is the core, with a radius of about 3500 km, made mostly of nickel and iron."
+      },
+      {
+        t: "Which of the following is the correct match between column-A and column-B?<br> Column-A (Type of rock)<br> i. Sedimentary Rock<br> ii. Metamorphic Rock<br> iii. Igneous Rock<br> Column-B (Method of formation)<br> a. Transformed its chemical qualities from other type of rocks<br> b. Derived from magma that was poured out or ejected at the Earth's Surface<br> c. Formed from fragments of other rocks or the remains of plants or animals",
+        o: ["i-a, ii-b, iii-c", "i-b, ii-a, iii-c", "i-c, ii-a, iii-b", "i-a, ii-c, iii-b"],
+        c: 2,
+        e: "i-c, ii-a, iii-b. The rock cycle is a web of processes that outlines how each of the three major rock types igneous, metamorphic, and sedimentary - form and break down based on the different applications of heat and pressure over time."
+      },
+      {
+        t: "Structural geology deals with:",
+        o: ["the age of rocks", "the components and chemical nature of soil", "the form, classification, mechanism, and causes of rock structures' evolution", "the cause of volcano formation"],
+        c: 2,
+        e: "Petrology is the science of rocks. Rock: Any natural mass of mineral matter that makes up the Earth's crust."
+      },
+      {
+        t: "Which of the following is a yellowish green to green coloured gemstone often found in mafic and ultramafic igneous rocks such as basalt, gabbro, dunite, diabase and peridotite?",
+        o: ["Bornite", "Olivine", "Tremolite", "Garnet"],
+        c: 1,
+        e: "Olivine. The mineral olivine is a magnesium iron silicate with the chemical formula $(Mg,Fe)_{2}SiO_{4}.$ It is a type of nesosilicate or orthosilicate. Bornite, also known as peacock ore, is a sulfide mineral with a chemical composition of $Cu_{5}FeS_{4}.$"
+      },
+      {
+        t: "The steep rocky coast rising almost vertically above sea water is called",
+        o: ["sea caves", "sea cliff", "sea arches", "ox-bow lake"],
+        c: 1,
+        e: "Sea cliffs are steep faces of rock and soil that are formed by destructive waves. A sea cave is a cave formed on a cliff by the wave action of an ocean or lake. A sea arch is a natural arch or bridge made of stone that has been created when water wears away the underside of a rock, leaving just the top behind."
+      },
+      {
+        t: "The core of the Great Himalayas is composed of",
+        o: ["Slate", "Granite", "Sandstone", "Limestone"],
+        c: 1,
+        e: "Granite rock (Igneous rock). Lesser Himalaya consists of metamorphosed sedimentary rocks (quartzite, marble, slate, phyllite, schist and gneiss)."
+      },
+      {
+        t: "Which of the following determines the colour, texture, chemical properties, mineral, content and permeability of the soil?",
+        o: ["Parent rock", "Time", "Relief", "Climate"],
+        c: 0,
+        e: "Parent rock. The color in the soil is mainly due to two factors organic content and the chemical nature of iron compounds found in the soil."
+      },
+      {
+        t: "How many types of igneous rocks are there?",
+        o: ["Four", "Two", "Six", "Five"],
+        c: 1,
+        e: "Two. Based on the texture of rocks, igneous rocks are classified into Intrusive igneous rocks (Plutonic rocks) and Extrusive igneous rocks (Lava or Volcanic rocks)."
+      },
+      {
+        t: "Mushroom rocks are formed due to",
+        o: ["glacial deposition", "deposition of sea waves", "running water erosion", "wind erosion"],
+        c: 3,
+        e: "Wind erosion. A mushroom rock (perched rock) is a typical mushroom-shaped landform that is formed by the action of wind erosion. These rocks are mostly found in arid regions. Such rocks are found in the Thar Desert of India."
+      },
+      {
+        t: "What type of rocks were once igneous or sedimentary, but have metamorphosed as a result of intense heat and/or pressure within the Earth's crust?",
+        o: ["Granite", "Quartzite", "Sandstone", "Basalt"],
+        c: 1,
+        e: "Quartzite. Granite is a coarse-grained (phaneritic) intrusive igneous rock composed mostly of quartz, alkali feldspar, and plagioclase. Sandstone is a clastic sedimentary rock composed mainly of sand-sized silicate grains. Basalt is a mafic extrusive rock, is the most widespread of all igneous rocks, and comprises more than 90% of all volcanic rocks."
+      },
+      {
+        t: "Which of the following rocks floats in water?",
+        o: ["Granite", "Obsidian", "Pumice", "Slate"],
+        c: 2,
+        e: "Pumice is a light-colored, extremely porous igneous rock that forms during explosive volcanic eruptions. Obsidian has been used for tools and ornaments. Granite is a hard igneous rock made of quartz, feldspar, and mica. Slate is a metamorphic rock."
+      },
+      {
+        t: "______ plains are formed due to the weathering of soluble rocks such as limestone and dolomite.",
+        o: ["Glacial", "Karst", "Deposition", "Desert"],
+        c: 1,
+        e: "Karst regions contain aquifers that are capable of providing large supplies of water. Typical karst forms include sinkholes, caves, natural bridges and sinking streams."
+      },
+      {
+        t: "Which of the following mountain peaks is located in the Karakoram Range?",
+        o: ["Trishul", "Nanda Devi", "K", "Kamet"],
+        c: 2,
+        e: "K2, also known as Mount Godwin Austen (8,611 meters), is the world's second-highest peak in the Karakoram range, spanning Pakistan, China, India, and extending into Afghanistan and Tajikistan. Trishul Peak is in the Himalayas, while Kamet Peak (7,756 meters) is the highest in the Zanskar range. Nanda Devi (7,817 meters) is the third-highest peak in the Himalayas."
+      },
+      {
+        t: "Which of the following mountains of India is famous for tea and coffee production?",
+        o: ["Nilgiri", "Aravali", "Himalaya", "Vidhyanchal"],
+        c: 0,
+        e: "Nilgiri Hills are where the Western Ghats and Eastern Ghats meet. They are located at the tri-junction of Karnataka, Kerala, and Tamil Nadu. The highest peak in this region is Doda Betta. The Aravalli Range is known for its mineral resources, such as copper and zinc. The Himalayas are famous for saffron cultivation in the Kashmir region."
+      },
+      {
+        t: "What is the name of the highest peak of Indian Garhwal Himalayas located in Chamoli district of Uttarakhand state with a height of 7,816 metres ?",
+        o: ["Trisul", "Hardeol", "Mukut Parbat", "Nanda Devi"],
+        c: 3,
+        e: "Nanda Devi. It is the second-highest mountain in India, after Kangchenjunga (8598 m), and the highest entirely within the country. It ranks as the 23rd highest peak in the world. The Garhwal Himalayas lie between the Sutlej and the Kali river and is 320 km long. It is a part of the Himalayan Shivalik Hills (outermost hills of the Himalayas found in Himachal Pradesh and Uttarakhand)."
+      },
+      {
+        t: "The Garo, Khasi and Jaintia hills are a subdivision of:",
+        o: ["Assam valley", "Barak basin", "Surma basin", "Meghalaya plateau"],
+        c: 3,
+        e: "Meghalaya Plateau. The plateau is separated from the main block of the peninsular plateau by a gap called the Garo-Raj Mahal gap. It is located on the northeastern flank of Peninsular India. It is one of the rainiest, most tectonically active areas in the world. Hills in North East India - Lushai Hills or Mizo Hills (Mizoram and Tripura), Chin Hills (Manipur to Chin State of Myanmar), Japfu Mountain Range (Nagaland), Barail Range (Assam), Dafla Hills and Abor Hills (Arunachal Pradesh)."
+      },
+      {
+        t: "The holy mountain 'Kailash' is located in which neighbouring country of India?",
+        o: ["Pakistan", "Afghanistan", "Bangladesh", "China"],
+        c: 3,
+        e: "China. Mount Kailash Located near Lake Mansarovar and Lake Rakshastal. The Indus River originates from Mansarovar lake (Tibet). Some highest mountain peaks: India Kanchenjunga (8598m), Nanda Devi (7817m). Nepal - Mount Everest (8848.86 m), Dhaulagiri (8172m). Hindu temple outside India Nepal Pashupatinath Temple, Indonesia - Prambanan Temple, Bangladesh Dhakeshwari temple, Cambodia Angkor Wat."
+      },
+      {
+        t: "Name an oval-shaped range of hills sculpted by glacial flow.",
+        o: ["Sandur", "Drumlins", "Moraines", "Esker"],
+        c: 1,
+        e: "Drumlins - It is formed by the filling of heavy rocky debris in the glacial crevices and its stay under the ice. One end of the drumlins facing the glacier called the stoss end and the other end called tail. Eskers: When glaciers melt in summer, the water flows on the surface of the ice. These waters accumulate beneath the glacier and flow like streams in a channel beneath the ice."
+      },
+      {
+        t: "The Shevaroy Hills are located in which state of India?",
+        o: ["Chhattisgarh", "Odisha", "Rajasthan", "Tamil Nadu"],
+        c: 3,
+        e: "Tamil Nadu (Aanna Malai, Doddabetta, Nilgiri). Famous hills:- Chhattisgarh Tulasi Dongar, Bailadila, Balaraja Gutta. Odisha Devmali, Turia Konda, Mahendragiri, Devagiri. Rajasthan Guru Shikhar, Mt. Abu, Sunda. Kangchenjunga (Sikkim) Highest mountain peak in India."
+      },
+      {
+        t: "Which among the following is the highest peak of West Bengal?",
+        o: ["Sandakphu", "Saramati", "Doddabetta", "Deomali"],
+        c: 0,
+        e: "Sandakphu (3636 m). It is located on the border between India and Nepal, belongs to the Singalia Mountain ranges. It is a part of the Purvanchal range. Doddabetta (2637 m) It is the highest peak of Tamil Nadu and a part of Nilgiri Mountain Range."
+      },
+      {
+        t: "The Himalayan Mountain range was formed by the collision of",
+        o: ["African Plate and Australian Plate", "Indian Plate and African Plate", "Eurasian Plate and African Plate", "Indian Plate and Eurasian Plate"],
+        c: 3,
+        e: "Indian Plate and Eurasian Plate. Plates - They are large, rigid pieces of the Earth's lithosphere that fit together like jigsaw puzzle, and their movements are responsible for shaping the Earth's surface through processes such as earthquakes and the formation of mountains. Major plates (7) - African Plate, Antarctic Plate, Eurasian Plate, North American Plate, South American Plate, Pacific Plate and Indo-Australian Plate."
+      },
+      {
+        t: "Dhinodhar Hills is located in which Indian state/Union Territory?",
+        o: ["Andaman and Nicobar Islands", "Maharashtra", "Gujarat", "West Bengal"],
+        c: 2,
+        e: "Gujarat. Dhinodhar Hill is a tourist and pilgrimage spot. Other hills in Gujarat - Chotila, Pavagadh, Palitana, Saputara, Girnar, Bardo, Gabbar. Hills: Maharashtra - Mahabaleshwar, Panchgani, Matheran, Lonavala, Amboli etc. West Bengal Gorgaburu Hill, Ajodhya Hills, Susunia Hill etc. Andaman and Nicobar Islands Ross Island, Barren Island, Saddle Peak, Katchal, Narcondam Island etc."
+      },
+      {
+        t: "Which among the following peaks is the highest peak of Jharkhand?",
+        o: ["Kangto", "Girnar", "Anamudi", "Parasnath"],
+        c: 3,
+        e: "Parasnath. It is named after Lord Parshvanath (23rd Jain Tirthankara). Kangto peak (Arunachal Pradesh). State and Highest Peak Gujarat (Girnar Peak), Rajasthan (Guru Shikhar), Andhra Pradesh (Arma Konda), Haryana (Karah Peak), Karnataka (Mullayanagiri Peak)."
+      },
+      {
+        t: "Which of the following statements is NOT correct?",
+        o: ["Mahendragiri is the highest peak in the Eastern Ghats.", "The height of the Western Ghats progressively decreases from north to south.", "The Western Ghats cause orographic rain.", "The Eastern Ghats stretch from the Mahanadi Valley to the Nilgiris in the south."],
+        c: 1,
+        e: "The height of the Western Ghats progressively increases from north to south. The highest peaks of Western Ghats include the Anai Mudi (2,695 metres) and the Doda Betta (2,637 meters). The Western Ghats, also known as the Sahyadri Hills, Mainly traverse the States of Kerala, Tamil Nadu, Karnataka, Goa, Maharashtra and Gujarat."
+      },
+      {
+        t: "Which among the following is the largest of all the duns of the Shiwaliks mountain range in India?",
+        o: ["Patli Dun", "Jammu Dun", "DehraDun", "Kotli Dun"],
+        c: 2,
+        e: "Dehradun (Length - 35-45 km). Dun- Valleys that lie between the Shivalik and Lesser himalaya. Other duns of Uttarakhand - Kota dun, Patli dun, Har ki dun. Kotli dun - Himachal Pradesh. Kashmir Himalayas - Jammu dun and Pathankot dun."
+      },
+      {
+        t: "Kalsubai peak is located in which of the following Indian states?",
+        o: ["Madhya Pradesh", "Maharashtra", "Andhra Pradesh", "Himachal Pradesh"],
+        c: 1,
+        e: "Maharashtra. Kalsubai (Everest of Maharashtra) is the highest peak of Maharashtra's Ahmednagar district in Akola taluka."
+      },
+      {
+        t: "Which of the following is NOT a type of a fold mountain?",
+        o: ["Aravali range", "The Rhine Valley", "Appalachians", "Ural Mountains"],
+        c: 1,
+        e: "Rhine Valley. Fold mountains are the most common type of mountain in the world. The rugged, soaring heights of the Himalayas, Andes, Alps and Aravalli Range (oldest range) are all active fold mountains. Rhine Valley (Germany) is the valley of the river Rhine in Europe. It is also known as Alpine Rhine. The Appalachian Mountains are found in North America."
+      },
+      {
+        t: "The approximate length of the Great Himalayan range, also known as the central axial range, is ______ from east to west.",
+        o: ["2800 km", "2500 km", "3000 km", "2100 km"],
+        c: 1,
+        e: "2500. The great Himalayan range width varies between 160-400 km from north to south. Famous peaks of Himalayas: Mount Everest (8848 m), Mt. Kanchenjunga (8598 m), Mt. Makalu (8481 m), Mt. Dhaulagiri (8172 m). The Himalayas consist of three parallel ranges - Himadri (Great Himalayas or the Higher Himalayas), Himachal (Lesser Himalayas or the Lower Himalayas) and Shiwaliks (Outer Himalayas)."
+      },
+      {
+        t: "What is the average height of inner Himalayas?",
+        o: ["6000 metres", "4500 metres", "5200 metres", "7100 metres"],
+        c: 0,
+        e: "6000 metres. The Himalayas consist of three parallel ranges, the Greater Himalayas or the Inner Himalayas or the Himadri, the Lesser Himalayas called the Himachal (with an average height of 3,700 to 4500 meters), and the Shivalik hills (with an average height of 900 to 1100 meters), which comprise the foothills."
+      },
+      {
+        t: "Asia is separated from Europe by ______ mountains.",
+        o: ["Himalayan", "Andes Mountains", "Alps", "Ural"],
+        c: 3,
+        e: "Ural. It is formed as a result of the compression of tectonic plates, leading to the formation of large fold-like structures on the Earth's crust. Alps mountain (natural boundary between France and Italy), Andes Mountains range (South American countries of Chile and Argentina), Himalaya (plains of the Indian subcontinent from the Tibetan Plateau). Caucasus mountains (Asia and Europe)."
+      },
+      {
+        t: "Which of the following mountain range have young fold mountains?",
+        o: ["Appalachians mountain range", "Alps mountain range", "Aravali mountain range", "Ural mountain range"],
+        c: 1,
+        e: "Alps mountain range. Fold mountains form when two or more of the Earth's tectonic plates collide. Types Anticline, Syncline, Monocline, Isocline. Features - Rugged relief, imposing height (lofty), high conical peaks. Examples are the Rockies, the Andes, the Alps, the Himalayas, etc. Old fold Mountain - An Appalachian mountain range, Aravali mountain range, and Ural mountain range."
+      },
+      {
+        t: "The uplifted blocks of block mountains are called",
+        o: ["horsts", "grabens", "slopes", "cones"],
+        c: 0,
+        e: "Horsts. Block mountains are formed due to the upward movement of the middle block between two normal faults. The up-thrown block is also called a horst. Graben is bounded by normal faults dipping toward each other. These mountains include the Great African Rift Valley, the Rhine Valley (graben) in Germany, etc."
+      },
+      {
+        t: "Fotu La, the Great Mountain Pass, at an altitude of 4108 m above sea level, is the highest point of which Indian state/UT?",
+        o: ["Ladakh", "Jammu and Kashmir", "Himachal Pradesh", "Sikkim"],
+        c: 0,
+        e: "Ladakh. Fatu La is a mountain pass on the Srinagar-Leh highway in the Zanskar Range of the Himalayas in Ladakh, UT. It is one of two high mountain passes between Leh and Kargil, the other being Namika La."
+      },
+      {
+        t: "Which of the following is also known as the 'White Mountain'?",
+        o: ["Cho Oyu", "Makalu", "Dhaulagiri", "Lhotse"],
+        c: 2,
+        e: "Dhaulagiri is in west-central Nepal. Cho Oyu lies on the Nepal-Tibet border. Makalu is southeast of Everest, on the Nepal-Tibet border. Lhotse is on the border between Tibet and Nepal's Khumbu region."
+      },
+      {
+        t: "Which of the following statement(s) is/are correct regarding mountains?<br> I- Mountains may be arranged in a line known as range.<br> II- The Aravali range in India is one of the oldest fold mountain systems in the world.<br> III- Mt. Kilimanjaro in South America is an example of Volcanic Mountain",
+        o: ["Only I and II", "Only II", "I, II and III", "Only I"],
+        c: 0,
+        e: "Only I and II. Mount Kilimanjaro is a dormant volcano in Tanzania. It is the highest mountain in Africa. It was formed when molten rock from the depths of the earth rose from the crust and piled up on its own. Top mountains in Africa: Mount Kenya, Mount Stanley, Mount Speke, Mount Baker, Mount Emin."
+      },
+      {
+        t: "The Deomali is the highest mountain peak of",
+        o: ["Assam", "West Bengal", "Bihar", "Odisha"],
+        c: 3,
+        e: "Odisha. The Deomali peak height is 1,762 m. The Borail Range is the highest Mountain Ranges in Assam. Someshwar Fort is the highest peak of Bihar. It is part of Shivalik hill."
+      },
+      {
+        t: "In which Indian state will you find Mount Tiyi?",
+        o: ["Arunachal Pradesh", "Odisha", "Himachal Pradesh", "Nagaland"],
+        c: 3,
+        e: "Nagaland. Some other mountains: Japfu Peak, Changkikong Range, Mount Saramati, Veda Peak, Ongpangkong Range."
+      },
+      {
+        t: "In which of the following Indian states is the Gorichen peak located?",
+        o: ["Madhya Pradesh", "Arunachal Pradesh", "Himachal Pradesh", "Nagaland"],
+        c: 1,
+        e: "Arunachal Pradesh. Gorichen Peak (6858 m) is the highest peak in Arunachal Pradesh, Dhupgarh is the highest in Madhya Pradesh, and Reo Purgyil is the highest in Himachal Pradesh."
+      },
+      {
+        t: "Mountaineers refer to altitudes above about ______ meters as the 'death zone'.",
+        o: ["5,800", "8,000", "6,700", "7,200"],
+        c: 1,
+        e: "8,000. The death zone refers to altitudes where oxygen pressure is too low to sustain human life for extended periods."
+      },
+      {
+        t: "Which of the following is a mountain peak that rises above the surrounding peaks at the mountainous border of the Indian state of Nagaland and the Sagaing region of Myanmar?",
+        o: ["Mount Kalsubai", "Mount Doddabetta", "Mount Saramati", "Mount Dhupgarh"],
+        c: 2,
+        e: "Mount Saramati. Doddabetta is the highest mountain in the Nilgiri Mountains at 2,637 meters. Kalsubai (highest point) is a mountain in the Western Ghats, located in the Indian state of Maharashtra."
+      },
+      {
+        t: "Generally, a steep hill with an elevation of more than ______ meters is classified as a mountain.",
+        o: ["600", "500", "1000", "800"],
+        c: 0,
+        e: "600. Within the earth, a continuous movement is taking place. The process leads to the upliftment and sinking of the earth's surface at several places. The external process is the continuous wearing down and rebuilding of the land surface. Eg: Erosion and Deposition."
+      },
+      {
+        t: "______ is created by the collision of convergent plate boundaries.",
+        o: ["Mid-ocean ridge", "Land erosion", "Oceanic trench", "Mountain building"],
+        c: 3,
+        e: "Mountain building. A convergent boundary is an area on earth where two or more lithospheric plates converge or collide and one plate eventually slides beneath the other."
+      },
+      {
+        t: "'Pidurutalagala' is the highest mountain peak in",
+        o: ["Bhutan", "Sri Lanka", "Myanmar", "Nepal"],
+        c: 1,
+        e: "Sri Lanka. Pidurutalagala (Mount Pedro) is the tallest mountain in Sri Lanka, standing at 2,524 m in Nuwara Eliya."
+      },
+      {
+        t: "Which of the following hills is situated in Assam?",
+        o: ["Aravali Hills", "Karbi Anglong Hills", "Javadi Hills", "Shevaroy Hills"],
+        c: 1,
+        e: "Karbi Anglong Hills. Javadi Hills and Shevaroy Hills are located in Tamil Nadu."
+      },
+      {
+        t: "Where is Mount Diavolo, an important mountain peak in the Andaman and Nicobar Islands, Located?",
+        o: ["Great Nicobar", "North Andaman", "Middle Andaman", "South Andaman"],
+        c: 3,
+        e: "South Andaman. It has an elevation of 295 meters. Middle Andaman is separated from North Andaman Island by Austen Strait, and from Baratang Island at the south by Homfray's Strait."
+      },
+      {
+        t: "Mount Jopuno is situated in which of the following states?",
+        o: ["Uttarakhand", "Sikkim", "Andhra Pradesh", "Himachal Pradesh"],
+        c: 1,
+        e: "Sikkim. Mount Jopuno, located in western Sikkim at 5,603 meters, is situated within Khangchendzonga National Park."
+      },
+      {
+        t: "Which of the following hills is situated in Andhra Pradesh?",
+        o: ["Kaimur Hills", "Pachmarhi Hills", "Nagari Hills", "Girnar Hills"],
+        c: 2,
+        e: "Nagari hills. Other hill stations in Andhra Pradesh include Tirumala, Araku Valley, Horsley Hills, Lambasingi, Nallamala Hills."
+      },
+      {
+        t: "In which of the following states is the Shatrunjaya Hills located?",
+        o: ["Gujarat", "Andhra Pradesh", "Madhya Pradesh", "Karnataka"],
+        c: 0,
+        e: "Gujarat. Other prominent hills in Gujarat include- Bhujia Hill, Dhinodhar, Girnar, Kalo Dungar, Pavagadh Hill, Thaltej-Jodhpur Tekra, Wilson Hills."
+      },
+      {
+        t: "Which of the following mountains is situated near the Siachen region of Ladakh in India?",
+        o: ["Kirat Chuli Mountain", "Kabru Mountain", "Kanchenjunga Mountain", "K12 Mountain"],
+        c: 3,
+        e: "K12 Mountain. Kirat Chuli Mountain or Tent Peak is a mountain in the Himalayas. Kabru is a mountain in the Himalayas on the border of eastern Nepal and India. Kanchenjunga is part of the Great Himalaya Range. K12 is the second highest peak in the Saltoro Mountains, a subrange of the Karakoram range in the Siachen region, in Ladakh."
+      },
+      {
+        t: "Borra Caves are situated on the East Coast of India in which of the following hills?",
+        o: ["Nallamala Hills", "Horsley Hills", "Nagari Hills", "Ananthagiri Hills"],
+        c: 3,
+        e: "Ananthagiri Hills. Borra Caves, also called Borra Guhalu, are located on the East Coast of India, in the Ananthagiri hills of the Araku Valley of the Visakhapatnam district in Andhra Pradesh."
+      },
+      {
+        t: "Which of the following types of volcanic eruptions of Earth's volcanoes are most explosive?",
+        o: ["Caldera", "Lapolith", "Dykes", "Flood basalt provinces"],
+        c: 0,
+        e: "Caldera. A caldera eruption is the most explosive type of volcanic activity, occurring when a volcano's magma chamber empties and the ground above collapses, forming a large, circular depression. Example: Yellowstone Caldera. Dykes: It is a vertical or steeply inclined geological formation that occurs when magma cuts through rock layers and solidifies. Flood basalt provinces: Flood basalt refers to large, extensive lava flows that spread out over vast areas. Example: Deccan Traps in India."
+      },
+      {
+        t: "What is the name of the process of gases being outpoured from the interior of the solid earth?",
+        o: ["Evaporation", "Transpiration", "Degassing", "Gas evolution"],
+        c: 2,
+        e: "Degassing is the process by which gases are released from the interior of the solid Earth, typically through volcanic activity or other geological processes. This includes gases such as water vapor, carbon dioxide, sulfur dioxide, and others that are expelled from magma or other subsurface materials."
+      },
+      {
+        t: "Which of the following statements is best related to the 'pacific ring of fire'?",
+        o: ["Known for thermal power station", "Known for volcano and earthquakes", "Known for only glacial formations", "Known for tropical rainforests"],
+        c: 1,
+        e: "The 'ring of fire' is a ring of volcanoes in the Pacific Ocean."
+      },
+    ];
+
+    // ==========================================
+    //  APP STATE
+    // ==========================================
+    let quizData = [];
+    let currentQIndex = 0;
+    let score = 0;
+    
+    // Timer Variables
+    let timerInterval = null;
+    let currentTimerDuration = 0; 
+    let timeLeft = 0; 
+    let isPaused = false;
+    
+    let userResults = [];
+
+    // Init
+    window.onload = () => restartQuiz();
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function restartQuiz() {
+      // 1. Deep copy the raw questions
+      quizData = JSON.parse(JSON.stringify(rawQuestions));
+      
+      // 2. Shuffle the ORDER of questions
+      shuffleArray(quizData);
+      
+      // 3. Shuffle the OPTIONS within each question
+      quizData.forEach(q => {
+        // Store the correct answer string before shuffling
+        const correctAnswerText = q.o[q.c];
+        
+        // Shuffle the options array
+        shuffleArray(q.o);
+        
+        // Find the new index of the correct answer string
+        q.c = q.o.indexOf(correctAnswerText);
+      });
+      
+      currentQIndex = 0;
+      score = 0;
+      userResults = [];
+      isPaused = false;
+      updatePauseButton();
+      
+      document.getElementById('score').innerText = 0;
+      document.getElementById('total').innerText = quizData.length;
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('review-area').style.display = 'none';
+      document.getElementById('settings-area').style.display = 'flex';
+      
+      document.getElementById('timer-container').style.display = 'block';
+
+      loadQuestion();
+    }
+
+    function togglePause() {
+      const pauseBtn = document.getElementById('pause-btn');
+      const gameArea = document.getElementById('game-area');
+      const overlay = document.getElementById('pause-overlay');
+      const statsContent = document.getElementById('pause-stats-content');
+
+      if (!isPaused) {
+        // ACTION: PAUSE
+        clearInterval(timerInterval);
+        isPaused = true;
+        
+        // Calculate Stats
+        const attempted = userResults.length;
+        const correct = userResults.filter(r => r.status === 'correct').length;
+        const wrong = userResults.filter(r => r.status === 'wrong').length;
+        const skipped = userResults.filter(r => r.status === 'skipped').length;
+        
+        statsContent.innerHTML = `
+          <div class="pause-stat-row"><span>Attempted:</span> <span class="stat-val">${attempted}</span></div>
+          <div class="pause-stat-row"><span>Correct:</span> <span class="stat-val" style="color:#a8e6cf">${correct}</span></div>
+          <div class="pause-stat-row"><span>Wrong:</span> <span class="stat-val" style="color:#ff8b94">${wrong}</span></div>
+          <div class="pause-stat-row"><span>Skipped:</span> <span class="stat-val" style="color:#ffd3b6">${skipped}</span></div>
+        `;
+
+        gameArea.classList.add('paused-content');
+        overlay.style.display = 'flex'; // Use flex to center
+        pauseBtn.innerText = "Resume";
+        pauseBtn.classList.add('paused-state');
+      } else {
+        // ACTION: RESUME
+        isPaused = false;
+        gameArea.classList.remove('paused-content');
+        overlay.style.display = 'none';
+        pauseBtn.innerText = "Pause";
+        pauseBtn.classList.remove('paused-state');
+        runTimer(); // Resume with existing global 'timeLeft'
+      }
+    }
+    
+    function updatePauseButton() {
+      const pauseBtn = document.getElementById('pause-btn');
+      const overlay = document.getElementById('pause-overlay');
+      const gameArea = document.getElementById('game-area');
+      
+      isPaused = false;
+      pauseBtn.innerText = "Pause";
+      pauseBtn.classList.remove('paused-state');
+      overlay.style.display = 'none';
+      gameArea.classList.remove('paused-content');
+    }
+
+    function loadQuestion() {
+      if(timerInterval) clearInterval(timerInterval);
+      
+      updatePauseButton();
+
+      const q = quizData[currentQIndex];
+      document.getElementById('current').innerText = currentQIndex + 1;
+      document.getElementById('question-text').innerHTML = q.t;
+      document.getElementById('explanation-text').innerText = q.e;
+
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      
+      // Reset grid layout
+      optionsDiv.className = 'options';
+
+      document.getElementById('feedback-box').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
+      
+      document.querySelector('.quiz-container').classList.remove('apply-shake');
+
+      // Check for long options to adjust layout (stack vertically if too long)
+      const hasLongOptionText = q.o.some(opt => opt.length > 30);
+      if(hasLongOptionText) {
+        optionsDiv.classList.add('single-col');
+      }
+
+      q.o.forEach((optText, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = optText;
+        btn.onclick = () => checkAnswer(index, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      // CALCULATE TIME (Auto Mode Logic)
+      const timerMode = document.getElementById('timer').value;
+      
+      if(timerMode === "auto") {
+        // Smart Timer: 
+        // If any option is longer than 50 chars (sentence-based answer), give 20 seconds.
+        const hasLengthyOptions = q.o.some(opt => opt.length > 50);
+        const hasLongQuestion = q.t.length > 100;
+
+        if (hasLengthyOptions) {
+          currentTimerDuration = 20;
+        } else if (hasLongQuestion) {
+           currentTimerDuration = 15;
+        } else {
+          currentTimerDuration = 10;
+        }
+      } else {
+        currentTimerDuration = parseInt(timerMode);
+      }
+
+      timeLeft = currentTimerDuration; 
+      runTimer();
+    }
+
+    function runTimer() {
+      const bar = document.getElementById('timer-bar');
+      bar.style.backgroundColor = 'var(--timer-color)';
+      
+      const percentage = (timeLeft / currentTimerDuration) * 100;
+      bar.style.width = percentage + '%';
+
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1; 
+        const pct = (timeLeft / currentTimerDuration) * 100;
+        bar.style.width = pct + '%';
+
+        if(timeLeft <= 0) {
+          clearInterval(timerInterval);
+          bar.style.width = '0%';
+          handleTimeOut();
+        }
+      }, 100);
+    }
+
+    function showNotification(text, type) {
+      const banner = document.getElementById('top-notification');
+      banner.innerText = text;
+      banner.className = `top-notification show ${type}`;
+      setTimeout(() => banner.classList.remove('show'), 2500);
+    }
+
+    function handleTimeOut() {
+      const q = quizData[currentQIndex];
+      showNotification("Time's Up!", "error");
+      
+      document.querySelector('.quiz-container').classList.add('apply-shake');
+      
+      userResults.push({ qIndex: currentQIndex, status: 'skipped', userAnswer: null });
+      revealAnswer(null);
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+      if(timerInterval) clearInterval(timerInterval);
+      
+      const q = quizData[currentQIndex];
+      const isCorrect = (selectedIndex === q.c);
+
+      userResults.push({
+        qIndex: currentQIndex,
+        status: isCorrect ? 'correct' : 'wrong',
+        userAnswer: q.o[selectedIndex]
+      });
+
+      if(isCorrect) {
+        score++;
+        document.getElementById('score').innerText = score;
+        showNotification("Correct!", "success");
+        setTimeout(() => nextQuestion(), 500);
+      } else {
+        showNotification("Wrong Answer!", "error");
+        document.querySelector('.quiz-container').classList.add('apply-shake');
+        btnElement.classList.add('wrong');
+        revealAnswer(selectedIndex);
+      }
+    }
+
+    function revealAnswer(userSelectedIndex) {
+      const q = quizData[currentQIndex];
+      const btns = document.querySelectorAll('.option');
+      
+      btns.forEach((btn, idx) => {
+        btn.disabled = true;
+        if(idx === q.c) btn.classList.add('correct');
+      });
+
+      document.getElementById('feedback-box').style.display = 'block';
+      document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQIndex++;
+      if(currentQIndex < quizData.length) {
+        loadQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('settings-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = 'none';
+      document.getElementById('review-area').style.display = 'block';
+
+      const correctCount = userResults.filter(r => r.status === 'correct').length;
+      const wrongCount = userResults.filter(r => r.status === 'wrong').length;
+      const skippedCount = userResults.filter(r => r.status === 'skipped').length;
+
+      document.getElementById('final-stats').innerHTML = `
+        <div class="stat-box" style="color:#155724; background:#d4edda; border-color:#c3e6cb">Correct: ${correctCount}</div>
+        <div class="stat-box" style="color:#721c24; background:#f8d7da; border-color:#f5c6cb">Wrong: ${wrongCount}</div>
+        <div class="stat-box">Skipped: ${skippedCount}</div>
+        <h3 style="margin-top:20px;">Final Score: ${score} / ${quizData.length}</h3>
+      `;
+
+      const reviewContainer = document.getElementById('review-details');
+      reviewContainer.innerHTML = '';
+
+      const mistakes = userResults.filter(r => r.status !== 'correct');
+      
+      if(mistakes.length === 0) {
+        document.getElementById('toggle-review-btn').style.display = 'none';
+        reviewContainer.innerHTML = '<p style="text-align:center;">Perfect Score! Well done.</p>';
+      } else {
+        document.getElementById('toggle-review-btn').style.display = 'inline-block';
+        mistakes.forEach(m => {
+          const q = quizData[m.qIndex];
+          const userVal = m.userAnswer || "Time Out";
+          const correctVal = q.o[q.c];
+          
+          reviewContainer.innerHTML += `
+            <div class="review-item">
+              <span class="badge-wrong">${m.status.toUpperCase()}</span>
+              <p><b>Q:</b> ${q.t}</p>
+              <p><b>Your Answer:</b> <span style="text-decoration:line-through; color:var(--subtext)">${userVal}</span></p>
+              <p style="color:var(--correct-text)"><b>Correct:</b> ${correctVal}</p>
+              <div style="background:#f1f3f5; padding:10px; border-radius:6px; font-size:0.9rem; margin-top:5px;">
+                <i>${q.e}</i>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+
+    function toggleReviewDetails() {
+      const el = document.getElementById('review-details');
+      const btn = document.getElementById('toggle-review-btn');
+      if(el.style.display === 'none') {
+        el.style.display = 'block';
+        btn.innerText = 'Hide Mistakes';
+      } else {
+        el.style.display = 'none';
+        btn.innerText = 'Review Mistakes';
+      }
+    }
+  </script>
+</body>
+</html>

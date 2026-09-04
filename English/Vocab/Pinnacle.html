@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC CGL Synonyms Quiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background-color: #ffffff;
+            width: 500px;
+            max-width: 90%;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            max-height: 90vh;
+            overflow-y: auto; /* Allows scrolling for the review section */
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 26px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 25px;
+        }
+
+        .word-highlight {
+            color: #e74c3c;
+            font-size: 24px;
+        }
+
+        .options-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .option-btn {
+            background-color: #f1f2f6;
+            border: 2px solid #dfe4ea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            color: #2f3542;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-btn:hover {
+            background-color: #dff9fb;
+            border-color: #3498db;
+        }
+
+        .option-btn.correct {
+            background-color: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+
+        .option-btn.incorrect {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #next-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+
+        #next-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Review Section Styles */
+        .review-section {
+            display: none;
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        .review-item {
+            background: #f8f9fa;
+            border-left: 5px solid #e74c3c;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .review-item h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+        }
+
+        .review-correct {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .review-wrong {
+            color: #c0392b;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h2>SSC Synonyms Quiz</h2>
+    <div id="quiz-content">
+        <div class="question-text" id="question">Loading...</div>
+        <div class="options-list" id="options"></div>
+        <div class="controls">
+            <span class="score-board" id="score">Score: 0</span>
+            <button id="next-btn" onclick="nextQuestion()">Next</button>
+        </div>
+    </div>
+
+    <div id="review-panel" class="review-section">
+        <h3>Mistakes Review</h3>
+        <div id="review-list"></div>
+        <button onclick="location.reload()" style="background:#3498db; color:white; padding:10px 20px; border:none; border-radius:5px; margin-top:20px; cursor:pointer;">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    // Data source: Extracted specifically from the provided SSC PDF content
+    const questions = [
+        { word: "Insinuation", answer: "Indirect suggestion", options: ["Indirect suggestion", "Direct accusation", "Formal declaration", "Loud announcement"] },
+        { word: "Intimidate", answer: "Frighten", options: ["Frighten", "Encourage", "Assist", "Calm"] },
+        { word: "Relish", answer: "Enjoy", options: ["Enjoy", "Dislike", "Ignore", "Release"] },
+        { word: "Phonotypical", answer: "Representing sound", options: ["Representing sound", "Typical behavior", "Fake image", "Visual art"] },
+        { word: "Demented", answer: "Irrational / Wild", options: ["Irrational / Wild", "Calm", "Sensible", "Organized"] },
+        { word: "Berserk", answer: "Out of control", options: ["Out of control", "Peaceful", "Silent", "Happy"] },
+        { word: "Titivate", answer: "Enhance appearance", options: ["Enhance appearance", "Destroy", "Calculate", "Motivate"] },
+        { word: "Recapitulated", answer: "Summarized", options: ["Summarized", "Expanded", "Forgot", "Initiated"] },
+        { word: "Despicable", answer: "Deserving hatred", options: ["Deserving hatred", "Admirable", "Loveable", "Respectable"] },
+        { word: "Deplorable", answer: "Shockingly bad", options: ["Shockingly bad", "Excellent", "Acceptable", "Mild"] },
+        { word: "Intrepid", answer: "Fearless", options: ["Fearless", "Cowardly", "Timid", "Anxious"] },
+        { word: "Equivocal", answer: "Ambiguous", options: ["Ambiguous", "Clear", "Direct", "Certain"] },
+        { word: "Motile", answer: "Capable of movement", options: ["Capable of movement", "Stationary", "Fixed", "Rigid"] },
+        { word: "Swindle", answer: "Defraud", options: ["Defraud", "Donate", "Support", "Honesty"] },
+        { word: "Belligerent", answer: "Aggressive", options: ["Aggressive", "Friendly", "Peaceful", "Cooperative"] },
+        { word: "Pugnacious", answer: "Eager to fight", options: ["Eager to fight", "Calm", "Lazy", "Indifferent"] },
+        { word: "Sly", answer: "Cunning", options: ["Cunning", "Honest", "Naive", "Open"] },
+        { word: "Dogmatic", answer: "Opinionated", options: ["Opinionated", "Flexible", "Uncertain", "Open-minded"] },
+        { word: "Taintless", answer: "Pure", options: ["Pure", "Corrupt", "Dirty", "Stained"] },
+        { word: "Mendacious", answer: "Lying", options: ["Lying", "Truthful", "Honest", "Sincere"] },
+        { word: "Virtue", answer: "Moral excellence", options: ["Moral excellence", "Vice", "Sin", "Weakness"] },
+        { word: "Residue", answer: "Remains", options: ["Remains", "Start", "Whole", "Cause"] },
+        { word: "Consort", answer: "Companion", options: ["Companion", "Enemy", "Stranger", "Rival"] },
+        { word: "Acquiesce", answer: "Accept reluctantly", options: ["Accept reluctantly", "Deny", "Fight", "Reject"] },
+        { word: "Desist", answer: "Stop", options: ["Stop", "Continue", "Start", "Persist"] },
+        { word: "Thwart", answer: "Prevent", options: ["Prevent", "Assist", "Allow", "Encourage"] },
+        { word: "Mawkish", answer: "Sentimental", options: ["Sentimental", "Practical", "Serious", "Unemotional"] },
+        { word: "Ecstatic", answer: "Overjoyed", options: ["Overjoyed", "Sad", "Depressed", "Neutral"] },
+        { word: "Rapturous", answer: "Delighted", options: ["Delighted", "Bored", "Angry", "Miserable"] },
+        { word: "Daunt", answer: "Intimidate", options: ["Intimidate", "Encourage", "Comfort", "Support"] },
+        { word: "Languish", answer: "Weaken", options: ["Weaken", "Thrive", "Flourish", "Grow"] },
+        { word: "Doggedness", answer: "Persistence", options: ["Persistence", "Surrender", "Hesitation", "Weakness"] },
+        { word: "Oppressor", answer: "Tyrant", options: ["Tyrant", "Liberator", "Follower", "Servant"] },
+        { word: "Coddle", answer: "Pamper", options: ["Pamper", "Neglect", "Punish", "Ignore"] },
+        { word: "Affirmation", answer: "Confirmation", options: ["Confirmation", "Denial", "Refusal", "Doubt"] },
+        { word: "Waspish", answer: "Irritable", options: ["Irritable", "Cheerful", "Calm", "Friendly"] },
+        { word: "Solicitude", answer: "Concern", options: ["Concern", "Indifference", "Neglect", "Disregard"] },
+        { word: "Solace", answer: "Comfort", options: ["Comfort", "Distress", "Pain", "Trouble"] },
+        { word: "Decoy", answer: "Lure / Trap", options: ["Lure / Trap", "Safety", "Original", "Guide"] },
+        { word: "Kilter", answer: "Balance / Order", options: ["Balance / Order", "Chaos", "Disorder", "Mess"] },
+        { word: "Shambles", answer: "Disorder", options: ["Disorder", "Organization", "Neatness", "System"] },
+        { word: "Cacophonous", answer: "Noisy / Harsh", options: ["Noisy / Harsh", "Melodious", "Quiet", "Pleasant"] },
+        { word: "Blemish", answer: "Flaw", options: ["Flaw", "Perfection", "Benefit", "Advantage"] },
+        { word: "Faltering", answer: "Hesitating", options: ["Hesitating", "Steady", "Confident", "Strong"] },
+        { word: "Veracity", answer: "Truthfulness", options: ["Truthfulness", "Falsehood", "Lying", "Deceit"] },
+        { word: "Pedantic", answer: "Fussy / Exacting", options: ["Fussy / Exacting", "Careless", "Simple", "Imprecise"] },
+        { word: "Morbid", answer: "Gruesome", options: ["Gruesome", "Cheerful", "Healthy", "Pleasant"] },
+        { word: "Blithe", answer: "Carefree", options: ["Carefree", "Worried", "Anxious", "Serious"] },
+        { word: "Implore", answer: "Beg", options: ["Beg", "Command", "Demand", "Refuse"] },
+        { word: "Bequeath", answer: "Leave (in will)", options: ["Leave (in will)", "Take", "Steal", "Keep"] },
+        { word: "Miraculous", answer: "Incredible", options: ["Incredible", "Ordinary", "Normal", "Expected"] },
+        { word: "Dissipate", answer: "Waste", options: ["Waste", "Save", "Accumulate", "Gather"] },
+        { word: "Maverick", answer: "Nonconformist", options: ["Nonconformist", "Follower", "Traditionalist", "Sheep"] },
+        { word: "Conformist", answer: "Traditionalist", options: ["Traditionalist", "Rebel", "Maverick", "Leader"] },
+        { word: "Obdurate", answer: "Stubborn", options: ["Stubborn", "Flexible", "Yielding", "Gentle"] },
+        { word: "Induce", answer: "Cause", options: ["Cause", "Prevent", "Stop", "Hinder"] },
+        { word: "Ailing", answer: "Sickly", options: ["Sickly", "Healthy", "Strong", "Fit"] },
+        { word: "Comely", answer: "Attractive", options: ["Attractive", "Ugly", "Repulsive", "Plain"] },
+        { word: "Offish", answer: "Unfriendly", options: ["Unfriendly", "Sociable", "Warm", "Kind"] },
+        { word: "Disparate", answer: "Different", options: ["Different", "Similar", "Same", "Equal"] },
+        { word: "Derivative", answer: "Unoriginal", options: ["Unoriginal", "Unique", "Original", "Creative"] },
+        { word: "Delegation", answer: "Assignment", options: ["Assignment", "Retention", "Keeping", "Refusal"] },
+        { word: "Salutary", answer: "Beneficial", options: ["Beneficial", "Harmful", "Bad", "Unhealthy"] },
+        { word: "Munificent", answer: "Generous", options: ["Generous", "Stingy", "Miserly", "Greedy"] },
+        { word: "Impetuously", answer: "Rashly", options: ["Rashly", "Carefully", "Slowly", "Cautiously"] }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let wrongAttempts = [];
+
+    // Shuffle Function
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            showReview();
+            return;
+        }
+
+        const currentData = questions[currentQuestionIndex];
+        document.getElementById("question").innerHTML = `Select the synonym for: <br><span class="word-highlight">${currentData.word}</span>`;
+        
+        const optionsDiv = document.getElementById("options");
+        optionsDiv.innerHTML = "";
+        document.getElementById("next-btn").style.display = "none";
+
+        let currentOptions = [...currentData.options];
+        shuffleArray(currentOptions);
+
+        currentOptions.forEach(option => {
+            const btn = document.createElement("button");
+            btn.classList.add("option-btn");
+            btn.innerText = option;
+            btn.onclick = () => checkAnswer(btn, currentData.answer, currentData.word);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedBtn, correctAnswer, questionWord) {
+        const buttons = document.querySelectorAll(".option-btn");
+        
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            if (btn.innerText === correctAnswer) {
+                btn.classList.add("correct");
+            }
+        });
+
+        if (selectedBtn.innerText === correctAnswer) {
+            score++;
+            document.getElementById("score").innerText = `Score: ${score}`;
+        } else {
+            selectedBtn.classList.add("incorrect");
+            // Save wrong attempt for review
+            wrongAttempts.push({
+                word: questionWord,
+                correct: correctAnswer,
+                selected: selectedBtn.innerText
+            });
+        }
+
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+
+    function showReview() {
+        document.getElementById("quiz-content").style.display = "none";
+        document.getElementById("review-panel").style.display = "block";
+        document.getElementById("score").style.display = "none";
+
+        const list = document.getElementById("review-list");
+        const total = questions.length;
+        
+        let html = `<h3>Quiz Completed! Final Score: ${score}/${total}</h3>`;
+        
+        if(wrongAttempts.length === 0) {
+            html += `<p style="color:#27ae60; font-weight:bold;">Perfect Score! Well done!</p>`;
+        } else {
+            html += `<p>You got ${wrongAttempts.length} questions wrong. Review them below:</p>`;
+            wrongAttempts.forEach(item => {
+                html += `
+                <div class="review-item">
+                    <h4>${item.word}</h4>
+                    <div>Your Answer: <span class="review-wrong">${item.selected}</span></div>
+                    <div>Correct Answer: <span class="review-correct">${item.correct}</span></div>
+                </div>`;
+            });
+        }
+        
+        list.innerHTML = html;
+    }
+
+    // Start
+    shuffleArray(questions); // Shuffle the question order too
+    loadQuestion();
+
+</script>
+
+</body>
+</html>

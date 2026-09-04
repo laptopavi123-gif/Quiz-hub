@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC CGL Tier 2: Selected Words (Set 3)</title>
+    <style>
+        :root {
+            --primary: #FFD600; /* Yellow highlight for 'Important' feel */
+            --dark: #212121;
+            --card: #ffffff;
+            --text: #333333;
+            --green: #43A047;
+            --red: #E53935;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: var(--card);
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.4);
+            text-align: center;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            color: #888;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .sno-badge {
+            background-color: var(--primary);
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 35px;
+            line-height: 1.4;
+            color: #222;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 columns */
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; } /* 1 column on mobile */
+        }
+
+        .option-btn {
+            background-color: #FAFAFA;
+            border: 2px solid #E0E0E0;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #444;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            background-color: #FFF9C4;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background-color: #C8E6C9;
+            border-color: var(--green);
+            color: #1B5E20;
+        }
+
+        .option-btn.wrong {
+            background-color: #FFCDD2;
+            border-color: var(--red);
+            color: #B71C1C;
+        }
+
+        .option-btn.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .next-btn {
+            margin-top: 30px;
+            padding: 14px 40px;
+            background-color: var(--dark);
+            color: var(--primary);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .next-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .score-box {
+            display: none;
+        }
+
+        .score-number {
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-shadow: 2px 2px 0px #000;
+            margin: 20px 0;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <span id="progress-text">Question 1 / 26</span>
+        <span>SSC OWS</span>
+    </div>
+
+    <div id="quiz-content">
+        <div id="sno-display" class="sno-badge">#SNo</div>
+        <div class="question-text" id="question">Loading Question...</div>
+        
+        <div class="options-grid" id="options"></div>
+        
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+    </div>
+
+    <div id="score-box" class="score-box">
+        <h2>Quiz Completed!</h2>
+        <div class="score-number" id="final-score">0</div>
+        <p>Review the list in your Black Book for any mistakes.</p>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    // Data extracted from 56.pdf based on your requested Serial Numbers
+    const quizData = [
+        { sno: 134, word: "Soliloquy", meaning: "A speech in a play in which a character, who is alone on the stage, speaks his/her thoughts" },
+        { sno: 152, word: "Catalogue", meaning: "A complete list of items, for example, of things that people can look at/buy" },
+        { sno: 154, word: "Congregation", meaning: "A group of people who are gathered together in a church to worship god" },
+        { sno: 156, word: "Credulous", meaning: "Ready to believe things and therefore easy to trick" },
+        { sno: 157, word: "Curator", meaning: "A person whose job is to be in charge of the objects or words of art in a museum or art gallery" },
+        { sno: 158, word: "Demagogue", meaning: "A political leader who tries to win support by using arguments based on emotion rather than reason" },
+        { sno: 160, word: "Dilettante", meaning: "A person who does or studies something but is not serious about it // a dabbler in art and literature" },
+        { sno: 164, word: "Empathy", meaning: "The ability to understand another person's feelings, experience, etc." },
+        { sno: 166, word: "Ephemeral", meaning: "Lasting/ used for only a short period of time" },
+        { sno: 168, word: "Epitome", meaning: "A person or thing that is a perfect example of a particular quality or type" },
+        { sno: 170, word: "Exemplary", meaning: "Severe punishment used as a warning to others // providing a good example for people to copy" },
+        { sno: 171, word: "Expatriate", meaning: "A person living in a country that is not his own" },
+        { sno: 172, word: "Fidelity", meaning: "Loyalty / accuracy" },
+        { sno: 177, word: "Hedonist", meaning: "A person who believes that pleasure is the most important thing in life" },
+        { sno: 179, word: "Heresy", meaning: "A belief or an opinion that is against the principle of a particular religion" },
+        { sno: 180, word: "Honorary", meaning: "Given as an honour" },
+        { sno: 183, word: "Incentive", meaning: "Something that encourages you to do something" },
+        { sno: 184, word: "Infanticide", meaning: "The crime of killing a baby" },
+        { sno: 188, word: "Masochist", meaning: "Someone who obtains pleasure from receiving punishment" },
+        { sno: 189, word: "Megalomania", meaning: "Mental illness/condition in which somebody has an exaggerated belief in their own importance/power" },
+        { sno: 197, word: "Patrimony", meaning: "Property that is given to somebody when his father dies" },
+        { sno: 205, word: "Prologue", meaning: "A speech, etc. at the beginning of a play, book, or film that introduces it" },
+        { sno: 206, word: "Psephology", meaning: "The study of how people vote in elections" },
+        { sno: 207, word: "Pseudonym", meaning: "A fictitious name used instead of his real names" },
+        { sno: 208, word: "Scullery", meaning: "A small room next to the kitchen in an old house, originally used for washing dishes, etc." },
+        { sno: 210, word: "Spinster", meaning: "An old unmarried woman" },
+        { sno: 216, word: "Abduct", meaning: "To take somebody away illegally, especially using force" },
+        { sno: 220, word: "Actuary", meaning: "Someone versed in the collection and interpretation of numerical data (esp. insurance)" },
+        { sno: 224, word: "Agnostic", meaning: "A person who doubts truth of religion" },
+        { sno: 226, word: "Allegory", meaning: "A story/play/picture where each element represents an idea/quality (truth, evil, death)" },
+        { sno: 230, word: "Anecdote", meaning: "A short, interesting or amusing story about a real person or event" }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    // Shuffle questions
+    quizData.sort(() => Math.random() - 0.5);
+
+    // DOM Elements
+    const progressText = document.getElementById("progress-text");
+    const snoDisplay = document.getElementById("sno-display");
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const nextBtn = document.getElementById("next-btn");
+    const quizContent = document.getElementById("quiz-content");
+    const scoreBox = document.getElementById("score-box");
+    const finalScore = document.getElementById("final-score");
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        
+        // Update UI
+        progressText.innerText = `Question ${currentIdx + 1} / ${quizData.length}`;
+        snoDisplay.innerText = `#${data.sno}`;
+        questionEl.innerText = data.meaning;
+        
+        // Reset state
+        optionsEl.innerHTML = "";
+        nextBtn.style.display = "none";
+
+        // Generate Options (1 Correct + 3 Random Distractors from the same list)
+        let options = [data.word];
+        let allWords = quizData.map(item => item.word); 
+        
+        // Add random distractors
+        while (options.length < 4) {
+            let randomWord = allWords[Math.floor(Math.random() * allWords.length)];
+            if (!options.includes(randomWord)) {
+                options.push(randomWord);
+            }
+        }
+
+        // Shuffle options
+        options.sort(() => Math.random() - 0.5);
+
+        // Create Buttons
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, data.word);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        const buttons = document.querySelectorAll(".option-btn");
+        buttons.forEach(b => {
+            b.classList.add("disabled");
+            if (b.innerText === correct) {
+                b.classList.add("correct");
+            }
+        });
+
+        if (selected === correct) {
+            score++;
+        } else {
+            btn.classList.add("wrong");
+        }
+
+        nextBtn.style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showScore();
+        }
+    }
+
+    function showScore() {
+        quizContent.style.display = "none";
+        scoreBox.style.display = "block";
+        progressText.style.display = "none";
+        finalScore.innerText = `${score} / ${quizData.length}`;
+    }
+
+    // Start
+    loadQuestion();
+
+</script>
+
+</body>
+</html>

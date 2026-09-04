@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Passage Panel (Left) */
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 65px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        /* Question Panel (Right) */
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Review Section */
+        .review-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .review-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-review-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .review-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .review-q-text { font-weight: 600; margin-bottom: 8px; font-size: 1.05rem; }
+        .review-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 500; }
+        .text-wrong { color: #b91c1c; font-weight: 500; }
+        .review-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cloze Test Master Practice</h1>
+    <button class="btn-finish" onclick="showReview()">Finish & Review Test</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p3', this)">Passage 3 (The Old School)</button>
+    <button class="tab-btn" onclick="switchPassage('p4', this)">Passage 4 (Newspapers)</button>
+    <button class="tab-btn" onclick="switchPassage('p5', this)">Passage 5 (Sleep Deficit)</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="welcomeMessage" style="text-align: center; color: var(--text-light); margin-top: 50px;">
+            <svg style="width: 64px; height: 64px; color: #cbd5e1; margin-bottom: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+            <h2>Select a blank in the passage</h2>
+            <p>Click on any numbered blank on the left to view its options here.</p>
+        </div>
+
+        <div id="questionArea" style="display: none;">
+            <div class="q-header" id="questionTitle">Select the appropriate word:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="review-section" id="reviewSection">
+    <div class="review-container" id="reviewContainer">
+        <!-- Review Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    // Comprehensive Data mapping all 3 passages and 28 questions
+    const clozeData = {
+        p3: {
+            title: "Passage 3",
+            startIdx: 23,
+            text: "After an absence of thirty years, I decided to visit my old school again. I had <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ 23 ]</span> to find changes, but not an <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ 24 ]</span> different building. As I walked up <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ 25 ]</span> school drive, I wondered for a <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ 26 ]</span> if I had come to the <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ 27 ]</span> address. The grimy, red-brick fortress with <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ 28 ]</span> tall windows that had looked down <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ 29 ]</span> on the playground and playing fields <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ 30 ]</span> been swept away. In its place <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ 31 ]</span> a bright, modern block raised from <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ 32 ]</span> ground on great concrete stilts.",
+            questions: [
+                { opts: {a: "known", b: "expected", c: "hoped", d: "imagined"}, ans: "b", expl: "<strong>expected:</strong> After 30 years, it is logical that one would 'expect' changes to have occurred." },
+                { opts: {a: "entirely", b: "barely", c: "completely", d: "very"}, ans: "a", expl: "<strong>entirely:</strong> 'An entirely different building' is standard English usage. 'Completely' would also work, but 'entirely' flows best stylistically here." },
+                { opts: {a: "our", b: "my", c: "the", d: "picture"}, ans: "c", expl: "<strong>the:</strong> 'The school drive' refers to a specific drive belonging to the school." },
+                { opts: {a: "moment", b: "while", c: "instance", d: "period"}, ans: "a", expl: "<strong>moment:</strong> 'Wondered for a moment' is the standard idiomatic expression for a brief thought or hesitation." },
+                { opts: {a: "school", b: "actual", c: "right", d: "exact"}, ans: "c", expl: "<strong>right:</strong> When questioning location, one asks if they are at the 'right address'." },
+                { opts: {a: "her", b: "its", c: "the", d: "some"}, ans: "b", expl: "<strong>its:</strong> The pronoun refers back to the 'red-brick fortress', which is a non-living thing and thus takes 'its'." },
+                { opts: {a: "pleasantly", b: "seriously", c: "grimly", d: "sorrowfully"}, ans: "c", expl: "<strong>grimly:</strong> This aligns with the personification of the 'grimy, red-brick fortress' looking down in a stern or grim manner." },
+                { opts: {a: "did", b: "has", c: "have", d: "had"}, ans: "d", expl: "<strong>had:</strong> The passage is in past tense, and the action was completed before another past action, necessitating the past perfect 'had been swept away'." },
+                { opts: {a: "stood", b: "was", c: "appeared", d: "rose"}, ans: "a", expl: "<strong>stood:</strong> Buildings are structurally described as 'standing' in a place." },
+                { opts: {a: "solid", b: "a", c: "the", d: "low"}, ans: "c", expl: "<strong>the:</strong> 'Raised from the ground' requires the definite article 'the'." }
+            ],
+            answers: []
+        },
+        p4: {
+            title: "Passage 4",
+            startIdx: 33,
+            text: "The <span class='blank' id='b-p4-0' onclick='loadQuestion(\"p4\", 0)'>[ 33 ]</span> of today is a huge financial undertaking with the same outlook as any other limited company. The <span class='blank' id='b-p4-1' onclick='loadQuestion(\"p4\", 1)'>[ 34 ]</span> staff have to make circulation, and if they do not they will soon be <span class='blank' id='b-p4-2' onclick='loadQuestion(\"p4\", 2)'>[ 35 ]</span> by those who can. Their independence therefore suffers a grave limitation. It is further <span class='blank' id='b-p4-3' onclick='loadQuestion(\"p4\", 3)'>[ 36 ]</span> by the fact that a newspaper is as much an advertising medium as a vehicle for <span class='blank' id='b-p4-4' onclick='loadQuestion(\"p4\", 4)'>[ 37 ]</span>. It is said that the <span class='blank' id='b-p4-5' onclick='loadQuestion(\"p4\", 5)'>[ 38 ]</span> which the public pays for its newspaper covers no more than a third of the <span class='blank' id='b-p4-6' onclick='loadQuestion(\"p4\", 6)'>[ 39 ]</span> of production; the other two-thirds is accounted <span class='blank' id='b-p4-7' onclick='loadQuestion(\"p4\", 7)'>[ 40 ]</span> by advertisement revenue.",
+            questions: [
+                { opts: {a: "hospital", b: "newspaper", c: "theatre", d: "library"}, ans: "b", expl: "<strong>newspaper:</strong> Context clues like 'circulation' and 'advertisement revenue' later in the text make it clear this is about a newspaper." },
+                { opts: {a: "performing", b: "editorial", c: "company", d: "teaching"}, ans: "b", expl: "<strong>editorial:</strong> Newspapers employ an 'editorial' staff." },
+                { opts: {a: "sustained", b: "treated", c: "supplanted", d: "cured"}, ans: "c", expl: "<strong>supplanted:</strong> This means replaced or superseded. If they fail, they will be replaced by others who can succeed." },
+                { opts: {a: "destroyed", b: "deepened", c: "curtailed", d: "aggravated"}, ans: "c", expl: "<strong>curtailed:</strong> Meaning reduced or restricted. Their independence is further restricted (curtailed) by advertising reliance." },
+                { opts: {a: "training", b: "news", c: "business", d: "patients"}, ans: "b", expl: "<strong>news:</strong> A newspaper is primarily a vehicle for delivering 'news'." },
+                { opts: {a: "cost", b: "tax", c: "fee", d: "price"}, ans: "d", expl: "<strong>price:</strong> The public pays a 'price' to purchase the newspaper." },
+                { opts: {a: "expenses", b: "cost", c: "sale", d: "amount"}, ans: "b", expl: "<strong>cost:</strong> The standard economic phrase is the 'cost of production'." },
+                { opts: {a: "into", b: "in", c: "from", d: "for"}, ans: "d", expl: "<strong>for:</strong> 'Accounted for' is the correct phrasal verb meaning to form or make up a particular amount." }
+            ],
+            answers: []
+        },
+        p5: {
+            title: "Passage 5",
+            startIdx: 41,
+            text: "Most experts agree that even people who think they are sleeping enough would <span class='blank' id='b-p5-0' onclick='loadQuestion(\"p5\", 0)'>[ 41 ]</span> be better off with more <span class='blank' id='b-p5-1' onclick='loadQuestion(\"p5\", 1)'>[ 42 ]</span>. As evidence of a general sleep deficit, they <span class='blank' id='b-p5-2' onclick='loadQuestion(\"p5\", 2)'>[ 43 ]</span> the use of the bedside alarm clock used by people to <span class='blank' id='b-p5-3' onclick='loadQuestion(\"p5\", 3)'>[ 44 ]</span> their waking hours. The most relentless robber of <span class='blank' id='b-p5-4' onclick='loadQuestion(\"p5\", 4)'>[ 45 ]</span> is the complexity of every day life. Whenever pressures from work, family and community <span class='blank' id='b-p5-5' onclick='loadQuestion(\"p5\", 5)'>[ 46 ]</span>, many people <span class='blank' id='b-p5-6' onclick='loadQuestion(\"p5\", 6)'>[ 47 ]</span> with sleep. Another <span class='blank' id='b-p5-7' onclick='loadQuestion(\"p5\", 7)'>[ 48 ]</span> of sleep is the shift work. The <span class='blank' id='b-p5-8' onclick='loadQuestion(\"p5\", 8)'>[ 49 ]</span> of round-the-clock entertainment, especially all-night television, also takes its <span class='blank' id='b-p5-9' onclick='loadQuestion(\"p5\", 9)'>[ 50 ]</span>.",
+            questions: [
+                { opts: {a: "mainly", b: "probably", c: "suddenly", d: "attentively", e: "meaningfully"}, ans: "b", expl: "<strong>probably:</strong> 'Would probably be better off' expresses likelihood without making a definitive medical claim." },
+                { opts: {a: "rest", b: "work", c: "time", d: "energy", e: "freedom"}, ans: "a", expl: "<strong>rest:</strong> The entire passage is discussing sleep and fatigue; hence 'more rest'." },
+                { opts: {a: "prove", b: "cite", c: "ignore", d: "explain", e: "overlook"}, ans: "b", expl: "<strong>cite:</strong> Experts 'cite' (reference or quote) the use of alarm clocks as evidence." },
+                { opts: {a: "widen", b: "disturb", c: "prolong", d: "improve", e: "minimise"}, ans: "c", expl: "<strong>prolong:</strong> People use alarm clocks to wake up early, thereby extending or 'prolonging' their waking hours." },
+                { opts: {a: "stress", b: "sleep", c: "leisure", d: "pleasure", e: "motivation"}, ans: "b", expl: "<strong>sleep:</strong> The complexity of life steals 'sleep' from individuals." },
+                { opts: {a: "mount", b: "unite", c: "happen", d: "diminish", e: "disappear"}, ans: "a", expl: "<strong>mount:</strong> When pressures increase or pile up, they are said to 'mount'." },
+                { opts: {a: "depend", b: "desist", c: "detach", d: "deprive", e: "dispense"}, ans: "e", expl: "<strong>dispense:</strong> 'Dispense with' is a phrasal verb meaning to get rid of or manage without. People forgo sleep." },
+                { opts: {a: "study", b: "product", c: "thief", d: "drawback", e: "contributor"}, ans: "c", expl: "<strong>thief:</strong> This parallels the earlier use of the word 'robber' ('another thief of sleep')." },
+                { opts: {a: "telecast", b: "viewing", c: "deficiency", d: "requirement", e: "availability"}, ans: "e", expl: "<strong>availability:</strong> The fact that entertainment is always 'available' leads people to stay up late." },
+                { opts: {a: "toll", b: "credit", c: "risk", d: "pressure", e: "enjoyment"}, ans: "a", expl: "<strong>toll:</strong> 'Takes its toll' is a standard idiom meaning to cause damage, suffering, or exhaustion over time." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = 'p3';
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    // Initialization
+    window.onload = () => {
+        // Calculate total questions for scoring
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        document.getElementById('passageContent').innerHTML = clozeData['p3'].text;
+    };
+
+    // Switch between passages
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        // Update Tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Render Passage
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        // Hide Question Area, Show Welcome
+        document.getElementById('questionArea').style.display = 'none';
+        document.getElementById('welcomeMessage').style.display = 'block';
+        currentBlankIndex = null;
+        
+        // Re-apply previous answers to blanks
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+    }
+
+    // Load a specific question
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+        const displayQuestionNum = clozeData[passageId].startIdx + qIndex;
+
+        // UI toggles
+        document.getElementById('welcomeMessage').style.display = 'none';
+        document.getElementById('questionArea').style.display = 'block';
+        
+        // Highlight active blank in text
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        document.getElementById(`b-${passageId}-${qIndex}`).classList.add('active');
+
+        // Populate Right Panel
+        document.getElementById('questionTitle').innerText = `Select the word for Blank [ ${displayQuestionNum} ]:`;
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    // Handle user selection
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        // Save state
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        // Disable options and show correct/wrong
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        // Show Explanation
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        // Update Passage Blank
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // Display Review Section globally
+    function showReview() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        const reviewSection = document.getElementById('reviewSection');
+        const reviewContainer = document.getElementById('reviewContainer');
+        
+        reviewSection.style.display = 'block';
+        
+        let score = 0;
+        let reviewHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            reviewHTML += `<div class="passage-review-title">${passage.title} Review</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const displayNum = passage.startIdx + idx;
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `Your Answer: (${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+
+                reviewHTML += `
+                    <div class="review-item">
+                        <div class="review-q-text">Blank [ ${displayNum} ]</div>
+                        <div class="review-ans ${statusClass}">${statusText}</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="review-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="review-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        reviewContainer.innerHTML = scoreCard + reviewHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>

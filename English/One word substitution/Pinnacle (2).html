@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC Vocabulary Quiz: Mixed Bag</title>
+    <style>
+        :root {
+            --primary: #FF5722; /* Deep Orange */
+            --dark: #212121;
+            --card: #333333;
+            --text: #FFFFFF;
+            --correct: #4CAF50;
+            --wrong: #F44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-wrapper {
+            background-color: var(--card);
+            width: 100%;
+            max-width: 650px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+
+        .header {
+            border-bottom: 1px solid #555;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            color: #bbb;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-box {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .btn {
+            background-color: #424242;
+            border: 2px solid #555;
+            color: var(--text);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+            background-color: #505050;
+        }
+
+        .btn.correct {
+            background-color: rgba(76, 175, 80, 0.3);
+            border-color: var(--correct);
+            color: #81C784;
+        }
+
+        .btn.wrong {
+            background-color: rgba(244, 67, 54, 0.3);
+            border-color: var(--wrong);
+            color: #E57373;
+        }
+
+        .btn.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .next-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            margin-top: 25px;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .results-view {
+            display: none;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-wrapper">
+    <div class="header">
+        <span id="progress">1 / 22</span>
+        <span>Selected Words</span>
+    </div>
+
+    <div id="quiz-interface">
+        <div class="question-box">
+            <div class="question-text" id="question">Loading...</div>
+        </div>
+        <div class="options-grid" id="options"></div>
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+    </div>
+
+    <div id="results-view" class="results-view">
+        <h2>Quiz Complete</h2>
+        <div class="score-display" id="final-score">0</div>
+        <p>Score</p>
+        <button class="next-btn" style="display:inline-block;" onclick="location.reload()">Restart</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { 
+            word: "Obstetrician", 
+            meaning: "A doctor who specializes in pregnancy and childbirth", 
+            distractors: ["Pediatrician", "Orthopedician", "Optician"] 
+        },
+        { 
+            word: "Chauvinist", 
+            meaning: "A person displaying aggressive or exaggerated patriotism / blind belief in superiority", 
+            distractors: ["Feminist", "Pacifist", "Optimist"] 
+        },
+        { 
+            word: "Squabble", 
+            meaning: "A noisy quarrel about something trivial", 
+            distractors: ["Scrabble", "Scribble", "Shuffle"] 
+        },
+        { 
+            word: "Invoke", 
+            meaning: "Cite or appeal to (someone or something) as an authority", 
+            distractors: ["Provoke", "Revoke", "Evoke"] 
+        },
+        { 
+            word: "Ingenious", 
+            meaning: "Clever, original, and inventive", 
+            distractors: ["Ingenuous", "Indigenous", "Ignominious"] 
+        },
+        { 
+            word: "Pertinent", 
+            meaning: "Relevant or applicable to a particular matter", 
+            distractors: ["Impertinent", "Permanent", "Penitent"] 
+        },
+        { 
+            word: "Out and out", 
+            meaning: "Totally; completely", 
+            distractors: ["Off and on", "Over and out", "Out and about"] 
+        },
+        { 
+            word: "Jurisprudence", 
+            meaning: "The theory or philosophy of law", 
+            distractors: ["Jurisdiction", "Judiciary", "Prudence"] 
+        },
+        { 
+            word: "Regalia", 
+            meaning: "The emblems or insignia of royalty", 
+            distractors: ["Regiment", "Region", "Regulars"] 
+        },
+        { 
+            word: "Virtuoso", 
+            meaning: "A person highly skilled in music or another artistic pursuit", 
+            distractors: ["Virtuous", "Verbose", "Viscous"] 
+        },
+        { 
+            word: "Virtuous", 
+            meaning: "Having or showing high moral standards", 
+            distractors: ["Virtuoso", "Virtual", "Violent"] 
+        },
+        { 
+            word: "Flaunt", 
+            meaning: "Display (something) ostentatiously, especially in order to provoke envy", 
+            distractors: ["Flout", "Taunt", "Gaunt"] 
+        },
+        { 
+            word: "Innocuous", 
+            meaning: "Not harmful or offensive", 
+            distractors: ["Inoculate", "Innoxious", "Obnoxious"] 
+        },
+        { 
+            word: "Inebriated", 
+            meaning: "Drunk; intoxicated", 
+            distractors: ["Inundated", "Infuriated", "Initiated"] 
+        },
+        { 
+            word: "Simonised", 
+            meaning: "Polished (specifically with wax)", 
+            distractors: ["Simmered", "Summarised", "Synchronised"] 
+        },
+        { 
+            word: "Lacerate", 
+            meaning: "Tear or make deep cuts in (flesh or skin)", 
+            distractors: ["Macerate", "Ulcerate", "Decorate"] 
+        },
+        { 
+            word: "Squeamish", 
+            meaning: "Easily made to feel sick, faint, or disgusted, especially by blood", 
+            distractors: ["Squarish", "Squeeze", "Squeak"] 
+        },
+        { 
+            word: "Insular", 
+            meaning: "Ignorant of or uninterested in cultures, ideas, or peoples outside one's own experience", 
+            distractors: ["Solar", "Insulated", "Peninsular"] 
+        },
+        { 
+            word: "Cavalier", 
+            meaning: "Showing a lack of proper concern; offhand", 
+            distractors: ["Chevalier", "Chivalrous", "Cavalry"] 
+        },
+        { 
+            word: "Rancour", 
+            meaning: "Bitterness or resentfulness, especially when long-standing", 
+            distractors: ["Candour", "Tumour", "Rumour"] 
+        },
+        { 
+            word: "Grotesque", 
+            meaning: "Comically or repulsively ugly or distorted", 
+            distractors: ["Picturesque", "Burlesque", "Unique"] 
+        },
+        { 
+            word: "Corpulent", 
+            meaning: "Fat (of a person)", 
+            distractors: ["Corporate", "Corpse", "Opulent"] 
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    // Shuffle questions
+    quizData.sort(() => Math.random() - 0.5);
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('next-btn');
+    const progressEl = document.getElementById('progress');
+    const interfaceEl = document.getElementById('quiz-interface');
+    const resultsEl = document.getElementById('results-view');
+    const finalScoreEl = document.getElementById('final-score');
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        progressEl.innerText = `${currentIdx + 1} / ${quizData.length}`;
+        questionEl.innerText = data.meaning;
+        
+        optionsEl.innerHTML = '';
+        nextBtn.style.display = 'none';
+
+        let opts = [...data.distractors, data.word];
+        opts.sort(() => Math.random() - 0.5);
+
+        opts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, data.word);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(b => {
+            b.classList.add('disabled');
+            if (b.innerText === correct) b.classList.add('correct');
+        });
+
+        if (selected === correct) {
+            score++;
+        } else {
+            btn.classList.add('wrong');
+        }
+        nextBtn.style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        interfaceEl.style.display = 'none';
+        progressEl.style.display = 'none';
+        resultsEl.style.display = 'block';
+        finalScoreEl.innerText = `${score} / ${quizData.length}`;
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Master: English Only</title>
+    <style>
+        /* --- CORE STYLES --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            user-select: none; 
+            overflow: hidden; 
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 650px;
+            text-align: center;
+            position: relative;
+            z-index: 1; 
+        }
+        .header { margin-bottom: 20px; }
+        .progress-bar {
+            width: 100%; height: 10px; background-color: #e9ecef;
+            border-radius: 5px; margin-bottom: 10px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background-color: #007bff; width: 0%; transition: width 0.3s ease;
+        }
+        .stats {
+            display: flex; justify-content: space-between; color: #6c757d;
+            font-size: 0.9rem; margin-bottom: 20px;
+        }
+        
+        /* Question Card */
+        .question-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .question-card.interactive:hover, 
+        .option-btn.interactive:hover {
+            border-color: #007bff;
+            cursor: help !important;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .q-type {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.8rem; font-weight: bold; text-transform: uppercase;
+        }
+        .word-display {
+            font-size: 2rem; font-weight: 800; color: #212529; margin: 10px 0; display: block;
+        }
+        .instruction { font-size: 1.1rem; color: #495057; }
+        
+        /* Options Grid */
+        .options-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        @media (max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
+
+        button.option-btn {
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        button.option-btn:hover:not([disabled]) {
+            background-color: #e2e6ea;
+            transform: translateY(-2px);
+        }
+
+        /* Answer States */
+        button.correct {
+            background-color: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724 !important;
+        }
+        button.wrong {
+            background-color: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24 !important;
+        }
+        
+        .next-btn {
+            background-color: #007bff; color: white; border: none;
+            padding: 12px 30px; border-radius: 8px; font-size: 1rem;
+            font-weight: bold; cursor: pointer; margin-top: 20px;
+            display: none; width: 100%;
+        }
+        .next-btn:hover { background-color: #0056b3; }
+        .type-syn { background-color: #28a745; } 
+        .type-ant { background-color: #dc3545; }
+
+        /* --- DICTIONARY MODAL --- */
+        .dict-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .dict-card {
+            background: white; width: 90%; max-width: 450px;
+            padding: 25px; border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+            text-align: left;
+            animation: popUp 0.2s ease-out;
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @keyframes popUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .dict-word {
+            font-size: 2rem; font-weight: 800; color: #212529;
+            text-transform: capitalize; border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px; margin-bottom: 15px;
+        }
+        .dict-section { margin-bottom: 15px; }
+        .dict-label {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+            color: #888; margin-bottom: 5px; font-weight: bold;
+        }
+        .dict-def {
+            font-size: 1.1rem; color: #333; line-height: 1.5;
+            background: #f8f9fa; padding: 15px; border-radius: 8px;
+            border-left: 5px solid #007bff;
+        }
+        .close-dict {
+            position: absolute; top: 15px; right: 20px;
+            font-size: 2rem; color: #aaa; cursor: pointer;
+            background: none; border: none; line-height: 1;
+        }
+        .close-dict:hover { color: #333; }
+
+        /* --- DRAWING STYLES --- */
+        #drawing-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 998; pointer-events: none;
+        }
+        body.draw-active #drawing-layer { pointer-events: auto; cursor: crosshair; }
+
+        .drawing-dock {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: flex; align-items: center;
+            background: #d6d4d4; border-radius: 50px; padding: 5px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 50px; height: 50px; overflow: hidden;
+            transition: width 0.3s ease;
+        }
+        .drawing-dock.active { width: 380px; padding: 5px 10px; }
+        
+        .dock-trigger {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #e6d5d5; border: none; color: white;
+            font-size: 1.2rem; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; flex-shrink: 0;
+            z-index: 2;
+        }
+        .drawing-dock.active .dock-trigger { background: #ff4d4d; }
+        .dock-tools {
+            display: flex; align-items: center; gap: 15px; margin-left: 15px;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s 0.1s;
+        }
+        .drawing-dock.active .dock-tools { opacity: 1; pointer-events: auto; }
+        
+        .color-swatch {
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+            border: 2px solid transparent; transition: transform 0.2s;
+        }
+        .color-swatch.active { border-color: white; transform: scale(1.1); }
+        .separator { width: 1px; height: 20px; background: #555; }
+        .icon-btn { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; }
+        .icon-btn:hover { color: white; }
+        input[type="range"] { width: 80px; accent-color: white; }
+        #custom-color-picker { position: absolute; opacity: 0; width: 0; height: 0; }
+    </style>
+</head>
+<body>
+
+<canvas id="drawing-layer"></canvas>
+
+<div class="drawing-dock" id="drawing-dock">
+    <button class="dock-trigger" onclick="toggleDock()" title="Toggle Draw (Key: D)">
+        <span id="trigger-icon">✏️</span>
+    </button>
+    <div class="dock-tools">
+        <div class="color-swatch active" style="background:#ff3b30;" onclick="setColor('#ff3b30', this)"></div>
+        <div class="color-swatch" style="background:#007bff;" onclick="setColor('#007bff', this)"></div>
+        <div class="color-swatch" style="background:#28a745;" onclick="setColor('#28a745', this)"></div>
+        <div class="color-swatch" style="background:#ffffff;" onclick="setColor('#ffffff', this)" title="Eraser"></div>
+        <div class="color-swatch" style="background: linear-gradient(45deg, red, blue, green);" onclick="document.getElementById('custom-color-picker').click()"></div>
+        <input type="color" id="custom-color-picker" onchange="setColor(this.value, this.previousElementSibling)">
+        <div class="separator"></div>
+        <input type="range" min="2" max="20" value="4" id="pen-size" title="Brush Size (Key: S)">
+        <div class="separator"></div>
+        <button class="icon-btn" onclick="clearCanvas()" title="Clear (Key: C)">🗑️</button>
+    </div>
+</div>
+
+<div class="dict-modal-overlay" id="dict-overlay" onclick="closeDictionary(event)">
+    <div class="dict-card" onclick="event.stopPropagation()">
+        <button class="close-dict" onclick="closeDictionary()">×</button>
+        <div class="dict-word" id="dict-word-text">WORD</div>
+        
+        <div class="dict-section">
+            <div class="dict-label">English Definition</div>
+            <div class="dict-def" id="dict-def-text">Loading...</div>
+        </div>
+        
+        <div style="font-size:0.8rem; color:#aaa; margin-top:10px; text-align:center;">
+            Audio played automatically
+        </div>
+    </div>
+</div>
+
+<div class="quiz-container">
+    <div id="quiz-interface">
+        <div class="header">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="stats">
+                <span>Total Coverage Mode</span>
+                <span>Question <span id="current-count">1</span> / <span id="total-count">--</span></span>
+            </div>
+        </div>
+
+        <div class="question-card" id="q-card">
+            <span class="q-type" id="q-type-badge">SYNONYM</span>
+            <div class="instruction" id="q-instruction">What is a synonym for:</div>
+            <span class="word-display" id="q-word">WORD</span>
+        </div>
+
+        <div class="options-grid" id="options-area">
+        </div>
+
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Word &rarr;</button>
+    </div>
+
+    <div id="results-interface" style="display:none;">
+        <h1>Review Complete!</h1>
+        <div style="font-size:3rem; font-weight:bold; color:#007bff; margin: 20px 0;">
+            <span id="final-score">0</span>%
+        </div>
+        <button class="next-btn" style="display:block;" onclick="location.reload()">Restart Drill</button>
+    </div>
+</div>
+
+<script>
+    /* --- DRAWING LOGIC (SHORTCUTS: D, C, S) --- */
+    const canvas = document.getElementById('drawing-layer');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let drawModeEnabled = false;
+    let currentColor = '#ff3b30';
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); 
+
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey || event.metaKey) return; // Allow system shortcuts
+        const key = event.key.toLowerCase();
+        if (key === 'd') { toggleDock(); }
+        if (key === 'c') { clearCanvas(); }
+        if (key === 's') { 
+            const slider = document.getElementById('pen-size');
+            slider.value = parseInt(slider.value) > 5 ? 3 : 10;
+        }
+    });
+
+    function toggleDock() {
+        drawModeEnabled = !drawModeEnabled;
+        const dock = document.getElementById('drawing-dock');
+        const icon = document.getElementById('trigger-icon');
+        if (drawModeEnabled) {
+            document.body.classList.add('draw-active'); dock.classList.add('active'); icon.innerText = "✖"; 
+        } else {
+            document.body.classList.remove('draw-active'); dock.classList.remove('active'); icon.innerText = "✏️";
+        }
+    }
+
+    function setColor(color, element) {
+        currentColor = color;
+        document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+    }
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    function startDraw(e) { if (!drawModeEnabled) return; isDrawing = true; draw(e); }
+    function endDraw() { isDrawing = false; ctx.beginPath(); }
+    function draw(e) {
+        if (!isDrawing || !drawModeEnabled) return;
+        ctx.lineWidth = document.getElementById('pen-size').value;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = currentColor;
+        ctx.lineTo(e.clientX, e.clientY); ctx.stroke(); ctx.beginPath(); ctx.moveTo(e.clientX, e.clientY);
+    }
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseout', endDraw);
+
+
+    /* --- QUIZ DATA (FULL 19 WORDS) --- */
+    const vocabData = [
+        { 
+            key: "Awkward", 
+            syns: ["Clumsy", "Ungainly", "Ponderous", "Rough"], 
+            ants: ["Clever", "Dexterous", "Apt", "Skilful"] 
+        },
+        { 
+            key: "Apparent", 
+            syns: ["Evident", "Obvious", "Perceptible", "Distinct"], 
+            ants: ["Masked", "Obscure", "Indistinct", "Doubtful"] 
+        },
+        { 
+            key: "Allure", 
+            syns: ["Entice", "Fascinate", "Tempt", "Seduce"], 
+            ants: ["Repulse", "Repel", "Deter", "Distaste"] 
+        },
+        { 
+            key: "Abortive", 
+            syns: ["Vain", "Useless", "Fruitless", "Unproductive"], 
+            ants: ["Effectual", "Productive", "Successful", "Progressive"] 
+        },
+        { 
+            key: "Abominable", 
+            syns: ["Odious", "Detestable", "Repugnant", "Aversion"], 
+            ants: ["Likeable", "Pleasant", "Affectionate", "Enjoyable"] 
+        },
+        { 
+            key: "Allay", 
+            syns: ["Pacify", "Soothe", "Lighten", "Assuage"], 
+            ants: ["Aggravate", "Heighten", "Agitate", "Excite"] 
+        },
+        { 
+            key: "Axiom", 
+            syns: ["Maxim", "Saying", "Dictum", "Truth"], 
+            ants: ["Absurdity", "Blunder", "Ridiculousness", "Irrelevant"] 
+        },
+        { 
+            key: "Assiduous", 
+            syns: ["Constant", "Diligent", "Attentive", "Persevering"], 
+            ants: ["Indifference", "Careless", "Indolent", "Lethargic"] 
+        },
+        { 
+            key: "Abjure", 
+            syns: ["Forsake", "Renounce", "Retract", "Revoke"], 
+            ants: ["Approve", "Sanction", "Patronise", "Adopt"] 
+        },
+        { 
+            key: "Abject", 
+            syns: ["Despicable", "Servile", "Base", "Contemptible"], 
+            ants: ["Exalted", "Commendable", "Praiseworthy", "Imposing"] 
+        },
+        { 
+            key: "Aversion", 
+            syns: ["Dislike", "Hatred", "Indifferent", "Apathy"], 
+            ants: ["Affection", "Fondness", "Niceness", "Liking"] 
+        },
+        { 
+            key: "Authentic", 
+            syns: ["Genuine", "Reliable", "Valid", "Guaranteed"], 
+            ants: ["Fictitious", "Counterfeit", "Unreal", "False"] 
+        },
+        { 
+            key: "Audacity", 
+            syns: ["Boldness", "Arrogance", "Insolence", "Haughtiness"], 
+            ants: ["Mildness", "Humility", "Cowardice", "Submission"] 
+        },
+        { 
+            key: "Astute", 
+            syns: ["Clever", "Intelligent", "Wise", "Brilliant"], 
+            ants: ["Dull", "Unintelligent", "Shallow", "Solid"] 
+        },
+        { 
+            key: "Abettor", 
+            syns: ["Assistant", "Accomplice", "Colleague", "Associate"], 
+            ants: ["Opponent", "Adversary", "Antagonist", "Rival"] 
+        },
+        { 
+            key: "Abate", 
+            syns: ["Moderate", "Mitigate", "Lessen", "Decrease"], 
+            ants: ["Aggravate", "Intensify", "Augment", "Supplement"] 
+        },
+        { 
+            key: "Arraign", 
+            syns: ["Charge", "Blame", "Accuse", "Complain"], 
+            ants: ["Exculpate", "Pardon", "Condone", "Exonerate"] 
+        },
+        { 
+            key: "Apathy", 
+            syns: ["Unconcern", "Indifference", "Insensitivity", "Aloofness"], 
+            ants: ["Concern", "Care", "Anxiety", "Eagerness"] 
+        },
+        { 
+            key: "Alien", 
+            syns: ["Foreigner", "Outsider", "Stranger", "Emigrant"], 
+            ants: ["Native", "Citizen", "Resident", "Occupant"] 
+        }
+    ];
+
+    let quizQueue = [];
+    let currentIdx = 0;
+    let score = 0;
+    let answerRevealed = false;
+
+    function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function getDistractors(count, excludeList) {
+        let distractors = [];
+        let attempts = 0;
+        while(distractors.length < count && attempts < 100) {
+            attempts++;
+            let randomObj = getRandom(vocabData);
+            let randomWord = Math.random() > 0.5 ? getRandom(randomObj.syns) : getRandom(randomObj.ants);
+            if (!excludeList.includes(randomWord) && !distractors.includes(randomWord)) distractors.push(randomWord);
+        }
+        return distractors;
+    }
+
+    function generateQuiz() {
+        quizQueue = [];
+        vocabData.forEach(item => {
+            // Include ALL question permutations
+            item.syns.forEach(synWord => quizQueue.push({ questionWord: synWord, targetType: "SYNONYM", correct: item.key, options: [item.key, ...getDistractors(3, [...item.syns, ...item.ants, item.key])] }));
+            item.ants.forEach(antWord => quizQueue.push({ questionWord: antWord, targetType: "ANTONYM", correct: item.key, options: [item.key, ...getDistractors(3, [...item.syns, ...item.ants, item.key])] }));
+            
+            // Random check on main word
+            quizQueue.push({ questionWord: item.key, targetType: "SYNONYM", correct: getRandom(item.syns), options: [getRandom(item.syns), ...getDistractors(3, [...item.syns, ...item.ants, item.key])] });
+            quizQueue.push({ questionWord: item.key, targetType: "ANTONYM", correct: getRandom(item.ants), options: [getRandom(item.ants), ...getDistractors(3, [...item.syns, ...item.ants, item.key])] });
+        });
+        
+        // Shuffle everything
+        quizQueue.sort(() => Math.random() - 0.5);
+        document.getElementById('total-count').textContent = quizQueue.length;
+    }
+
+    function loadQuestion() {
+        answerRevealed = false;
+        if (currentIdx >= quizQueue.length) { endQuiz(); return; }
+
+        const q = quizQueue[currentIdx];
+        document.getElementById('current-count').textContent = currentIdx + 1;
+        document.getElementById('progress-fill').style.width = ((currentIdx) / quizQueue.length * 100) + '%';
+        
+        const badge = document.getElementById('q-type-badge');
+        badge.textContent = q.targetType;
+        badge.className = 'q-type ' + (q.targetType === 'SYNONYM' ? 'type-syn' : 'type-ant');
+        
+        document.getElementById('q-instruction').textContent = `Find the ${q.targetType.toLowerCase()} of:`;
+        document.getElementById('q-word').textContent = q.questionWord;
+        
+        // Reset Interactive State
+        document.getElementById('q-card').classList.remove('interactive');
+        document.getElementById('q-card').onclick = null;
+
+        const optionsDiv = document.getElementById('options-area');
+        optionsDiv.innerHTML = '';
+        document.getElementById('next-btn').style.display = 'none';
+
+        let opts = [...q.options].sort(() => Math.random() - 0.5);
+        opts.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            // IMPORTANT: Bind the answer logic first
+            btn.onclick = () => handleAnswer(btn, opt, q.correct);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(btn, selected, correct) {
+        if(answerRevealed) return; // Prevent double checking
+        answerRevealed = true; 
+
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => {
+            // 1. Disable normal answer clicking
+            b.onclick = null; 
+            
+            // 2. Enable Dictionary Click
+            b.classList.add('interactive');
+            b.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop bubbling
+                openDictionary(b.textContent);
+            });
+        });
+
+        // 3. Enable Dictionary for Main Question Word
+        const qCard = document.getElementById('q-card');
+        qCard.classList.add('interactive');
+        const mainWord = document.getElementById('q-word').textContent;
+        qCard.onclick = () => openDictionary(mainWord);
+
+        // 4. Mark Colors
+        if (selected === correct) {
+            btn.classList.add('correct'); score++;
+        } else {
+            btn.classList.add('wrong');
+            allBtns.forEach(b => { if(b.textContent === correct) b.classList.add('correct'); });
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    /* --- ENGLISH DEFINITION & AUDIO LOGIC (NO HINDI) --- */
+    function openDictionary(word) {
+        const modal = document.getElementById('dict-overlay');
+        const wordText = document.getElementById('dict-word-text');
+        const defText = document.getElementById('dict-def-text');
+        
+        // Reset UI
+        modal.style.display = 'flex';
+        wordText.textContent = word;
+        defText.textContent = "Fetching definition...";
+        
+        // Auto Play Audio
+        speakWord(word);
+
+        // --- FETCH: English Definition (Free Dict API) ---
+        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+            .then(res => res.json())
+            .then(data => {
+                if(Array.isArray(data) && data[0].meanings.length > 0) {
+                    const firstDef = data[0].meanings[0].definitions[0].definition;
+                    defText.textContent = firstDef;
+                } else {
+                    defText.textContent = "Definition not found in English DB.";
+                }
+            })
+            .catch(() => {
+                defText.textContent = "Could not load definition (Offline?)";
+            });
+    }
+
+    function closeDictionary(e) {
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('dict-overlay').style.display = 'none';
+        window.speechSynthesis.cancel();
+    }
+
+    function speakWord(text) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function nextQuestion() { currentIdx++; loadQuestion(); }
+    function endQuiz() {
+        document.getElementById('quiz-interface').style.display = 'none';
+        document.getElementById('results-interface').style.display = 'block';
+        document.getElementById('final-score').textContent = Math.round((score / quizQueue.length) * 100);
+    }
+
+    // Init
+    generateQuiz();
+    loadQuestion();
+
+</script>
+</body>
+</html>

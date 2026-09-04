@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC/Banking - Sentence Improvement Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --correct-bg: #dcfce7;
+            --correct-border: #22c55e;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-border: #ef4444;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: var(--bg-panel);
+            max-width: 850px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h2 { margin: 0; font-size: 1.5rem; letter-spacing: 0.5px; }
+
+        .progress-container {
+            background: #e0e7ff;
+            height: 8px;
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- Question View Styles --- */
+        .question-body { padding: 40px; min-height: 400px; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #1e293b;
+        }
+
+        .question-text u {
+            text-decoration-color: var(--primary);
+            text-decoration-thickness: 3px;
+            padding-bottom: 2px;
+        }
+
+        .options-list { display: flex; flex-direction: column; gap: 14px; }
+
+        .option-btn {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px 22px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-border);
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong-border);
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 30px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.4s ease;
+            color: #334155;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .footer-nav {
+            padding: 20px 40px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+
+        .nav-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            background: var(--border-color);
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .nav-btn:hover:not(:disabled) { background: #cbd5e1; }
+        .nav-btn.primary-btn { background: var(--primary); color: white; }
+        .nav-btn.primary-btn:hover:not(:disabled) { background: var(--primary-hover); }
+        .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* --- Final Result Dashboard Styles --- */
+        .result-body {
+            display: none;
+            padding: 40px;
+            background: #f8fafc;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h3 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin: 0 0 10px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .val-total { color: var(--primary); }
+        .val-correct { color: #16a34a; }
+        .val-wrong { color: #dc2626; }
+        .val-acc { color: #d97706; }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .review-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+        }
+
+        .review-card.is-correct::before { background: #22c55e; }
+        .review-card.is-wrong::before { background: #ef4444; }
+        .review-card.is-skipped::before { background: #94a3b8; }
+
+        .r-question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .r-answer-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .r-row {
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .icon { margin-right: 8px; font-size: 1.1rem; }
+
+        .r-explanation {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .question-body, .result-body { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h2>Sentence Improvement Exam Practice</h2>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Interface for Answering Questions -->
+    <div class="question-body" id="questionBody">
+        <div class="question-meta">
+            <span id="questionCount">Question 1 of 42</span>
+            <span>SSC / Bank Pattern</span>
+        </div>
+        
+        <div class="question-text" id="questionText"></div>
+        <div class="options-list" id="optionsContainer"></div>
+        <div class="explanation" id="explanationBox"></div>
+    </div>
+
+    <div class="footer-nav" id="footerNav">
+        <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" disabled>Previous</button>
+        <button class="nav-btn primary-btn" id="nextBtn" onclick="nextQuestion()">Next</button>
+    </div>
+
+    <!-- Interface for Final Results -->
+    <div class="result-body" id="resultBody">
+        <div class="dashboard-header">
+            <h3>Performance Dashboard</h3>
+            <p style="color: var(--text-muted);">Review your answers and explanations below.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value val-total" id="statTotal">0</div>
+                <div class="stat-label">Total Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-correct" id="statCorrect">0</div>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-wrong" id="statWrong">0</div>
+                <div class="stat-label">Incorrect Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-acc" id="statAcc">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+        </div>
+
+        <div class="review-list" id="reviewList">
+            <!-- Review cards injected here via JS -->
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <button class="nav-btn primary-btn" onclick="location.reload()" style="padding: 16px 40px; font-size: 1.1rem;">Restart Practice</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            q: "Will you <u>lend me few rupees</u> in this hour of need?",
+            options: { a: "borrow me a few rupees", b: "lend me any rupees", c: "lend me a few rupees", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) lend me a few rupees:</strong> The article 'a' is required before 'few'. 'A few' means 'some' and is appropriate in positive contexts/requests. 'Few' without the article means 'almost none'."
+        },
+        {
+            q: "I <u>made</u> him good-bye.",
+            options: { a: "wished", b: "complimented", c: "bade", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) bade:</strong> The correct grammatical and idiomatic choice for bidding farewell or saying good-bye is 'bade' (the past tense of bid)."
+        },
+        {
+            q: "We <u>must make for</u> our foreign policy on the basis of guarding national interest alone.",
+            options: { a: "must make to", b: "have made for", c: "must make", d: "must be making to", e: "No correction required" },
+            ans: "c",
+            expl: "<strong>(c) must make:</strong> The phrasal verb 'make for' means 'to head towards a place'. Here, the context requires the simple verb 'make' (formulate/create)."
+        },
+        {
+            q: "The man <u>who will score the maximum points, will</u> carry the trophy.",
+            options: { a: "who scores the maximum points", b: "who the maximum points scores", c: "who would score the maximum points", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) who scores the maximum points:</strong> In conditional or subordinate clauses referring to the future, the simple present tense ('scores') is used instead of the future tense ('will score')."
+        },
+        {
+            q: "The farmers are <u>working</u> in the field from sunrise and will continue to do so until sunset.",
+            options: { a: "have worked", b: "have been working", c: "were working", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) have been working:</strong> An action that started in the past ('from sunrise') and is continuing in the present requires the present perfect continuous tense."
+        },
+        {
+            q: "His father wrote to him, \"It is high time you <u>start</u> preparing for the forthcoming examination\".",
+            options: { a: "would start", b: "started", c: "had started", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) started:</strong> Expressions like 'It is high time' or 'It is time' must be followed by a clause in the simple past tense when suggesting that an action should have already been done."
+        },
+        {
+            q: "Many of the boys in our class <u>were of kind who would</u> be a nuisance everywhere.",
+            options: { a: "were of the kind who would be a nuisance", b: "were of the kind who would be nuisance", c: "were of a kind who would be nuisance", d: "were to be nuisance" },
+            ans: "a",
+            expl: "<strong>(a) were of the kind who would be a nuisance:</strong> The definite article 'the' is required before 'kind' to specify the category, and the indefinite article 'a' is needed before the singular noun 'nuisance'."
+        },
+        {
+            q: "The standard of living of the working class is higher <u>than was the case thirty years ago</u>.",
+            options: { a: "than it was before thirty years", b: "than that of thirty years ago", c: "than what it was thirty years ago", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) than that of thirty years ago:</strong> To maintain parallel structure when comparing properties (standard of living), we use 'that of' to avoid repeating the noun."
+        },
+        {
+            q: "The child has been in the sick bed <u>for the last one week</u>.",
+            options: { a: "for the past", b: "for past", c: "since the past", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) for the past:</strong> Idiomatically, we use 'for the past week' or 'for the past one week' to refer to a continuous duration leading up to the present."
+        },
+        {
+            q: "One of my <u>colleagues is an expert</u> in homoeopathy.",
+            options: { a: "is expert", b: "has expertised", c: "has been expertised", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> The original sentence is grammatically correct. 'One of' takes a plural noun ('colleagues') and a singular verb ('is'), and 'an expert' functions perfectly as a predicate nominative."
+        },
+        {
+            q: "They are social insects, <u>living in communities</u>, regulated by definite laws...",
+            options: { a: "living among a community", b: "who are living in communities", c: "who lives with a community", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> 'Living in communities' is a correct and standard participial phrase modifying 'insects'."
+        },
+        {
+            q: "The roads are wet; it <u>must had</u> rained last night.",
+            options: { a: "might had", b: "must have", c: "must have been", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) must have:</strong> Modals expressing past deductions are formed using 'modal + have + past participle' (must have rained). Modals cannot be directly followed by 'had'."
+        },
+        {
+            q: "He has been growing weaker and his life now <u>hangs like a thread</u>.",
+            options: { a: "hangs with threads", b: "hangs by a thread", c: "hung on a thread", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) hangs by a thread:</strong> The correct English idiom for being in a precarious or highly unstable situation is 'hanging by a thread'."
+        },
+        {
+            q: "To get one's name in the Rowland Ward's book of hunting records was the <u>hot ambition of every</u> serious hunter.",
+            options: { a: "burning", b: "extreme", c: "high", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) burning:</strong> We collocate 'ambition' with 'burning' to describe an incredibly intense or consuming desire. 'Hot ambition' is not a standard collocation."
+        },
+        {
+            q: "She did not ask <u>any question to him</u>.",
+            options: { a: "any question from him", b: "him any question", c: "to him any question", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) him any question:</strong> When a ditransitive verb like 'ask' takes two objects without a preposition, the indirect object (him) should precede the direct object (any question)."
+        },
+        {
+            q: "<u>On some evenings I leave</u> office as late as seven o'clock.",
+            options: { a: "In some evenings", b: "Some evenings", c: "On some of the evenings", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> The preposition 'on' is correctly used with specific parts of the day when they are modified (e.g., 'on a cold morning', 'on some evenings')."
+        },
+        {
+            q: "<u>Hold hands of your child</u> while crossing the road.",
+            options: { a: "your child's hands", b: "your child's hand", c: "hand of your child", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) your child's hand:</strong> Idiomatically, you hold someone's hand (singular), and using the possessive 's is much more natural than the 'of' construction."
+        },
+        {
+            q: "It is <u>all and one</u> to me whether he lives in Bombay or Calcutta.",
+            options: { a: "all one", b: "all but one", c: "all or one", d: "No correction required" },
+            ans: "a",
+            expl: "<strong>(a) all one:</strong> The idiom 'it is all one to me' means it makes no difference or it is entirely the same to me."
+        },
+        {
+            q: "I am tired as I <u>am working</u> since 8 o'clock in the morning.",
+            options: { a: "I was working", b: "have been working", c: "I had been working", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) have been working:</strong> For an action that began in the past ('since 8 o'clock') and continues up to the present moment, the present perfect continuous tense is required."
+        },
+        {
+            q: "There is a dearth of <u>woman doctor</u> in our state. We shall have to recruit some from the other states.",
+            options: { a: "women doctor", b: "woman doctors", c: "women doctors", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) women doctors:</strong> In compound nouns where the first part implies gender (man/woman), both parts must be made plural (women doctors)."
+        },
+        {
+            q: "He was likely to win the elections <u>by the sweeping majority</u>.",
+            options: { a: "by a sweeping majority", b: "with sweeping a majority", c: "with the sweeping majority", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) by a sweeping majority:</strong> The phrase is standardly used with the indefinite article 'a' because it refers to one of many possible massive margins of victory."
+        },
+        {
+            q: "There is plenty of time to <u>catch the train</u>.",
+            options: { a: "reach", b: "get", c: "hold", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> 'Catch a train' is the correct and standard collocated phrase for boarding a scheduled train."
+        },
+        {
+            q: "The policeman stopped him for jumping the red light but <u>let him out</u>.",
+            options: { a: "let him off", b: "let him through", c: "let him by", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) let him off:</strong> The phrasal verb 'let off' means to pardon someone or choose not to punish them for an offense."
+        },
+        {
+            q: "You will be late if you <u>do not leave now</u>.",
+            options: { a: "will not leave", b: "did not leave", c: "left", d: "did not happen to leave", e: "No correction required" },
+            ans: "e",
+            expl: "<strong>(e) No correction required:</strong> This is a standard First Conditional sentence. The main clause is in the future tense ('will be') and the if-clause is correctly in the simple present tense ('do not leave')."
+        },
+        {
+            q: "They invited <u>I and my friend</u> to tea.",
+            options: { a: "my friend and I", b: "my friend and me", c: "to me and my friend", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) my friend and me:</strong> The pronoun must be in the objective case ('me') as it is the object of the verb 'invited'. Furthermore, polite ordering dictates placing the other person first ('my friend and me')."
+        },
+        {
+            q: "Every time I go <u>in a lift</u> to my sixth floor apartment, I remember the calm and serenity of my ancestral home...",
+            options: { a: "move in a lift", b: "take a lift", c: "ascend in a lift", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) take a lift:</strong> The standard and most common idiomatic English expression for using an elevator is to 'take a lift'."
+        },
+        {
+            q: "The shopkeeper said graciously, \"I'll quote no price; the article is yours <u>for asking</u>.\"",
+            options: { a: "for the asking", b: "if you ask", c: "for only asking", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) for the asking:</strong> The fixed idiom is 'for the asking', which means something is freely available to anyone who requests it."
+        },
+        {
+            q: "Rohit assured Sunita that he <u>would look at her work</u> while she was on leave.",
+            options: { a: "would overlook", b: "would look after", c: "would look down upon", d: "will look", e: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) would look after:</strong> The phrasal verb 'look after' means to take care of or manage responsibilities, which perfectly fits covering someone's work while they are on leave."
+        },
+        {
+            q: "He told us the story in <u>a nutshell</u>.",
+            options: { a: "in nutshell", b: "in the nutshell", c: "putting it in a nut", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> 'In a nutshell' is a correct and widely used idiom meaning concisely or in very few words."
+        },
+        {
+            q: "It was hard to believe that he <u>was dead for two years</u>.",
+            options: { a: "is dead", b: "has been dead", c: "had been dead", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) had been dead:</strong> To indicate an action or state that started in the past and continued up to another point in the past ('was hard to believe'), the past perfect tense is required."
+        },
+        {
+            q: "The accused now flatly denies <u>have admitted</u> his guilt in his first statement.",
+            options: { a: "has admitted", b: "having admitted", c: "had admitted", d: "have been admitting", e: "No correction required" },
+            ans: "b",
+            expl: "<strong>(b) having admitted:</strong> The verb 'deny' is followed by a gerund. To express an action that occurred prior to the denial, the perfect gerund ('having + past participle') is used."
+        },
+        {
+            q: "The little child was knocked <u>out</u> by a car.",
+            options: { a: "up", b: "away", c: "down", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) down:</strong> The phrasal verb 'knock down' means to strike someone to the ground, which is the correct terminology for a vehicle hitting a pedestrian."
+        },
+        {
+            q: "He asked me if I <u>can</u> help him to lift the box.",
+            options: { a: "may", b: "would", c: "will", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) would:</strong> In reported speech (indirect questions) set in the past ('asked'), modals must be backshifted. While 'could' is ideal, 'would' correctly conveys willingness in the past tense among these options."
+        },
+        {
+            q: "She tried to eat another leaf of lettuce but she could no longer <u>fight</u> the stench.",
+            options: { a: "face", b: "keep", c: "stand", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) stand:</strong> In English, we 'can't stand' something to mean we are unable to tolerate or endure it. It is a more idiomatic verb choice than 'fight' in this context."
+        },
+        {
+            q: "<u>Have you not reached in time</u>, we would have lost our lives.",
+            options: { a: "Had you not reach", b: "If you have not reached", c: "Had you not reached", d: "If you would not have reached", e: "No correction required" },
+            ans: "c",
+            expl: "<strong>(c) Had you not reached:</strong> This is a Third Conditional (unreal past). By omitting 'if', we invert the subject and auxiliary verb: 'Had' + subject + past participle."
+        },
+        {
+            q: "I wish that I <u>read this book before the seminar</u>.",
+            options: { a: "had read", b: "can read", c: "was reading", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) had read:</strong> When expressing a regret about an unfulfilled action in the past after 'I wish', the past perfect tense ('had read') is strictly required."
+        },
+        {
+            q: "The rules of chess require that one <u>made</u> only one move at a time.",
+            options: { a: "makes", b: "will make", c: "make", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) make:</strong> Verbs like 'require', 'demand', or 'suggest' followed by a 'that' clause trigger the subjunctive mood, which uses the base form of the verb regardless of the subject."
+        },
+        {
+            q: "Let us <u>partake</u> a meal before we start.",
+            options: { a: "partake of", b: "partake off", c: "partake in", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) partake of:</strong> The verb 'partake' is followed by the preposition 'of' when referring to eating or drinking a portion of something."
+        },
+        {
+            q: "Do take an umbrella with you <u>lest you do not get wet</u>.",
+            options: { a: "lest you might not get wet", b: "lest you should not get wet", c: "lest you should get wet", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) lest you should get wet:</strong> The conjunction 'lest' means 'for fear that' and is naturally followed by the modal 'should'. Because 'lest' is already negative, adding 'not' creates a grammatical error."
+        },
+        {
+            q: "They will be coming to attend the farewell party, <u>isn't it</u>?",
+            options: { a: "aren't they?", b: "wouldn't they?", c: "won't they?", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) won't they?:</strong> Question tags must match the auxiliary verb of the main clause. 'Will' in a positive statement requires the negative tag 'won't', and 'they' matches the subject."
+        },
+        {
+            q: "Taxpayers <u>are</u> to be conscious of their privileges.",
+            options: { a: "need", b: "have to", c: "ought to", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) ought to:</strong> 'Ought to' expresses a moral obligation, duty, or strong desirability, which fits perfectly when describing what citizens should be aware of."
+        },
+        {
+            q: "You can't go that way, I'm afraid, as the road is <u>in repairs</u>.",
+            options: { a: "under repairs", b: "under repair", c: "on repairs", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) under repair:</strong> The proper idiomatic English phrasing to indicate that infrastructure or machinery is currently being fixed is 'under repair'."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    const userAnswers = new Array(quizData.length).fill(null);
+    
+    // UI Elements
+    const qBody = document.getElementById('questionBody');
+    const footerNav = document.getElementById('footerNav');
+    const resultBody = document.getElementById('resultBody');
+    const qText = document.getElementById('questionText');
+    const optsContainer = document.getElementById('optionsContainer');
+    const explBox = document.getElementById('explanationBox');
+    const progBar = document.getElementById('progressBar');
+    const qCount = document.getElementById('questionCount');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function loadQuestion(index) {
+        const qData = quizData[index];
+        
+        qCount.innerText = `Question ${index + 1} of ${quizData.length}`;
+        progBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+        
+        qText.innerHTML = `${index + 1}. ${qData.q}`;
+        optsContainer.innerHTML = '';
+        explBox.style.display = 'none';
+        
+        for (const [key, value] of Object.entries(qData.options)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${value}`;
+            
+            if (userAnswers[index]) {
+                btn.disabled = true;
+                if (key === qData.ans) {
+                    btn.classList.add('correct');
+                } else if (key === userAnswers[index] && key !== qData.ans) {
+                    btn.classList.add('wrong');
+                }
+            } else {
+                btn.onclick = () => selectAnswer(key, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (userAnswers[index]) {
+            explBox.innerHTML = qData.expl;
+            explBox.style.display = 'block';
+        }
+
+        prevBtn.disabled = index === 0;
+        nextBtn.innerText = index === quizData.length - 1 ? 'Finish & View Results' : 'Next';
+    }
+
+    function selectAnswer(selectedKey, btnElement) {
+        const qData = quizData[currentQuestionIndex];
+        userAnswers[currentQuestionIndex] = selectedKey;
+        
+        const allBtns = optsContainer.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (selectedKey !== qData.ans) btnElement.classList.add('wrong');
+
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+        
+        // Auto Scroll to the bottom so the Next button and explanation are visible
+        setTimeout(() => {
+            footerNav.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 150);
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion(currentQuestionIndex);
+        } else {
+            showFinalResults();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion(currentQuestionIndex);
+        }
+    }
+
+    function showFinalResults() {
+        qBody.style.display = 'none';
+        footerNav.style.display = 'none';
+        resultBody.style.display = 'block';
+
+        let correct = 0;
+        let wrong = 0;
+        let skipped = 0;
+        let reviewHTML = '';
+
+        quizData.forEach((q, idx) => {
+            const userAns = userAnswers[idx];
+            let isCorrect = false;
+            let cardClass = '';
+            let userIcon = '';
+            
+            if (!userAns) {
+                skipped++;
+                cardClass = 'is-skipped';
+                userIcon = '<span class="icon" style="color:#94a3b8;">➖</span>';
+            } else if (userAns === q.ans) {
+                correct++;
+                isCorrect = true;
+                cardClass = 'is-correct';
+                userIcon = '<span class="icon" style="color:#22c55e;">✅</span>';
+            } else {
+                wrong++;
+                cardClass = 'is-wrong';
+                userIcon = '<span class="icon" style="color:#ef4444;">❌</span>';
+            }
+
+            reviewHTML += `
+                <div class="review-card ${cardClass}">
+                    <div class="r-question">Q${idx + 1}. ${q.q}</div>
+                    <div class="r-answer-block">
+                        <div class="r-row ${isCorrect ? 'text-correct' : (userAns ? 'text-wrong' : 'text-muted')}">
+                            ${userIcon} Your Answer: ${userAns ? `(${userAns}) ${q.options[userAns]}` : 'Skipped'}
+                        </div>
+                        ${!isCorrect ? `
+                        <div class="r-row text-correct">
+                            <span class="icon">🎯</span> Correct Answer: (${q.ans}) ${q.options[q.ans]}
+                        </div>` : ''}
+                    </div>
+                    <div class="r-explanation">${q.expl}</div>
+                </div>
+            `;
+        });
+
+        const total = quizData.length;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        document.getElementById('statTotal').innerText = total;
+        document.getElementById('statCorrect').innerText = correct;
+        document.getElementById('statWrong').innerText = wrong;
+        document.getElementById('statAcc').innerText = `${accuracy}%`;
+        
+        document.getElementById('reviewList').innerHTML = reviewHTML;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Initialize Quiz
+    loadQuestion(0);
+</script>
+
+</body>
+</html>

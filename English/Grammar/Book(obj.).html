@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Spotting Errors Exercise</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #22c55e;
+            --error: #ef4444;
+            --background: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --exp-bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        /* Header & Progress */
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Question Section */
+        .question-text {
+            font-size: 1.15rem;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .instructions {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #eef2ff;
+        }
+
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: var(--success);
+            color: #166534;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: var(--error);
+            color: #991b1b;
+        }
+
+        /* Explanation Box (Immediate Feedback) */
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--exp-bg);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .exp-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Results */
+        .result-box {
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen" class="result-box">
+        <h1>English Spotting Errors</h1>
+        <p style="margin-top: 10px; color: var(--text-sub);">25 Questions | Exercise A</p>
+        <button class="btn" onclick="startQuiz()" style="margin-top: 25px;">Start Quiz</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div class="header">
+            <div class="stats-bar">
+                <span id="question-count">Question 1/25</span>
+                <span id="score-tracker">Score: 0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress-fill" class="progress-bar-fill"></div>
+            </div>
+        </div>
+        
+        <p class="instructions">Find out which part of the sentence has an error.</p>
+        <div id="question-text" class="question-text"></div>
+
+        <div id="options-container" class="options-grid"></div>
+
+        <div id="explanation-display" class="explanation-box hidden">
+            <span class="exp-title">Correct Answer & Explanation:</span>
+            <span id="explanation-text"></span>
+        </div>
+
+        <div class="controls">
+            <button id="next-btn" class="btn" onclick="nextQuestion()" disabled>Next Question</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden result-box">
+        <h2>Quiz Completed!</h2>
+        <div class="score-display">
+            <span id="final-score">0</span> / 25
+        </div>
+        <p id="score-message" style="color: var(--text-sub); margin-bottom: 25px;"></p>
+        <button class="btn" onclick="restartQuiz()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    const quizQuestions = [
+      {
+        id: 1,
+        question: "Another baffling change that I notice in him now-a-days is that he avoids to speak to me.",
+        options: [
+          "(a) Another baffling change that I notice in him now-a-days",
+          "(b) is that he avoids",
+          "(c) to speak to me",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) to speak to me",
+        explanation: "Answer (c): Say 'speaking' for 'to speak'. (Gerund is used after 'avoid')."
+      },
+      {
+        id: 2,
+        question: "I asked him how could he go out if it started raining.",
+        options: [
+          "(a) I asked him",
+          "(b) how could he go out",
+          "(c) if it started raining",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) how could he go out",
+        explanation: "Answer (b): Say 'he could go'. (In indirect speech, the interrogative form changes to assertive)."
+      },
+      {
+        id: 3,
+        question: "One of the state in which Satyagraha was offered was Rajkot, where he had spent his youth.",
+        options: [
+          "(a) One of the state in which",
+          "(b) Satyagraha was offered was Rajkot,",
+          "(c) where he had spent his youth",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) One of the state in which",
+        explanation: "Answer (a): Say 'One of the states'. ('One of' is followed by a plural noun)."
+      },
+      {
+        id: 4,
+        question: "Hardly the inspector had arrived there to investigate the crime when the house was set ablaze.",
+        options: [
+          "(a) Hardly the inspector had arrived there",
+          "(b) to investigate the crime",
+          "(c) when the house was set ablaze",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Hardly the inspector had arrived there",
+        explanation: "Answer (a): Say 'had the inspector'. (Inversion applies when the sentence starts with 'Hardly')."
+      },
+      {
+        id: 5,
+        question: "Since his arrival at his native town he is trying to the best of his power to spread education among the poor masses.",
+        options: [
+          "(a) Since his arrival at his native town",
+          "(b) he is trying to the best of his power",
+          "(c) to spread education among the poor masses",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) he is trying to the best of his power",
+        explanation: "Answer (b): Say 'has been trying'. (Present Perfect Continuous is needed as action started in the past and continues)."
+      },
+      {
+        id: 6,
+        question: "In various parts of the country ponds just dry down in the scorching heat of summer.",
+        options: [
+          "(a) In various parts of the country",
+          "(b) ponds just dry down",
+          "(c) in the scorching heat of summer",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) ponds just dry down",
+        explanation: "Answer (b): Say 'dry up'. ('Dry up' means to become completely dry)."
+      },
+      {
+        id: 7,
+        question: "He lay the watch on the table and then forgot all about it when he went out.",
+        options: [
+          "(a) He lay the watch on the table",
+          "(b) and then forgot all about it",
+          "(c) when he went out",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) He lay the watch on the table",
+        explanation: "Answer (a): Say 'laid' for 'lay'. ('Laid' is the past tense of 'lay' (transitive) meaning to put down)."
+      },
+      {
+        id: 8,
+        question: "Although he draws a reasonably good salary he has a large family to support, and he finds it difficult to make both ends meet.",
+        options: [
+          "(a) Although he draws a reasonably good salary",
+          "(b) he has a large family to support,",
+          "(c) and he finds it difficult to make both ends meet",
+          "(d) No error"
+        ],
+        correctAnswer: "(d) No error",
+        explanation: "Answer (d): No error."
+      },
+      {
+        id: 9,
+        question: "While it is apparent that biotechnology offers significant benefits adequate attention has not been focussed to this vital area.",
+        options: [
+          "(a) While it is apparent",
+          "(b) that biotechnology offers significant benefits",
+          "(c) adequate attention has not been focussed to this vital area",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) adequate attention has not been focussed to this vital area",
+        explanation: "Answer (c): Use 'on' in place of 'to'. (Focused on)."
+      },
+      {
+        id: 10,
+        question: "Being a sunny day I decided to skip work and stay at home.",
+        options: [
+          "(a) Being a sunny day",
+          "(b) I decided to skip",
+          "(c) work and stay at home",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) Being a sunny day",
+        explanation: "Answer (a): Add 'It' before 'being'. (Correction: 'It being a sunny day')."
+      },
+      {
+        id: 11,
+        question: "We had to cancel our trip to Delhi because when we reached the railway station, the train left.",
+        options: [
+          "(a) We had to cancel our trip to Delhi",
+          "(b) because when we reached the railway station,",
+          "(c) the train left",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) the train left",
+        explanation: "Answer (c): Say 'the train had left'. (Past perfect is used for the earlier of two past actions)."
+      },
+      {
+        id: 12,
+        question: "Many a student has failed in the Mathematics test but Dilip has scored 100 per cent.",
+        options: [
+          "(a) Many a student",
+          "(b) has failed in the Mathematics test",
+          "(c) but Dilip has scored 100 per cent",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) but Dilip has scored 100 per cent",
+        explanation: "Answer (c): Say 'full marks'."
+      },
+      {
+        id: 13,
+        question: "The General with over 1000 officers and soldiers have surrendered to the Indian troops who are patrolling the valley.",
+        options: [
+          "(a) The General with over 1000 officers and soldiers",
+          "(b) have surrendered to the",
+          "(c) Indian troops who are patrolling the valley",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) have surrendered to the",
+        explanation: "Answer (b): Use 'has' in place of 'have'. (Subject 'The General' is singular)."
+      },
+      {
+        id: 14,
+        question: "If he wrote the examination faster and had answered one more question he would have scored better.",
+        options: [
+          "(a) If he wrote the examination faster",
+          "(b) and had answered one more question",
+          "(c) he would have scored better",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) If he wrote the examination faster",
+        explanation: "Answer (a): Say 'had written'. (Third conditional: If + Past Perfect ... would have + V3)."
+      },
+      {
+        id: 15,
+        question: "For decades there have been a debate on whether schizophrenia is a psychological condition.",
+        options: [
+          "(a) For decades",
+          "(b) there have been ",
+          "(c) a debate on whether schizophrenia is a psychological condition",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) there have been a debate on whether schizophrenia is a psychological condition",
+        explanation: "Answer (b): Say 'there has been'. (Subject 'a debate' is singular)."
+      },
+      {
+        id: 16,
+        question: "Mohan is the one who always finds fault with whatever Ram does.",
+        options: [
+          "(a) Mohan is the one",
+          "(b) who always finds fault",
+          "(c) with whatever Ram does",
+          "(d) No error"
+        ],
+        correctAnswer: "(d) No error",
+        explanation: "Answer (d): No error."
+      },
+      {
+        id: 17,
+        question: "There is a need to revising Government policies on controlling unauthorized constructions.",
+        options: [
+          "(a) There is a need",
+          "(b) to revising Government policies",
+          "(c) on controlling unauthorized constructions",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) to revising Government policies",
+        explanation: "Answer (b): Say 'to revise'. ('To' infinitive takes the base verb form)."
+      },
+      {
+        id: 18,
+        question: "We know where it begins but we don't know that where it ends.",
+        options: [
+          "(a) We know where it begins",
+          "(b) but we don't know",
+          "(c) that where it ends",
+          "(d) No error"
+        ],
+        correctAnswer: "(c) that where it ends",
+        explanation: "Answer (c): Remove 'that'. (Double conjunction 'that where' is incorrect)."
+      },
+      {
+        id: 19,
+        question: "The simplest method of welding two pieces of metal together is known as pressure welding.",
+        options: [
+          "(a) The simplest method",
+          "(b) of welding two pieces of metal together",
+          "(c) is known as pressure welding",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) of welding two pieces of metal together",
+        explanation: "Answer (b): Remove 'together'. (Superfluous with 'welding')."
+      },
+      {
+        id: 20,
+        question: "One of the important benefits of machine age is that our standard of life has improved.",
+        options: [
+          "(a) One of the important benefits",
+          "(b) of machine age is that our standard of life has",
+          "(c) improved",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) of machine age is that our standard of life has",
+        explanation: "Answer (b): Say 'the machine age'. (Article required)."
+      },
+      {
+        id: 21,
+        question: "There is sense of urgency in locating alternative sources of water to augment the dwindling supply.",
+        options: [
+          "(a) There is sense of urgency",
+          "(b) in locating alternative sources of water",
+          "(c) to augment the dwindling supply",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) There is sense of urgency",
+        explanation: "Answer (a): Add 'a' before 'sense'. ('There is a sense...')."
+      },
+      {
+        id: 22,
+        question: "Although there is virtually no production in India, the 'Encyclopaedia Britannica' estimate that India has perhaps the largest accumulated stocks of silver in the world.",
+        options: [
+          "(a) Although there is virtually no production in India, the 'Encyclopaedia Britannica'",
+          "(b) estimate that India has perhaps the largest accumulated stocks of silver in the",
+          "(c) world",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) estimate that India has perhaps the largest accumulated stocks of silver in the",
+        explanation: "Answer (b): Say 'estimates'. (Subject 'Encyclopaedia Britannica' is singular)."
+      },
+      {
+        id: 23,
+        question: "Neither the severe earthquake or the subsequent famine could demoralize the people of the country.",
+        options: [
+          "(a) Neither the severe earthquake",
+          "(b) or the subsequent famine",
+          "(c) could demoralize the people of the country",
+          "(d) No error"
+        ],
+        correctAnswer: "(b) or the subsequent famine",
+        explanation: "Answer (b): Use 'nor' for 'or'. (Correlative conjunction: 'Neither... nor')."
+      },
+      {
+        id: 24,
+        question: "As soon as I shall reach New Delhi I shall send you the file you have asked for.",
+        options: [
+          "(a) As soon as I shall reach New Delhi",
+          "(b) I shall send you the file",
+          "(c) you have asked for",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) As soon as I shall reach New Delhi",
+        explanation: "Answer (a): Remove 'shall'. (Use simple present tense in time clauses referring to the future)."
+      },
+      {
+        id: 25,
+        question: "All the furnitures have been replaced by the owner of the house before shifting.",
+        options: [
+          "(a) All the furnitures have been",
+          "(b) replaced by the owner of the house",
+          "(c) before shifting",
+          "(d) No error"
+        ],
+        correctAnswer: "(a) All the furnitures have been",
+        explanation: "Answer (a): Say 'furniture has been'. (Furniture is uncountable and takes a singular verb)."
+      }
+    ];
+
+    // --- APP LOGIC ---
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    // Elements
+    const screens = {
+        start: document.getElementById('start-screen'),
+        quiz: document.getElementById('quiz-screen'),
+        result: document.getElementById('result-screen')
+    };
+
+    const els = {
+        questionText: document.getElementById('question-text'),
+        optionsContainer: document.getElementById('options-container'),
+        progressFill: document.getElementById('progress-fill'),
+        questionCount: document.getElementById('question-count'),
+        scoreTracker: document.getElementById('score-tracker'),
+        nextBtn: document.getElementById('next-btn'),
+        finalScore: document.getElementById('final-score'),
+        scoreMsg: document.getElementById('score-message'),
+        expDisplay: document.getElementById('explanation-display'),
+        expText: document.getElementById('explanation-text')
+    };
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        showScreen('quiz');
+        loadQuestion();
+    }
+
+    function showScreen(screenName) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenName].classList.remove('hidden');
+    }
+
+    function loadQuestion() {
+        const q = quizQuestions[currentQuestionIndex];
+        
+        // Update UI
+        els.questionText.textContent = `${q.id}. ${q.question}`;
+        els.questionCount.textContent = `Question ${currentQuestionIndex + 1}/${quizQuestions.length}`;
+        els.scoreTracker.textContent = `Score: ${score}`;
+        els.nextBtn.disabled = true;
+        
+        // Hide explanation from previous question
+        els.expDisplay.classList.add('hidden');
+        els.expText.textContent = '';
+
+        // Progress Bar
+        const progress = (currentQuestionIndex / quizQuestions.length) * 100;
+        els.progressFill.style.width = `${progress}%`;
+
+        // Render Options
+        els.optionsContainer.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => checkAnswer(btn, opt, q);
+            els.optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedBtn, selectedOption, questionObj) {
+        const allBtns = els.optionsContainer.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.disabled = true);
+
+        const isCorrect = selectedOption === questionObj.correctAnswer;
+
+        if (isCorrect) {
+            selectedBtn.classList.add('correct');
+            score++;
+        } else {
+            selectedBtn.classList.add('wrong');
+            // Highlight correct one
+            allBtns.forEach(btn => {
+                if (btn.textContent === questionObj.correctAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        // SHOW EXPLANATION IMMEDIATELY
+        els.expText.textContent = questionObj.explanation;
+        els.expDisplay.classList.remove('hidden');
+
+        els.nextBtn.disabled = false;
+        els.scoreTracker.textContent = `Score: ${score}`;
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizQuestions.length) {
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        showScreen('result');
+        els.finalScore.textContent = score;
+        els.progressFill.style.width = '100%';
+
+        const percentage = (score / quizQuestions.length) * 100;
+        if (percentage === 100) els.scoreMsg.textContent = "Perfect Score!";
+        else if (percentage >= 80) els.scoreMsg.textContent = "Great work!";
+        else if (percentage >= 50) els.scoreMsg.textContent = "Good effort. Review the explanations to improve.";
+        else els.scoreMsg.textContent = "Keep practicing. Read the explanations carefully.";
+    }
+
+    function restartQuiz() {
+        startQuiz();
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ultimate Homonyms Quiz (Clean Audio Edition)</title>
+  <style>
+    /* Floating Back Button Style */
+    .app-back-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-family: sans-serif;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        z-index: 1000; /* Ensures it stays on top */
+        transition: transform 0.2s;
+        text-decoration: none; /* In case you use <a> tag */
+    }
+    
+    .app-back-btn:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+</style>
+  <style>
+    :root{
+      --primary:#007bff;
+      --bg:#f4f4f9;
+      --card:#ffffff;
+      --text:#333;
+      --subtext:#555;
+      
+      /* COLORS */
+      --correct-bg: #28a745; 
+      --correct-text: #ffffff; 
+      --wrong-bg: #dc3545; 
+      --wrong-text: #ffffff; 
+      --timer-color: #ffc107;
+    }
+    body{
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      display:flex;justify-content:center;align-items:center;
+      min-height:100vh;margin:0;padding:20px;
+    }
+    
+    .quiz-container{
+      background: var(--card);
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      width:100%;max-width:850px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* HEADER */
+    .header{
+      display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;
+    }
+    .score-board{font-weight:bold;color:var(--primary); font-size: 1.1em;}
+    h2{color:var(--text);margin:10px 0 4px;}
+    .question{font-size:1.2em;color:#222;margin:0 0 20px; line-height: 1.5;}
+    
+    /* CONTROLS */
+    .controls{
+      display:flex;gap:15px;align-items:center;flex-wrap:wrap;
+      background:#f0f2f5; padding:10px 15px; border-radius:10px; margin-bottom: 15px;
+    }
+    .control-group{display:flex;align-items:center;gap:6px;}
+    select { padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff; font-size:14px; }
+
+    /* OPTIONS */
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media (max-width:560px){ .options{grid-template-columns:1fr;} }
+    
+    button.option{
+      padding:15px 12px;font-size:16px;cursor:pointer;
+      border:2px solid #ddd;border-radius:8px;background:#fff;transition:0.2s; text-align:left;
+      font-weight: 500; color: #444;
+    }
+    button.option:hover{background-color:#eef; border-color:#bbb;}
+    button.option:disabled{cursor: not-allowed; opacity: 1;}
+    
+    .correct { background-color: var(--correct-bg) !important; border-color: #1e7e34 !important; color: white !important; }
+    .wrong { background-color: var(--wrong-bg) !important; border-color: #bd2130 !important; color: white !important; }
+
+    /* --- VISUAL FEEDBACK CARDS --- */
+    .feedback{
+      margin-top:25px; display:none; animation: fadeIn 0.4s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .feedback h4 {
+      text-align: center; margin: 0 0 15px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9em;
+    }
+
+    .comparison-container {
+      display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+      background: #fff; border: 2px solid #eef0f3; border-radius: 12px; padding: 20px;
+    }
+
+    .comparison-card {
+      flex: 1; min-width: 160px; max-width: 240px;
+      background: #fdfdfd; border: 1px solid #e0e0e0; border-radius: 10px;
+      padding: 10px; text-align: center;
+      display: flex; flex-direction: column;
+    }
+
+    /* Highlight the correct card */
+    .is-correct-card { border: 2px solid #28a745; background: #f0fff4; transform: scale(1.02); box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15); }
+    .is-correct-card .word-title { background: #d4edda; color: #155724; }
+
+    .word-title {
+      display: block; font-size: 1.1em; font-weight: 800; text-transform: uppercase;
+      color: #333; margin-bottom: 8px; letter-spacing: 0.5px;
+      background: #f0f2f5; padding: 6px; border-radius: 6px;
+    }
+
+    /* IMAGE CONTAINER - Clean, no overlays, but Clickable */
+    .img-container {
+      width: 100%; height: 140px; background: #eee; border-radius: 8px; margin-bottom: 10px;
+      overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; /* Indicates Clickable */
+      transition: transform 0.2s;
+    }
+    .img-container:hover {
+      transform: scale(1.02);
+      border: 2px solid var(--primary);
+    }
+    /* Add a subtle active state so user knows click registered */
+    .img-container:active {
+      transform: scale(0.98);
+    }
+
+    .comparison-img {
+      width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s;
+    }
+    .comparison-img.loaded { opacity: 1; }
+
+    /* Spinner */
+    .loader {
+      border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%;
+      width: 20px; height: 20px; animation: spin 1s linear infinite; position: absolute;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .word-def { font-size: 0.9em; color: #555; line-height: 1.4; flex-grow: 1; }
+    
+    /* FOOTER / NEXT BTN */
+    .next-btn {
+      margin-top:20px; background-color:var(--primary); color:white; border:none;
+      padding:12px 24px; border-radius:30px; cursor:pointer; display:none; 
+      font-size:16px; font-weight:bold; width: 100%;
+    }
+    .next-btn:hover{background-color:#0056b3;}
+    
+    /* TIMER */
+    .timer-container { width: 100%; height: 6px; background: #eee; border-radius: 3px; margin: 10px 0 20px; overflow: hidden; display: none; }
+    .timer-bar { height: 100%; background-color: var(--timer-color); width: 100%; transition: width 1s linear; }
+
+    /* NOTIFICATION */
+    .top-notification {
+      position: fixed; top: -80px; left: 0; width: 100%; padding: 16px; text-align: center;
+      font-size: 1.1rem; font-weight: bold; color: white; z-index: 9999; transition: top 0.3s;
+      background-color: #dc3545; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .top-notification.show { top: 0; }
+
+    /* RESULTS */
+    #review-area { text-align: center; }
+    .stat-box { display: inline-block; padding: 10px 20px; margin: 5px; border-radius: 8px; font-weight: bold; background: #eee;}
+    .stat-correct { background: #d4edda; color: #155724; }
+    .stat-wrong { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <button class="app-back-btn" onclick="history.back()">❮ Back to Menu</button>
+
+  <div id="top-notification" class="top-notification"></div>
+
+  <div class="quiz-container" id="quiz-app">
+    <div class="header">
+      <div class="score-board">Score: <span id="score">0</span></div>
+      <div class="progress">Question <span id="current">1</span> / <span id="total">0</span></div>
+      
+      <div class="controls">
+        <div class="control-group">
+          <label><b>Level:</b></label>
+          <select id="level" onchange="startQuiz()">
+            <option value="1">Level 1: Easy</option>
+            <option value="2">Level 2: Moderate</option>
+            <option value="3">Level 3: Hard</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label><b>Timer:</b></label>
+          <select id="timer" onchange="startQuiz()">
+            <option value="10">10 Sec</option>
+            <option value="15">15 Sec</option>
+            <option value="0">No Limit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-container" id="timer-container">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <div id="game-area">
+      <h2 id="question-number">Question 1</h2>
+      <p class="question" id="question-text">Loading...</p>
+      <div class="options" id="options-container"></div>
+      
+      <div class="feedback" id="feedback-box"></div>
+      
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question ➝</button>
+    </div>
+
+    <div id="review-area" style="display:none;">
+      <h2>Quiz Complete!</h2>
+      <div id="result-summary" style="margin-bottom:20px;"></div>
+      <button class="next-btn" style="display:inline-block; width:auto;" onclick="startQuiz()">Play Again</button>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    //  DATA: DEFINITIONS + IMAGE PROMPTS
+    // ==========================================
+    const D = {
+      access: [
+        {w:"Access", d:"Entry / Approach", img:"opening a door entering room"}, 
+        {w:"Accession", d:"Rising to throne", img:"king sitting on royal throne"}, 
+        {w:"Excess", d:"Too much", img:"overflowing pile of red apples"}
+      ],
+      accept: [
+        {w:"Accept", d:"To receive", img:"hands receiving a gift box"}, 
+        {w:"Except", d:"Excluding", img:"one red apple in a group of green apples"}, 
+        {w:"Expect", d:"To anticipate", img:"looking at wrist watch waiting impatiently"}
+      ],
+      alter: [
+        {w:"Alter", d:"To change / Modify", img:"tailor sewing clothes adjusting size"}, 
+        {w:"Altar", d:"Religious table", img:"church altar with candles"}
+      ],
+      assent: [
+        {w:"Assent", d:"Agreement", img:"two people nodding heads agreeing"}, 
+        {w:"Ascent", d:"Climbing up", img:"hiker climbing steep mountain peak"}
+      ],
+      adopt: [
+        {w:"Adopt", d:"Take as one's own", img:"family holding a new puppy"}, 
+        {w:"Adapt", d:"To adjust", img:"chameleon changing color on leaf"}, 
+        {w:"Adept", d:"Expert / Skilled", img:"magician performing card trick perfectly"}
+      ],
+      amicable: [
+        {w:"Amicable", d:"Friendly settlement", img:"two people shaking hands smiling peace"}, 
+        {w:"Amiable", d:"Lovable personality", img:"cute grandma smiling kindly"}
+      ],
+      accede: [
+        {w:"Accede", d:"Agree to request", img:"king nodding yes to a request"}, 
+        {w:"Exceed", d:"Go beyond limit", img:"speedometer going past red zone limit"},
+        {w:"Concede", d:"Admit defeat", img:"chess player tipping king resigning"}
+      ],
+      altercation: [
+        {w:"Altercation", d:"Noisy quarrel", img:"two angry people shouting pointing fingers"}, 
+        {w:"Alteration", d:"Change / Modification", img:"carpenter modifying a wooden table"}
+      ],
+      apposite: [
+        {w:"Apposite", d:"Suitable / Fitting", img:"puzzle piece fitting perfectly"}, 
+        {w:"Opposite", d:"Facing / Contrary", img:"black and white arrows pointing opposite directions"}
+      ],
+      affect: [
+        {w:"Affect", d:"Influence (Verb)", img:"rain cloud over sad person mood"}, 
+        {w:"Effect", d:"Result (Noun)", img:"dominoes falling chain reaction"}
+      ],
+      allusion: [
+        {w:"Allusion", d:"Indirect reference", img:"person whispering a secret hint"}, 
+        {w:"Illusion", d:"False perception", img:"mirage in desert water optical illusion"}
+      ],
+      ail: [
+        {w:"Ail", d:"To suffer / Sick", img:"sick person in bed with thermometer"}, 
+        {w:"Ale", d:"A type of beer", img:"frothy mug of beer on table"}
+      ],
+      apprehend: [
+        {w:"Apprehend", d:"To arrest", img:"police officer handcuffing a thief"}, 
+        {w:"Comprehend", d:"To understand", img:"lightbulb appearing above head idea"}
+      ],
+      admission: [
+        {w:"Admission", d:"Confession / Acceptance", img:"person saying sorry guilty face"}, 
+        {w:"Admittance", d:"Physical Entry", img:"ticket taker at cinema entrance gate"}
+      ],
+      antique: [
+        {w:"Antique", d:"Old / Ancient", img:"dusty old vintage vase museum"}, 
+        {w:"Antic", d:"Foolish behavior", img:"clown doing silly tricks jumping"}
+      ],
+      alternate: [
+        {w:"Alternate", d:"Every other one", img:"black white black white stripe pattern"}, 
+        {w:"Alternative", d:"Choice", img:"road sign fork in the road two paths"}
+      ],
+      artful: [
+        {w:"Artful", d:"Cunning / Clever", img:"fox wearing a suit sneaky sly"}, 
+        {w:"Artistic", d:"Creative", img:"painter painting colorful canvas"}
+      ],
+      artist: [
+        {w:"Artist", d:"Painter", img:"painter with palette and brush"}, 
+        {w:"Artiste", d:"Performer", img:"singer on stage with microphone spotlight"},
+        {w:"Artisan", d:"Craftsman", img:"potter making clay pot hands"}
+      ],
+      affection: [
+        {w:"Affection", d:"Love / Care", img:"mother hugging child love"}, 
+        {w:"Affectation", d:"Pretence", img:"person wearing fake mustache mask acting"}
+      ],
+      abstain: [
+        {w:"Abstain", d:"Hold back", img:"hand refusing a drink stop gesture"}, 
+        {w:"Refrain", d:"Stop from doing", img:"zipping lips silence"}
+      ],
+      avenge: [
+        {w:"Avenge", d:"Justice", img:"superhero fighting for justice"}, 
+        {w:"Revenge", d:"Spite", img:"angry villain plotting scheming"}
+      ],
+      adulteration: [
+        {w:"Adulteration", d:"Making impure", img:"pouring water into milk diluting"}, 
+        {w:"Adultery", d:"Unfaithfulness", img:"broken heart symbol cheating"}
+      ],
+      aspersion: [
+        {w:"Aspersion", d:"Slander", img:"person whispering bad gossip pointing"}, 
+        {w:"Aspiration", d:"Ambition", img:"person looking at mountain top flag goal"}
+      ],
+      avert: [
+        {w:"Avert", d:"Prevent / Turn away", img:"hand stopping a falling domino"}, 
+        {w:"Advert", d:"Refer to", img:"billboard advertisement sale"}
+      ],
+      birth: [
+        {w:"Birth", d:"Being born", img:"stork carrying baby bundle"}, 
+        {w:"Berth", d:"Sleeping shelf", img:"train sleeping bunk bed"}
+      ],
+      bridle: [
+        {w:"Bridle", d:"Horse headgear", img:"horse wearing leather bridle reins"}, 
+        {w:"Bridal", d:"Wedding related", img:"bride in white wedding dress"}
+      ],
+      barbaric: [
+        {w:"Barbaric", d:"Savage", img:"caveman with club shouting"}, 
+        {w:"Barbarous", d:"Cruel", img:"dungeon chains scary"},
+        {w:"Barbarity", d:"Cruelty", img:"villain laughing evilly"}, 
+        {w:"Barbarism", d:"Uncivilized", img:"savage eating meat with hands"}
+      ],
+      beneficial: [
+        {w:"Beneficial", d:"Helpful", img:"healthy fruit and vegetables sun"}, 
+        {w:"Beneficent", d:"Generous", img:"person giving money to beggar charity"}
+      ]
+    };
+
+    // ==========================================
+    //  FULL QUESTION LIST (63 Items)
+    // ==========================================
+    const Q = [
+      // LEVEL 1: EASY
+      { l:1, t:'"It is very difficult to have an ________ to the Prime Minister."', o:["Access","Accession","Excess","Assess"], c:0, v:D.access },
+      { l:1, t:'"The ________ of the prince to the throne was welcomed by the people."', o:["Accession","Access","Excess","Session"], c:0, v:D.access },
+      { l:1, t:'"________ of everything is bad."', o:["Excess","Access","Assess","Axis"], c:0, v:D.access },
+      { l:1, t:'"The teachers ________ the invitation of the students."', o:["Accepted","Excepted","Expected","Accessed"], c:0, v:D.accept },
+      { l:1, t:'"Everybody ________ Rahul was invited to the party."', o:["Except","Accept","Expect","Aspect"], c:0, v:D.accept },
+      { l:1, t:'"I never ________ that my friends would desert me in the lurch."', o:["Expected","Accepted","Excepted","Inspected"], c:0, v:D.accept },
+      { l:1, t:'"Mohan is so obstinate that no one can ________ his views."', o:["Alter","Altar","Alert","Altercation"], c:0, v:D.alter },
+      { l:1, t:'"When I visited temple, I saw him kneeling at the ________."', o:["Altar","Alter","Alert","Altercation"], c:0, v:D.alter },
+      { l:1, t:'"I got ________ of my father to study in a boarding school."', o:["Assent","Ascent","Accent","Assert"], c:0, v:D.assent },
+      { l:1, t:'"The ________ to Kargil hills is very arduous."', o:["Ascent","Assent","Accent","Assert"], c:0, v:D.assent },
+      { l:1, t:'"One should not ________ the bad habits of others."', o:["Adopt","Adapt","Adept","Adult"], c:0, v:D.adopt },
+      { l:1, t:'"One must learn to ________ oneself to the circumstances of life."', o:["Adapt","Adopt","Adept","Adult"], c:0, v:D.adopt },
+      { l:1, t:'"Shruti is ________ in the art of dancing."', o:["Adept","Adopt","Adapt","Adult"], c:0, v:D.adopt },
+      { l:1, t:'"Finally the two brothers came to an ________ settlement."', o:["Amicable","Amiable","Applicable","Admirable"], c:0, v:D.amicable },
+      { l:1, t:'"Being an ________ house wife she is liked by her kith and kin."', o:["Amiable","Amicable","Able","Admirable"], c:0, v:D.amicable },
+      { l:1, t:'"The director was kind enough to ________ to the request of the labourers."', o:["Accede","Exceed","Concede","Proceed"], c:0, v:D.accede },
+      { l:1, t:'"Your essay should not ________ three hundred words."', o:["Exceed","Accede","Concede","Proceed"], c:0, v:D.accede },
+      { l:1, t:'"The prisoner did not ________ to the argument of the jailor."', o:["Concede","Accede","Exceed","Recede"], c:0, v:D.accede },
+      { l:1, t:'"There is no ________ in the programme yet."', o:["Alteration","Altercation","Alternation","Allocation"], c:0, v:D.altercation },
+      { l:1, t:'"There was ________ between the shop keeper and my brother."', o:["Altercation","Alteration","Allocation","Alternation"], c:0, v:D.altercation },
+      { l:1, t:'"Her remarks about the character of her friends are quite ________ (suitable)."', o:["Apposite","Opposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:1, t:'"Sita\'s behaviour is ________ to that of her brother."', o:["Opposite","Apposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:1, t:'"Continuous attack of asthma has ________ his health."', o:["Affected","Effected","Infected","Defected"], c:0, v:D.affect },
+      { l:1, t:'"Excessive hard work in life had adverse ________ on her health."', o:["Effect","Affect","Defect","Infect"], c:0, v:D.affect },
+      { l:1, t:'"The poem is explained properly by the help of many ________."', o:["Allusions","Illusions","Illustrations","Elusions"], c:0, v:D.allusion },
+      { l:1, t:'"According to the Vedantists life is an ________."', o:["Illusion","Allusion","Illustration","Elusion"], c:0, v:D.allusion },
+      { l:1, t:'"Rohit is getting weaker day by day, we don\'t know what ________ him."', o:["Ails","Ales","Alludes","Fails"], c:0, v:D.ail },
+      { l:1, t:'"He visits ________ house daily even against the advice of doctors."', o:["Ale","Ail","All","Aisle"], c:0, v:D.ail },
+      { l:1, t:'"The soothsayer ________ the day of Rohit\'s death."', o:["Apprehended","Comprehended","Reprehended","Amended"], c:0, v:D.apprehend },
+      { l:1, t:'"She could not ________ the meaning of the passage."', o:["Comprehend","Apprehend","Amend","Append"], c:0, v:D.apprehend },
+      { l:1, t:'"These days in order to get ________ to convent schools you must give a lot of money."', o:["Admission","Admittance","Accession","Mission"], c:0, v:D.admission },
+      { l:1, t:'"No ________ without permission."', o:["Admittance","Admission","Administration","Admonition"], c:0, v:D.admission },
+      { l:1, t:'"There are many ________ pieces in the museum."', o:["Antique","Antic","Unique","Attic"], c:0, v:D.antique },
+      { l:1, t:'"________ of the juggler regaled the children."', o:["Antics","Antiques","Arts","Attics"], c:0, v:D.antique },
+      { l:1, t:'"We have a moral science class on every ________ day."', o:["Alternate","Alternative","Altered","Alternator"], c:0, v:D.alternate },
+      { l:1, t:'"There is no ________ to honesty in dealing with the people."', o:["Alternative","Alternate","Alteration","Alternator"], c:0, v:D.alternate },
+      { l:1, t:'"She was able to change the behaviour of her in laws towards her by ________ means."', o:["Artful","Artistic","Artificial","Artless"], c:0, v:D.artful },
+      { l:1, t:'"Everybody admires her for ________ temperament."', o:["Artistic","Artful","Artificial","Artless"], c:0, v:D.artful },
+      { l:1, t:'"He is a frivolous ________ (one who practises fine art)."', o:["Artist","Artiste","Artisan","Artistry"], c:0, v:D.artist },
+      { l:1, t:'"There was no security for the ________, who had come to perform for the charity show."', o:["Artiste","Artist","Artisan","Artistry"], c:0, v:D.artist },
+      { l:1, t:'"The ________ of Moradabad are very skilful."', o:["Artisans","Artists","Artistes","Artistry"], c:0, v:D.artist },
+      { l:1, t:'"My mother is held in high ________ and respect by all."', o:["Affection","Affectation","Infection","Perfection"], c:0, v:D.affection },
+      { l:1, t:'"I always feel vexed at her ________ (unnatural behaviour)."', o:["Affectation","Affection","Infection","Affliction"], c:0, v:D.affection },
+      { l:1, t:'"We should ________ from drinking."', o:["Abstain","Refrain","Restrain","Contain"], c:0, v:D.abstain },
+      { l:1, t:'"You should ________ from telling a lie."', o:["Refrain","Abstain","Restrain","Retain"], c:0, v:D.abstain },
+      { l:1, t:'"Hamlet delayed ________ the murder of his father."', o:["Avenging","Revenging","Averting","Adverting"], c:0, v:D.avenge },
+      { l:1, t:'"He ________ himself on his enemy by abducting his minor child."', o:["Revenged","Avenged","Averted","Reversed"], c:0, v:D.avenge },
+      { l:1, t:'"The owners of the milk dairy were charged with ________ of milk."', o:["Adulteration","Adultery","Alteration","Adulation"], c:0, v:D.adulteration },
+      { l:1, t:'"Her husband accused her of ________ and deserted her."', o:["Adultery","Adulteration","Adult","Adulation"], c:0, v:D.adulteration },
+      { l:1, t:'"We should not cast ________ on our friends."', o:["Aspersions","Aspirations","Dispersions","Versions"], c:0, v:D.aspersion },
+      { l:1, t:'"You can attain your ________ only by hard work."', o:["Aspiration","Aspersion","Respiration","Expiration"], c:0, v:D.aspersion },
+      { l:1, t:'"A little common sense ________ a major mishap."', o:["Averted","Adverted","Inverted","Diverted"], c:0, v:D.avert },
+      { l:1, t:'"He ________ to the problem of Indian security in his speech."', o:["Adverted","Averted","Inverted","Converted"], c:0, v:D.avert },
+      { l:1, t:'"The exact date of the ________ of a person is known from his birth certificate."', o:["Birth","Berth","Bird","Bard"], c:0, v:D.birth },
+      { l:1, t:'"I have got two ________ booked in the Rajdhani Express."', o:["Berths","Births","Birds","Bards"], c:0, v:D.birth },
+      { l:1, t:'"It is very difficult to control a horse without a ________."', o:["Bridle","Bridal","Brutal","Brief"], c:0, v:D.bridle },
+      { l:1, t:'"The ________ dress must have cost a lot."', o:["Bridal","Bridle","Brutal","Brief"], c:0, v:D.bridle },
+      { l:1, t:'"She was selected to play the part of a village damsel because of her ________ beauty."', o:["Barbaric","Barbarous","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:1, t:'"The Muslim invaders were ________ in their wars."', o:["Barbarous","Barbaric","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:1, t:'"Hitler\'s ________ is too terrible to be related."', o:["Barbarity","Barbarism","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:1, t:'"________ still prevails in most of the tribal regions of the world."', o:["Barbarism","Barbarity","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:1, t:'"Nutritious food is ________ for health."', o:["Beneficial","Beneficent","Benevolent","Benefit"], c:0, v:D.beneficial },
+      { l:1, t:'"Everybody paid rich tribute to the king as he was ________ to all."', o:["Beneficent","Beneficial","Benevolent","Benefit"], c:0, v:D.beneficial },
+
+      // LEVEL 2: MODERATE
+      { l:2, t:'"The student needed ________ to the digital library to finish his project."', o:["Access","Accession","Excess","Assess"], c:0, v:D.access },
+      { l:2, t:'"The ________ of the CEO to the board was unexpected."', o:["Accession","Access","Excess","Session"], c:0, v:D.access },
+      { l:2, t:'"The baggage fee applies if your suitcase is in ________ of 20kg."', o:["Excess","Access","Assess","Axis"], c:0, v:D.access },
+      { l:2, t:'"Please ________ my apology for the delay."', o:["Accept","Except","Expect","Aspect"], c:0, v:D.accept },
+      { l:2, t:'"The store is open every day ________ Sundays."', o:["Except","Accept","Expect","Aspect"], c:0, v:D.accept },
+      { l:2, t:'"I ________ the package to arrive by tomorrow morning."', o:["Expect","Accept","Except","Inspect"], c:0, v:D.accept },
+      { l:2, t:'"The tailor promised to ________ the suit by Friday."', o:["Alter","Altar","Alert","Altercation"], c:0, v:D.alter },
+      { l:2, t:'"The couple stood before the ________ to exchange rings."', o:["Altar","Alter","Alert","Altercation"], c:0, v:D.alter },
+      { l:2, t:'"The manager gave his ________ to the new holiday plan."', o:["Assent","Ascent","Accent","Assert"], c:0, v:D.assent },
+      { l:2, t:'"The sudden ________ of the elevator made me dizzy."', o:["Ascent","Assent","Accent","Assert"], c:0, v:D.assent },
+      { l:2, t:'"They decided to ________ a puppy from the shelter."', o:["Adopt","Adapt","Adept","Adult"], c:0, v:D.adopt },
+      { l:2, t:'"It took time to ________ to the new software interface."', o:["Adapt","Adopt","Adept","Adult"], c:0, v:D.adopt },
+      { l:2, t:'"He is quite ________ at fixing computer problems."', o:["Adept","Adopt","Adapt","Adult"], c:0, v:D.adopt },
+      { l:2, t:'"The neighbors reached an ________ agreement over the fence."', o:["Amicable","Amiable","Applicable","Admirable"], c:0, v:D.amicable },
+      { l:2, t:'"The new receptionist is very ________ and helpful."', o:["Amiable","Amicable","Able","Admirable"], c:0, v:D.amicable },
+      { l:2, t:'"I cannot ________ to your demand for a salary hike right now."', o:["Accede","Exceed","Concede","Proceed"], c:0, v:D.accede },
+      { l:2, t:'"Do not ________ the speed limit on the highway."', o:["Exceed","Accede","Concede","Proceed"], c:0, v:D.accede },
+      { l:2, t:'"After losing the vote, he had to ________ defeat."', o:["Concede","Accede","Exceed","Recede"], c:0, v:D.accede },
+      { l:2, t:'"The architect made a small ________ to the blueprint."', o:["Alteration","Altercation","Alternation","Allocation"], c:0, v:D.altercation },
+      { l:2, t:'"The minor traffic accident led to a loud ________ on the street."', o:["Altercation","Alteration","Allocation","Alternation"], c:0, v:D.altercation },
+      { l:2, t:'"His joke was not ________ to the solemn occasion."', o:["Apposite","Opposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:2, t:'"The bank is located ________ the supermarket."', o:["Opposite","Apposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:2, t:'"The bad weather will likely ________ our travel plans."', o:["Affect","Effect","Infect","Defect"], c:0, v:D.affect },
+      { l:2, t:'"The medicine had an immediate ________ on his fever."', o:["Effect","Affect","Defect","Infect"], c:0, v:D.affect },
+      { l:2, t:'"The movie made a clever ________ to a famous book."', o:["Allusion","Illusion","Illustration","Elusion"], c:0, v:D.allusion },
+      { l:2, t:'"The magician created the ________ of floating in air."', o:["Illusion","Allusion","Illustration","Elusion"], c:0, v:D.allusion },
+      { l:2, t:'"What ________ the economy is a lack of investment."', o:["Ails","Ales","Alludes","Fails"], c:0, v:D.ail },
+      { l:2, t:'"They met at the pub for a pint of ________."', o:["Ale","Ail","All","Aisle"], c:0, v:D.ail },
+      { l:2, t:'"The police managed to ________ the thief after a chase."', o:["Apprehend","Comprehend","Reprehend","Amend"], c:0, v:D.apprehend },
+      { l:2, t:'"I cannot ________ why he quit such a good job."', o:["Comprehend","Apprehend","Amend","Append"], c:0, v:D.apprehend },
+      { l:2, t:'"The college ________ process is entirely online now."', o:["Admission","Admittance","Accession","Mission"], c:0, v:D.admission },
+      { l:2, t:'"He was refused ________ to the club because he wasn\'t a member."', o:["Admittance","Admission","Administration","Admonition"], c:0, v:D.admission },
+      { l:2, t:'"Grandmother\'s clock is a valuable ________."', o:["Antique","Antic","Unique","Attic"], c:0, v:D.antique },
+      { l:2, t:'"The puppy\'s playful ________ made everyone laugh."', o:["Antics","Antiques","Arts","Attics"], c:0, v:D.antique },
+      { l:2, t:'"We visit the gym on ________ days (Mon, Wed, Fri)."', o:["Alternate","Alternative","Altered","Alternator"], c:0, v:D.alternate },
+      { l:2, t:'"We have no ________ but to walk home."', o:["Alternative","Alternate","Alteration","Alternator"], c:0, v:D.alternate },
+      { l:2, t:'"The magician used ________ tricks to deceive the audience."', o:["Artful","Artistic","Artificial","Artless"], c:0, v:D.artful },
+      { l:2, t:'"The gallery displays ________ works from local students."', o:["Artistic","Artful","Artificial","Artless"], c:0, v:D.artful },
+      { l:2, t:'"Picasso was a famous ________."', o:["Artist","Artiste","Artisan","Artistry"], c:0, v:D.artist },
+      { l:2, t:'"The circus ________ performed a dangerous stunt."', o:["Artiste","Artist","Artisan","Artistry"], c:0, v:D.artist },
+      { l:2, t:'"The local ________ sells handmade pottery at the market."', o:["Artisan","Artist","Artiste","Artistry"], c:0, v:D.artist },
+      { l:2, t:'"She greeted her old friend with genuine ________."', o:["Affection","Affectation","Infection","Perfection"], c:0, v:D.affection },
+      { l:2, t:'"His British accent is just an ________; he is actually American."', o:["Affectation","Affection","Infection","Affliction"], c:0, v:D.affection },
+      { l:2, t:'"The doctor advised him to ________ from smoking."', o:["Abstain","Refrain","Restrain","Contain"], c:0, v:D.abstain },
+      { l:2, t:'"Please ________ from talking during the movie."', o:["Refrain","Abstain","Restrain","Retain"], c:0, v:D.abstain },
+      { l:2, t:'"He wanted to ________ the insult to his family honor."', o:["Avenge","Revenge","Avert","Advert"], c:0, v:D.avenge },
+      { l:2, t:'"She sought ________ after being fired unfairly."', o:["Revenge","Avenge","Avert","Reverse"], c:0, v:D.avenge },
+      { l:2, t:'"Food ________ is a crime punishable by law."', o:["Adulteration","Adultery","Alteration","Adulation"], c:0, v:D.adulteration },
+      { l:2, t:'"The scandal involved accusations of ________."', o:["Adultery","Adulteration","Adult","Adulation"], c:0, v:D.adulteration },
+      { l:2, t:'"The politician cast an ________ on his opponent\'s integrity."', o:["Aspersion","Aspiration","Dispersion","Version"], c:0, v:D.aspersion },
+      { l:2, t:'"Her ________ is to become a doctor."', o:["Aspiration","Aspersion","Respiration","Expiration"], c:0, v:D.aspersion },
+      { l:2, t:'"The pilot managed to ________ a disaster by landing safely."', o:["Avert","Advert","Invert","Divert"], c:0, v:D.avert },
+      { l:2, t:'"The brochure ________ to the hotel\'s spa facilities."', o:["Adverts","Averts","Inverts","Converts"], c:0, v:D.avert },
+      { l:2, t:'"Please state your country of ________."', o:["Birth","Berth","Bird","Bard"], c:0, v:D.birth },
+      { l:2, t:'"The ship is waiting for a free ________ at the dock."', o:["Berth","Birth","Bird","Bard"], c:0, v:D.birth },
+      { l:2, t:'"He struggled to ________ his anger during the argument."', o:["Bridle","Bridal","Brutal","Brief"], c:0, v:D.bridle },
+      { l:2, t:'"We are shopping for a ________ gown for the wedding."', o:["Bridal","Bridle","Brutal","Brief"], c:0, v:D.bridle },
+      { l:2, t:'"The ________ decorations were crude but colorful."', o:["Barbaric","Barbarous","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:2, t:'"Cruelty to animals is considered ________."', o:["Barbarous","Barbaric","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:2, t:'"The ________ of the attack shocked the community."', o:["Barbarity","Barbarism","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:2, t:'"Eating with your hands is considered ________ in some cultures."', o:["Barbarism","Barbarity","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:2, t:'"Regular exercise is ________ to your heart."', o:["Beneficial","Beneficent","Benevolent","Benefit"], c:0, v:D.beneficial },
+      { l:2, t:'"The charity relies on a ________ donor."', o:["Beneficent","Beneficial","Benevolent","Benefit"], c:0, v:D.beneficial },
+
+      // LEVEL 3: HARD
+      { l:3, t:'"His unauthorized ________ to the classified files triggered an investigation."', o:["Access","Accession","Excess","Assess"], c:0, v:D.access },
+      { l:3, t:'"The rapid ________ of new states to the union changed the political map."', o:["Accession","Access","Excess","Session"], c:0, v:D.access },
+      { l:3, t:'"An ________ of caution can sometimes paralyze decision making."', o:["Excess","Access","Assess","Axis"], c:0, v:D.access },
+      { l:3, t:'"We agreed with the report, ________ the statistical error on page 5."', o:["Excepting","Accepting","Expecting","Aspecting"], c:0, v:D.accept },
+      { l:3, t:'"I can ________ his apology, but I cannot forget the insult."', o:["Accept","Except","Expect","Aspect"], c:0, v:D.accept },
+      { l:3, t:'"Analysts ________ a downturn in the market next quarter."', o:["Expect","Accept","Except","Inspect"], c:0, v:D.accept },
+      { l:3, t:'"He sacrificed his morals on the ________ of corporate greed."', o:["Altar","Alter","Alert","Altercation"], c:0, v:D.alter },
+      { l:3, t:'"Nothing can ________ the fact that we are late."', o:["Alter","Altar","Alert","Altercation"], c:0, v:D.alter },
+      { l:3, t:'"Royal ________ is required before the law becomes effective."', o:["Assent","Ascent","Accent","Assert"], c:0, v:D.assent },
+      { l:3, t:'"His rapid ________ through the ranks of the military was unprecedented."', o:["Ascent","Assent","Accent","Assert"], c:0, v:D.assent },
+      { l:3, t:'"The senate voted to ________ the new resolution unanimously."', o:["Adopt","Adapt","Adept","Adult"], c:0, v:D.adopt },
+      { l:3, t:'"It is difficult for old systems to ________ to modern cloud architecture."', o:["Adapt","Adopt","Adept","Adult"], c:0, v:D.adopt },
+      { l:3, t:'"He is an ________ negotiator in international treaties."', o:["Adept","Adopt","Adapt","Adult"], c:0, v:D.adopt },
+      { l:3, t:'"Despite the divorce, they maintained an ________ relationship for the kids."', o:["Amicable","Amiable","Applicable","Admirable"], c:0, v:D.amicable },
+      { l:3, t:'"His ________ disposition masked a ruthless ambition."', o:["Amiable","Amicable","Able","Admirable"], c:0, v:D.amicable },
+      { l:3, t:'"The King was forced to ________ to the demands of the rebels."', o:["Accede","Exceed","Concede","Proceed"], c:0, v:D.accede },
+      { l:3, t:'"The budget deficit must not ________ 3% of the GDP."', o:["Exceed","Accede","Concede","Proceed"], c:0, v:D.accede },
+      { l:3, t:'"The candidate refused to ________ the election until all votes were counted."', o:["Concede","Accede","Exceed","Recede"], c:0, v:D.accede },
+      { l:3, t:'"The lawyer requested a minor ________ to the contract clauses."', o:["Alteration","Altercation","Alternation","Allocation"], c:0, v:D.altercation },
+      { l:3, t:'"The diplomatic ________ resulted in the expulsion of the ambassador."', o:["Altercation","Alteration","Allocation","Alternation"], c:0, v:D.altercation },
+      { l:3, t:'"The quote was particularly ________, capturing the essence of the crisis."', o:["Apposite","Opposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:3, t:'"His political views are diametrically ________ to mine."', o:["Opposite","Apposite","Appose","Oppose"], c:0, v:D.apposite },
+      { l:3, t:'"The new tax law will take ________ from midnight tonight."', o:["Effect","Affect","Defect","Infect"], c:0, v:D.affect },
+      { l:3, t:'"Public opinion can deeply ________ government policy."', o:["Affect","Effect","Infect","Defect"], c:0, v:D.affect },
+      { l:3, t:'"The author\'s ________ to Dante\'s Inferno added depth to the novel."', o:["Allusion","Illusion","Illustration","Elusion"], c:0, v:D.allusion },
+      { l:3, t:'"They are laboring under the ________ that the market will recover overnight."', o:["Illusion","Allusion","Illustration","Elusion"], c:0, v:D.allusion },
+      { l:3, t:'"A sense of malaise ________ the entire department."', o:["Ails","Ales","Alludes","Fails"], c:0, v:D.ail },
+      { l:3, t:'"The soldiers gathered at the tavern for ________."', o:["Ale","Ail","All","Aisle"], c:0, v:D.ail },
+      { l:3, t:'"The complex philosophy was difficult to ________."', o:["Comprehend","Apprehend","Amend","Append"], c:0, v:D.apprehend },
+      { l:3, t:'"We must ________ the danger before it is too late."', o:["Apprehend","Comprehend","Reprehend","Amend"], c:0, v:D.apprehend },
+      { l:3, t:'"His ________ of guilt surprised the jury."', o:["Admission","Admittance","Accession","Mission"], c:0, v:D.admission },
+      { l:3, t:'"She stared at the sign: \'No ________ except on business\'."', o:["Admittance","Admission","Administration","Admonition"], c:0, v:D.admission },
+      { l:3, t:'"His views on women are positively ________."', o:["Antique","Antic","Unique","Attic"], c:0, v:D.antique },
+      { l:3, t:'"Stop playing these childish ________ and behave seriously."', o:["Antics","Antiques","Arts","Attics"], c:0, v:D.antique },
+      { l:3, t:'"The layers of rock ________ between shale and sandstone."', o:["Alternate","Alternative","Altered","Alternator"], c:0, v:D.alternate },
+      { l:3, t:'"We have no ________ but to accept the judge\'s ruling."', o:["Alternative","Alternate","Alteration","Alternator"], c:0, v:D.alternate },
+      { l:3, t:'"The cathedral is a magnificent ________ achievement."', o:["Artistic","Artful","Artificial","Artless"], c:0, v:D.artful },
+      { l:3, t:'"The lawyer used ________ questioning to trap the witness."', o:["Artful","Artistic","Artificial","Artless"], c:0, v:D.artful },
+      { l:3, t:'"The renaissance ________ changed the perspective of painting."', o:["Artist","Artiste","Artisan","Artistry"], c:0, v:D.artist },
+      { l:3, t:'"The cabaret featured a famous French ________."', o:["Artiste","Artist","Artisan","Artistry"], c:0, v:D.artist },
+      { l:3, t:'"He is a master ________ of wood carving."', o:["Artisan","Artist","Artiste","Artistry"], c:0, v:D.artist },
+      { l:3, t:'"He regarded his country with deep ________."', o:["Affection","Affectation","Infection","Perfection"], c:0, v:D.affection },
+      { l:3, t:'"His sophisticated mannerisms were mere ________."', o:["Affectation","Affection","Infection","Affliction"], c:0, v:D.affection },
+      { l:3, t:'"Due to a conflict of interest, the chairman decided to ________ from voting."', o:["Abstain","Refrain","Restrain","Contain"], c:0, v:D.abstain },
+      { l:3, t:'"We must ________ from making premature judgments."', o:["Refrain","Abstain","Restrain","Retain"], c:0, v:D.abstain },
+      { l:3, t:'"The gods will ________ the death of the hero."', o:["Avenge","Revenge","Avert","Advert"], c:0, v:D.avenge },
+      { l:3, t:'"The bombing was an act of ________ for the airstrike."', o:["Revenge","Avenge","Avert","Reverse"], c:0, v:D.avenge },
+      { l:3, t:'"The ________ of the currency caused inflation."', o:["Adulteration","Adultery","Alteration","Adulation"], c:0, v:D.adulteration },
+      { l:3, t:'"The King was executed for treason and ________."', o:["Adultery","Adulteration","Adult","Adulation"], c:0, v:D.adulteration },
+      { l:3, t:'"I resent the ________ cast upon my professional reputation."', o:["Aspersion","Aspiration","Dispersion","Version"], c:0, v:D.aspersion },
+      { l:3, t:'"National ________ for independence grew stronger."', o:["Aspirations","Aspersions","Respirations","Expirations"], c:0, v:D.aspersion },
+      { l:3, t:'"Diplomacy failed to ________ the war."', o:["Avert","Advert","Invert","Divert"], c:0, v:D.avert },
+      { l:3, t:'"The speaker ________ to the previous point during his summary."', o:["Adverted","Averted","Inverted","Converted"], c:0, v:D.avert },
+      { l:3, t:'"The ________ of a new nation is a painful process."', o:["Birth","Berth","Bird","Bard"], c:0, v:D.birth },
+      { l:3, t:'"He gave the angry dog a wide ________."', o:["Berth","Birth","Bird","Bard"], c:0, v:D.birth },
+      { l:3, t:'"He bristled and ________ at the suggestion of dishonesty."', o:["Bridled","Bridaled","Brutaled","Briefed"], c:0, v:D.bridle },
+      { l:3, t:'"The ________ suite was reserved for the VIPs."', o:["Bridal","Bridle","Brutal","Brief"], c:0, v:D.bridle },
+      { l:3, t:'"The intricate design was surprisingly complex for a ________ tribe."', o:["Barbaric","Barbarous","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:3, t:'"The regime was known for its ________ treatment of dissidents."', o:["Barbarous","Barbaric","Barbarity","Barber"], c:0, v:D.barbaric },
+      { l:3, t:'"The ________ of the crime scene suggested a ritual."', o:["Barbarity","Barbarism","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:3, t:'"We must rise above ________ and embrace civilization."', o:["Barbarism","Barbarity","Barbaric","Barber"], c:0, v:D.barbaric },
+      { l:3, t:'"The trade agreement was mutually ________."', o:["Beneficial","Beneficent","Benevolent","Benefit"], c:0, v:D.beneficial },
+      { l:3, t:'"God is described as the all-________ creator."', o:["Beneficent","Beneficial","Benevolent","Benefit"], c:0, v:D.beneficial }
+    ];
+
+    // ==========================================
+    //  APP STATE
+    // ==========================================
+    let activeQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timerInterval = null;
+    let timeLimit = 0;
+    let userResults = [];
+
+    // Init
+    startQuiz(); 
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    // -----------------------------------------------------
+    // TEXT TO SPEECH HELPER
+    // -----------------------------------------------------
+    function speakWord(word) {
+      // Prevent bubbling if user clicks child elements (like the SVG)
+      if(window.event) window.event.stopPropagation();
+      
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US'; 
+        utterance.rate = 0.9; 
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("Audio playback is not supported in this browser.");
+      }
+    }
+
+    function startQuiz() {
+      // 1. Get Settings
+      const level = document.getElementById('level').value;
+      const timerVal = document.getElementById('timer').value;
+      const lvlNum = parseInt(level);
+      timeLimit = parseInt(timerVal);
+
+      // 2. Filter & Setup Data
+      let rawData = Q.filter(q => q.l === lvlNum);
+      
+      activeQuestions = JSON.parse(JSON.stringify(rawData));
+      activeQuestions.forEach(q => {
+        const correctText = q.o[q.c];
+        shuffleArray(q.o);
+        q.c = q.o.indexOf(correctText);
+      });
+      shuffleArray(activeQuestions);
+
+      // 3. Reset State
+      currentQuestionIndex = 0;
+      score = 0;
+      userResults = [];
+      document.getElementById('score').innerText = score;
+      
+      // 4. Reset UI
+      document.getElementById('game-area').style.display = 'block';
+      document.getElementById('review-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = (timeLimit > 0) ? 'block' : 'none';
+      document.getElementById('timer-bar').style.width = '100%';
+      document.getElementById('top-notification').classList.remove('show');
+
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if(timerInterval) clearInterval(timerInterval);
+
+      const q = activeQuestions[currentQuestionIndex];
+      document.getElementById('total').innerText = activeQuestions.length;
+      document.getElementById('current').innerText = currentQuestionIndex + 1;
+      document.getElementById('question-number').innerText = `Question ${currentQuestionIndex + 1}`;
+      document.getElementById('question-text').innerText = q.t;
+
+      const optionsDiv = document.getElementById('options-container');
+      optionsDiv.innerHTML = '';
+      
+      // Hide feedback from previous
+      document.getElementById('feedback-box').style.display = 'none';
+      document.getElementById('next-btn').style.display = 'none';
+
+      q.o.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(index, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      if(timeLimit > 0) runTimer(timeLimit);
+    }
+
+    function runTimer(seconds) {
+      let timeLeft = seconds;
+      const bar = document.getElementById('timer-bar');
+      bar.style.width = '100%';
+      bar.style.backgroundColor = 'var(--timer-color)';
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const percentage = (timeLeft / seconds) * 100;
+        bar.style.width = percentage + '%';
+
+        if(percentage < 30) bar.style.backgroundColor = '#dc3545';
+
+        if(timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function showTopBanner(text) {
+      const banner = document.getElementById('top-notification');
+      banner.innerText = text;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 2500);
+    }
+
+    function handleTimeOut() {
+      const q = activeQuestions[currentQuestionIndex];
+      showTopBanner(`Time's Up! Answer: ${q.o[q.c]}`);
+
+      userResults.push({ qIndex: currentQuestionIndex, status: 'skipped', userAnswer: null });
+      disableOptions(q.c);
+      showFeedback(q, true);
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+      if(timerInterval) clearInterval(timerInterval);
+
+      const q = activeQuestions[currentQuestionIndex];
+      const isCorrect = (selectedIndex === q.c);
+      
+      userResults.push({
+        qIndex: currentQuestionIndex,
+        status: isCorrect ? 'correct' : 'wrong',
+        userAnswer: q.o[selectedIndex]
+      });
+
+      if (isCorrect) {
+        score++;
+        document.getElementById('score').innerText = score;
+        nextQuestion(); 
+      } else {
+        btnElement.classList.add('wrong');
+        showTopBanner(`Wrong! Answer: ${q.o[q.c]}`);
+        disableOptions(q.c);
+        showFeedback(q, true);
+      }
+    }
+
+    function disableOptions(correctIndex) {
+      const btns = document.querySelectorAll('.option');
+      btns.forEach((b, idx) => {
+        b.disabled = true;
+        if(idx === correctIndex) b.classList.add('correct');
+      });
+    }
+
+    function showFeedback(questionData, showVisuals) {
+      if(!showVisuals) return;
+
+      const feedbackBox = document.getElementById('feedback-box');
+      feedbackBox.innerHTML = `<h4>Visual Comparison</h4><div class="comparison-container" id="cards-container"></div>`;
+      const container = document.getElementById('cards-container');
+      
+      const correctWord = questionData.o[questionData.c];
+
+      questionData.v.forEach(v => {
+        const seed = Math.floor(Math.random() * 9000) + 1000;
+        const prompt = encodeURIComponent(`${v.img} cartoon vector flat illustration minimalist`);
+        const imgSrc = `https://image.pollinations.ai/prompt/${prompt}?width=240&height=140&nologo=true&seed=${seed}`;
+
+        const isCorrectCard = (v.w === correctWord) ? 'is-correct-card' : '';
+
+        const card = document.createElement('div');
+        card.className = `comparison-card ${isCorrectCard}`;
+        
+        // CLEAN WORD TITLE + CLICKABLE IMAGE
+        card.innerHTML = `
+          <div class="word-title">${v.w}</div>
+          
+          <div class="img-container" onclick="speakWord('${v.w}')">
+            <div class="loader"></div>
+            <img class="comparison-img" src="${imgSrc}" alt="${v.w}" 
+                 onload="this.classList.add('loaded'); this.parentElement.querySelector('.loader').style.display='none';">
+          </div>
+          
+          <div class="word-def">${v.d}</div>
+        `;
+        container.appendChild(card);
+      });
+      
+      feedbackBox.style.display = 'block';
+      document.getElementById('next-btn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < activeQuestions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('game-area').style.display = 'none';
+      document.getElementById('timer-container').style.display = 'none';
+      document.getElementById('top-notification').classList.remove('show');
+      document.getElementById('review-area').style.display = 'block';
+
+      const skipped = userResults.filter(r => r.status === 'skipped').length;
+      const wrong = userResults.filter(r => r.status === 'wrong').length;
+      const correct = userResults.filter(r => r.status === 'correct').length;
+
+      const summaryHTML = `
+        <div class="stat-box stat-correct">Correct: ${correct}</div>
+        <div class="stat-box stat-wrong">Wrong: ${wrong}</div>
+        <div class="stat-box" style="background:#e2e3e5;">Timeouts: ${skipped}</div>
+        <h3>Total Score: ${score} / ${activeQuestions.length}</h3>
+      `;
+      document.getElementById('result-summary').innerHTML = summaryHTML;
+    }
+  </script>
+</body>
+</html>
