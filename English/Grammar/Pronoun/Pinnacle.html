@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammar Quiz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --background: #EEF2FF;
+            --card-bg: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            padding: 40px;
+            transition: opacity 0.3s ease-in-out; 
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            color: var(--text-dark);
+            margin-bottom: 20px;
+        }
+
+        .rules-area {
+            background: linear-gradient(to right, #EEF2FF, #E0E7FF);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .rules-area h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .rules-area ul {
+            list-style-position: inside;
+            line-height: 1.8;
+            color: var(--text-dark);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .option {
+            background: white;
+            border: 2px solid var(--border);
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: #F8FAFC;
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: #EEF2FF;
+        }
+
+        .option.correct-reveal {
+            border-color: var(--secondary);
+            background: #ECFDF5;
+            color: #065F46;
+        }
+
+        .option.wrong-reveal {
+            border-color: var(--danger);
+            background: #FEF2F2;
+            color: #991B1B;
+        }
+
+        .explanation-area {
+            display: none;
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-left: 5px solid #F59E0B;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #92400E;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .explanation-area strong {
+            display: block;
+            color: #B45309;
+            margin-bottom: 5px;
+        }
+
+        .score-card {
+            text-align: center;
+            padding: 30px;
+            background: #F8FAFC;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-card h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .review-item {
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--border);
+            background: #F9FAFB;
+        }
+
+        .review-item.correct {
+            border-left-color: var(--secondary);
+        }
+
+        .review-item.incorrect {
+            border-left-color: var(--danger);
+        }
+
+        .review-question {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .review-status {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .text-correct { color: var(--secondary); }
+        .text-incorrect { color: var(--danger); }
+
+        .flex-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .flex-buttons .btn { width: 50%; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="rules-screen" class="screen active">
+            <h1>Grammar Mastery Quiz</h1>
+            
+            <div class="rules-area">
+                <h3>📋 Rules & Instructions</h3>
+                <ul>
+                    <li>Read each sentence carefully and identify the correct grammatical structure.</li>
+                    <li>You must select an answer before moving to the next question.</li>
+                    <li>If you answer <strong>correctly</strong>, you will automatically move to the next question.</li>
+                    <li>If you answer <strong>incorrectly</strong>, you will see a detailed explanation to help you learn.</li>
+                    <li>At the end of the quiz, you can review your performance.</li>
+                    <li>You will have the option to <strong>reattempt only the questions you got wrong</strong>.</li>
+                </ul>
+            </div>
+
+            <button class="btn" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <div id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            
+            <span id="question-counter" style="color: var(--text-light); font-size: 0.9rem; font-weight: 600;">Question 1 of 120</span>
+            
+            <div id="question-text" class="question-text">Question goes here?</div>
+            
+            <div id="options-container" class="options">
+            </div>
+
+            <div id="explanation-area" class="explanation-area">
+                <strong>💡 Explanation:</strong>
+                <span id="explanation-text">Explanation goes here.</span>
+            </div>
+
+            <button id="next-btn" class="btn" onclick="handleNextButton()" disabled>Submit Answer</button>
+        </div>
+
+        <div id="review-screen" class="screen">
+            <h1>Quiz Results</h1>
+            
+            <div class="score-card">
+                <h2 id="final-score">0/0</h2>
+                <p>Your Final Score</p>
+            </div>
+
+            <h3>Detailed Review</h3>
+            <div id="review-list" class="review-list">
+            </div>
+
+            <div class="flex-buttons">
+                <button id="reattempt-btn" class="btn" style="background: var(--danger);" onclick="reattemptWrongQuestions()">Reattempt Wrong</button>
+                <button class="btn" onclick="resetQuiz()">Restart Full Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "Identify the part with the error:<br><br><em>'I don't think either of the answers is correct.'</em>",
+                options: ["I don't think either", "of the answers", "is correct", "no error"],
+                correct: 0,
+                explanation: "Replace 'don't think either' with 'think neither'. Use of 'either' is ambiguous in this case. It is not clear whether one answer is wrong or both answers are wrong. 'Neither' means none of the two answers is correct."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'All of the twins have similar features.'</em>",
+                options: ["All of the", "twins have", "similar features", "no error"],
+                correct: 0,
+                explanation: "Replace 'all of' with 'both'. As 'all' is used for more than two and 'twins' means pair."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'She hurt while playing badminton late at night.'</em>",
+                options: ["She hurt", "while playing", "badminton late at night.", "no error"],
+                correct: 0,
+                explanation: "Add 'herself' after 'hurt'. We use a reflexive pronoun with the verb 'hurt'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'I bought a few books and put it in the bag.'</em>",
+                options: ["I bought a few books", "and put it in", "the bag", "no error"],
+                correct: 1,
+                explanation: "Replace 'it' with 'them'. The plural pronoun will be used with the plural noun 'books'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'They praised for their hard work.'</em>",
+                options: ["They", "praised for", "their hard work.", "no error"],
+                correct: 0,
+                explanation: "Add 'themselves' after 'praised'. A reflexive pronoun is used with the verb 'praise'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'This is the house which owner is known.'</em>",
+                options: ["This is the", "house which owner", "is known", "no error"],
+                correct: 1,
+                explanation: "Replace 'which' with 'whose'. 'whose/who' is used for living things; while 'which' is used for non-living things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The company is expanding their operations globally.'</em>",
+                options: ["The company", "is expanding their", "operations globally", "no error"],
+                correct: 1,
+                explanation: "Replace 'their' with 'its'. Here, we are talking about 'company' which is singular. Thus, the singular pronoun 'its' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The scenery of Shillong is more beautiful than Guwahati.'</em>",
+                options: ["The scenery of Shillong", "is more beautiful", "than Guwahati.", "no error"],
+                correct: 2,
+                explanation: "Replace 'than' with 'than that of'. Here comparison is between the scenery of two places. So to avoid repetition of a singular noun 'that of' is used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He decided to report his concerns to the supervisor.'</em>",
+                options: ["He decided to", "report his concerns", "to the supervisor.", "no error"],
+                correct: 3,
+                explanation: "No error. The sentence is grammatically correct."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The manager resigned herself to the fact that changes were inevitable.'</em>",
+                options: ["The manager resigned", "herself to the fact that", "changes were inevitable", "no error"],
+                correct: 3,
+                explanation: "No error. The reflexive pronoun is used correctly with the verb 'resign'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The person who I met was friendly.'</em>",
+                options: ["The person", "who I met", "was friendly.", "no error"],
+                correct: 1,
+                explanation: "Replace 'who' with 'whom'. 'Whom' is used to refer to the object of a verb/preposition."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'After the conversation, she and I found myself wondering about the topic.'</em>",
+                options: ["After the conversation,", "she and I found myself", "wondering about the topic.", "no error"],
+                correct: 1,
+                explanation: "Replace 'myself' with 'ourselves'. 'Ourselves' is used as the reflexive pronoun for any two or three persons including the first person."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The collaborators congratulated each other as they celebrated the completion of his ambitious project.'</em>",
+                options: ["The collaborators congratulated", "each other as they celebrated", "the completion of his ambitious project", "no error"],
+                correct: 2,
+                explanation: "Replace 'his' with 'their'. 'Their' will be used to match the plural pronoun 'they'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Whom is coming to the birthday party today?'</em>",
+                options: ["Whom is", "coming to the", "birthday party today", "no error"],
+                correct: 0,
+                explanation: "Replace 'whom' with 'who'. 'Who' is used to refer to the subject of a sentence."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The person to which the package was addressed had already moved to a new city.'</em>",
+                options: ["The person to", "which the package was addressed", "had already moved to a new city.", "no error"],
+                correct: 1,
+                explanation: "Replace 'which' with 'whom'. 'Which' is used for non-living things, while 'whom' is used for living things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Animals adapt himself to survive in harsh conditions.'</em>",
+                options: ["Animals adapt", "himself to survive", "in harsh conditions.", "no error"],
+                correct: 1,
+                explanation: "Replace 'himself' with 'themselves'. For the plural subject 'animals', themselves will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The comedian amused by watching his own performance.'</em>",
+                options: ["The comedian", "amused by watching", "his own performance", "no error"],
+                correct: 1,
+                explanation: "Add 'himself' after the verb 'amused'. The verb 'amuse' always takes a reflexive pronoun with it."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Whom did you encounter during your visit to the historical museum?'</em>",
+                options: ["Whom did you", "encounter during your visit", "to the historical museum?", "no error"],
+                correct: 3,
+                explanation: "No error. The sentence is grammatically correct."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Him and her will be attending the office meeting.'</em>",
+                options: ["Him and her", "will be attending the office", "meeting", "no error"],
+                correct: 0,
+                explanation: "Replace 'him and her' with 'he and she'. 'He' and 'she' are used as the subjects of a sentence."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The team has truly excelled, and his hard work has not gone unnoticed.'</em>",
+                options: ["The team has truly", "excelled, and his hard work", "has not gone unnoticed.", "no error"],
+                correct: 1,
+                explanation: "Replace 'his' with 'their'. 'Their' will be used for the collective noun 'team' to highlight the hard work of each individual."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He, you and I have been awarded the Employee of the Month for our outstanding contributions.'</em>",
+                options: ["He, you and I have been", "awarded the Employee of the", "Month for our outstanding contributions.", "no error"],
+                correct: 0,
+                explanation: "Replace 'he, you and I' with 'you, he and I'. When some pleasant news is to be announced, pronouns are used in the order of 2nd person, 3rd person and 1st person (i.e. 231)."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'They, you and we should collaborate to rectify the issues raised in the recent report.'</em>",
+                options: ["They, you and we should", "collaborate to rectify the issues", "raised in the recent report.", "no error"],
+                correct: 0,
+                explanation: "Replace 'they, you and we' with 'we, you and they'. In the case of plural pronouns, pronouns are used in the order of 1st person, 2nd person and 3rd person (i.e. 123)."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The woman of which chain has been snatched has come here.'</em>",
+                options: ["The woman", "of which chain has been snatched", "has come here.", "no error"],
+                correct: 1,
+                explanation: "Replace 'of which' with 'whose'. 'Whose' is used for living things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Nobody has given their best to make it a grand success.'</em>",
+                options: ["Nobody has given", "their best to make it", "a grand success.", "no error"],
+                correct: 1,
+                explanation: "Replace 'their' with 'his'. Indefinite pronouns like somebody, nobody, no one, anyone, everybody, everyone take pronouns according to 'he'. Hence, 'his' is the best choice."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One has the right to go places in his life.'</em>",
+                options: ["One has the right", "to go places", "in his life.", "no error"],
+                correct: 2,
+                explanation: "Replace 'his' with 'one\\'s'. If 'one' is used as the subject of the sentence, one's will be used as the possessive adjective."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'It is very difficult for me to stand your separation.'</em>",
+                options: ["It is very difficult", "for me to stand", "your separation.", "no error"],
+                correct: 2,
+                explanation: "Replace 'your separation' with 'separation from you'. Possessive adjectives are not used with 'separation'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The brave have to give his best to save this country.'</em>",
+                options: ["The brave have to", "give his best", "to save this country.", "no error"],
+                correct: 1,
+                explanation: "Replace 'his' with 'their'. 'The brave' means the whole community of brave people so the plural pronoun 'their' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Either your wife or your parents have to present herself before the Magistrate.'</em>",
+                options: ["Either your wife or your parents", "have to present herself", "before the Magistrate.", "no error"],
+                correct: 1,
+                explanation: "Replace 'herself' with 'themselves'. For 'parents', a plural pronoun will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'You are the person and whom everybody admires.'</em>",
+                options: ["You are the person", "and whom everybody", "admires.", "no error"],
+                correct: 1,
+                explanation: "Remove 'and'. We don't use any conjunction between the antecedent and relative pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'You always want to better the plight of the poor that is a mark of a good character.'</em>",
+                options: ["You always want to", "better the plight of the poor", "that is a mark of a good character.", "no error"],
+                correct: 2,
+                explanation: "Replace 'that' with 'which'. 'Which' is used for a non-essential clause and 'that' for an essential clause. A non-essential clause provides additional information."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'All the girls including whom I have taught are going abroad to delegate India.'</em>",
+                options: ["All the girls including whom", "I have taught are going abroad", "to delegate India.", "no error"],
+                correct: 0,
+                explanation: "Replace 'whom' with 'those whom'. In case of mainly/chiefly/particularly/including/specially/especially, always use 'that' or 'those' with the relative pronoun as per need."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'This is the same dog that always barks to attract someone.'</em>",
+                options: ["This is the same", "dog that always barks", "to attract someone.", "no error"],
+                correct: 3,
+                explanation: "No error. The sentence is grammatically correct."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Yours is the same condition that mine.'</em>",
+                options: ["Yours is the", "same condition", "that mine.", "no error"],
+                correct: 2,
+                explanation: "Replace 'that' with 'as'. When 'the same' appears as a noun or noun equivalent, 'as' is used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'That was a wonderful chance but which you missed.'</em>",
+                options: ["That was a wonderful", "chance but which", "you missed.", "no error"],
+                correct: 1,
+                explanation: "Replace 'but which' with 'which'. We don't use any conjunction between the antecedent and relative pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Many a girl is not doing their homework.'</em>",
+                options: ["Many a girl", "is not doing", "their homework.", "no error"],
+                correct: 2,
+                explanation: "Replace 'their' with 'her'. With 'many + a/an + noun' the pronoun is used according to 'he/she/it'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'I am getting late so I will have to take your leave.'</em>",
+                options: ["I am getting late", "so I will have to take", "your leave.", "no error"],
+                correct: 2,
+                explanation: "Replace 'your leave' with 'leave of you'. Possessive adjectives are not used with 'leave'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'These books are on english grammar but those one are about math.'</em>",
+                options: ["These books are on", "english grammar but those one", "are about math.", "no error"],
+                correct: 1,
+                explanation: "Replace 'one' with 'ones'. As there are many books, the plural form 'ones' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The dog which I bought yesterday never barks at strangers.'</em>",
+                options: ["The dog which", "I bought yesterday", "never barks at strangers.", "no error"],
+                correct: 3,
+                explanation: "No error. The sentence is grammatically correct."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The dog which was barking at you is my.'</em>",
+                options: ["The dog which was", "barking at you", "is my.", "no error"],
+                correct: 2,
+                explanation: "Replace 'my' with 'mine'. Possessive pronoun is used when the noun is used separately. Possessive adjective is used together with the noun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Neither of the two friends has got their name in the merit list.'</em>",
+                options: ["Neither of the two friends", "has got their name", "in the merit list.", "no error"],
+                correct: 1,
+                explanation: "Replace 'their' with 'his'. Always a singular pronoun is used with 'neither'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The Party Chief and the Chief Minister expressed his views on demonetization in India.'</em>",
+                options: ["The Party Chief and the Chief Minister", "expressed his views", "on demonetization in India.", "no error"],
+                correct: 1,
+                explanation: "Replace 'his' with 'their'. When two singular nouns joined by 'and' refer to two different persons, the pronoun used for them should be plural."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Somebody left his belongings in the conference room; please collect that.'</em>",
+                options: ["Somebody left his", "belongings in the conference", "room; please collect that.", "no error"],
+                correct: 2,
+                explanation: "Replace 'that' with 'them'. The objective plural pronoun 'them' will be used for belongings."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'In the midst of the chaos, she had to remind to stay focused on the task at hand.'</em>",
+                options: ["In the midst of the chaos,", "she had to remind to stay", "focused on the task at hand.", "no error"],
+                correct: 1,
+                explanation: "Add 'herself' after 'remind'. The verb 'remind' takes a reflexive pronoun with it when there is no object after it."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The Manager ordered the watchman to let the boys and I go in.'</em>",
+                options: ["The Manager ordered the", "watchman to let the boys", "and I go in.", "no error"],
+                correct: 2,
+                explanation: "Replace 'I' with 'me'. After the word 'let', pronouns are always used in the objective case."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'They expected him to outperform herself in the upcoming task.'</em>",
+                options: ["They expected him", "to outperform herself", "in the upcoming task.", "no error"],
+                correct: 1,
+                explanation: "Replace 'herself' with 'himself'. The reflexive pronoun of him is 'himself'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He adjusted herself to the new working environment.'</em>",
+                options: ["He adjusted", "herself to the", "new working environment.", "no error"],
+                correct: 1,
+                explanation: "Replace 'herself' with 'himself'. The verb 'adjust' takes a reflexive pronoun with it, and the reflexive pronoun of 'he' is himself."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'In the spirit of teamwork, the two members of the project collaborated seamlessly, offering insights and support to one another.'</em>",
+                options: ["In the spirit of teamwork,", "the two members of the project collaborated", "seamlessly, offering insights and support to one another.", "no error"],
+                correct: 2,
+                explanation: "Replace 'one another' with 'each other'. For two persons, 'each other' is used instead of 'one another'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'My sister that is a brilliant girl and always stands first in the school.'</em>",
+                options: ["My sister that is a brilliant", "girl and always stands first", "in the school.", "no error"],
+                correct: 0,
+                explanation: "Remove 'that'. We don't use any conjunction between the antecedent and helping verb."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'My dress was more beautiful than her's.'</em>",
+                options: ["My dress was", "more beautiful", "than her's", "no error"],
+                correct: 2,
+                explanation: "Replace 'her\\'s' with 'hers'. To show possession, 'hers' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Gautam is smarter than either of his three friends.'</em>",
+                options: ["Gautam is smarter", "than either of his", "three friends.", "no error"],
+                correct: 1,
+                explanation: "Replace 'either' with 'any'. As 'either' is used for two persons or things and 'any' is used for more than two persons or things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The daily wagers whom I have selected are very sagacious.'</em>",
+                options: ["The daily wagers", "whom I have selected", "are very sagacious.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The team leader is holding a meeting with hers subordinates to guide them about the upcoming projects.'</em>",
+                options: ["The team leader is holding a", "meeting with hers subordinates to guide them", "about the upcoming projects.", "no error"],
+                correct: 1,
+                explanation: "Replace 'hers' with 'his'. In the case of a common gender person, we use a masculine pronoun or adjective."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'You, I and Deepak have broken the main gate of the building.'</em>",
+                options: ["You, I and Deepak", "have broken the main", "gate of the building", "no error"],
+                correct: 0,
+                explanation: "Replace 'You, I and Deepak' with 'I, you and Deepak'. When some unpleasant news is to be announced, pronouns are used in the order of 1st person, 2nd person, and 3rd person (i.e. 123)."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Despite their best efforts, both of them could not solve the complex puzzle.'</em>",
+                options: ["Despite their best efforts,", "both of them could not", "solve the complex puzzle", "no error"],
+                correct: 1,
+                explanation: "Replace 'both of them could not' with 'neither of them could'. 'Both' is not used in negative sentences."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One should always strive for his personal growth and continuous learning to embrace new opportunities and challenges in life.'</em>",
+                options: ["One should always strive for his personal growth", "and continuous learning to embrace new", "opportunities and challenges in life", "no error"],
+                correct: 0,
+                explanation: "Replace 'his' with 'one\\'s'. If 'one' is used as the subject of the sentence, 'one\\'s' will be used in the sentence instead of 'his' or 'him'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Rachna, the team leader, she presented the quarterly report during the meeting.'</em>",
+                options: ["Rachna, the team leader,", "she presented the quarterly report", "during the meeting", "no error"],
+                correct: 1,
+                explanation: "Remove 'she'. We do not use a pronoun together with the noun it refers to."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The book on the shelf is not yours; it's my.'</em>",
+                options: ["The book on the shelf", "is not yours;", "it's my", "no error"],
+                correct: 2,
+                explanation: "Replace 'my' with 'mine'. We use a possessive pronoun when the noun (the book) is used separately."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The novels of J.K. Rowling are more popular than Dan Brown.'</em>",
+                options: ["The novels of J.K. Rowling", "are more popular than", "Dan Brown", "no error"],
+                correct: 2,
+                explanation: "Use 'those of' before Dan Brown. Comparison is made between the same type of entities. We need to use 'those of' to refer to the books of Dan Brown."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He is as responsible as her.'</em>",
+                options: ["He is as", "responsible", "as her", "no error"],
+                correct: 2,
+                explanation: "Replace 'her' with 'she'. While making comparisons in pronouns, the pronouns compared should be of the same case."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The manager was unaware of who of the employees had submitted the anonymous complaint.'</em>",
+                options: ["The manager was unaware of", "who of the employees had submitted", "the anonymous complaint", "no error"],
+                correct: 1,
+                explanation: "Replace 'who' with 'which'. We have to choose one among many employees, so 'which' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The team members, most of who participated in the competition, were feeling proud of themselves.'</em>",
+                options: ["The team members,", "most of who participated in the competition,", "were feeling proud of themselves.", "no error"],
+                correct: 1,
+                explanation: "Replace 'who' with 'whom'. We use an objective case pronoun after any preposition."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The teacher, pleased with the students' efforts, congratulated each of them on their achievements.'</em>",
+                options: ["The teacher, pleased with", "the students' efforts, congratulated", "each of them on their achievements", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Parul hates everybody and everything who reminds her of her old flame.'</em>",
+                options: ["Parul hates", "everybody and everything", "who reminds her of her old flame", "no error"],
+                correct: 2,
+                explanation: "Replace 'who' with 'that'. Use 'that' when we talk about both people and things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He expressed his gratitude to everyone except she, feeling a sense of betrayal.'</em>",
+                options: ["He expressed his gratitude", "to everyone except she,", "feeling a sense of betrayal", "no error"],
+                correct: 1,
+                explanation: "Replace 'she' with 'her'. An objective case comes after all prepositions."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Stop blaming you for the mistake; it wasn't your fault.'</em>",
+                options: ["Stop blaming you", "for the mistake;", "it wasn't your fault", "no error"],
+                correct: 0,
+                explanation: "Replace 'you' with 'yourself'. The verb 'blame' takes a reflexive pronoun when there is no object after it."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Despite facing numerous challenges, she persevered and ultimately achieved herself goals.'</em>",
+                options: ["Despite facing numerous challenges,", "she persevered and ultimately", "achieved herself goals", "no error"],
+                correct: 2,
+                explanation: "Replace 'herself' with 'her'. Reflexive pronouns are used when the subject and the object of the verb are the same person. Here, the object is 'her goals'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'She proved to her and others that dedication and resilience can lead to success.'</em>",
+                options: ["She proved to her", "and others that dedication and", "resilience can lead to success", "no error"],
+                correct: 0,
+                explanation: "Replace 'her' with 'herself'. Reflexive pronouns are used when the subject and the object of the verb are the same person."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'It is me who is responsible for the failure of this plan.'</em>",
+                options: ["It is", "me who is responsible", "for the failure of this plan.", "no error"],
+                correct: 1,
+                explanation: "Replace 'me' with 'I'. A subjective pronoun is used before a relative pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The guests enjoyed their time at the party; those expressed their appreciation for the hospitality.'</em>",
+                options: ["The guests enjoyed their time", "at the party; those expressed their", "appreciation for the hospitality", "no error"],
+                correct: 1,
+                explanation: "Replace 'those' with 'they'. A subjective pronoun is used as the subject of a clause or sentence."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'You and me will work together to create a collaborative and innovative solution for the upcoming project.'</em>",
+                options: ["You and me will work together", "to create a collaborative and innovative", "solution for the upcoming project", "no error"],
+                correct: 0,
+                explanation: "Replace 'me' with 'I'. In a compound subject, the subjective form of the pronoun should be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One should prioritize once well-being by adopting healthy lifestyle habits and managing stress effectively.'</em>",
+                options: ["One should prioritize once well-being", "by adopting healthy lifestyle", "habits and managing stress effectively", "no error"],
+                correct: 0,
+                explanation: "Replace 'once' with 'one\\'s'. The plural form of 'one' is 'ones' and to show possession, 'one\\'s' is used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'She absented from the meeting without prior notice.'</em>",
+                options: ["She absented", "from the meeting", "without prior notice", "no error"],
+                correct: 0,
+                explanation: "Add 'herself' after 'absented'. The verb 'absent' always takes a reflexive pronoun with it."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Every of the four employees working on the project is proficient in data analysis and brings valuable skills to the team.'</em>",
+                options: ["Every of the four employees working on the project", "is proficient in data analysis and brings", "valuable skills to the team", "no error"],
+                correct: 0,
+                explanation: "Replace 'Every' with 'Each'. 'Every of' is not the correct term. Either it should be 'everyone' or 'each of'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The baby started crying when he fell from the bed.'</em>",
+                options: ["The baby started crying", "when he fell", "from the bed", "no error"],
+                correct: 1,
+                explanation: "Replace 'he' with 'it'. We use the pronoun 'it' for a human baby, animals, and non-living things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Everybody should bring their ID card to the meeting.'</em>",
+                options: ["Everybody should", "bring their ID card", "to the meeting", "no error"],
+                correct: 1,
+                explanation: "Replace 'their' with 'his'. 'Everybody' takes a singular pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The book is yours; you can keep it.'</em>",
+                options: ["The book is", "yours;", "you can keep it", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'John asked she and me to join the committee.'</em>",
+                options: ["John asked she", "and me to join", "the committee", "no error"],
+                correct: 0,
+                explanation: "Replace 'she' with 'her'. Here, we need the object of the verb 'asked', so the objective case 'her' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'She bathed herself in the cold waters of the lake.'</em>",
+                options: ["She bathed", "herself in the", "cold waters of the lake", "no error"],
+                correct: 1,
+                explanation: "'herself' will be removed. We do not use a reflexive pronoun with the verb 'bathe'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The two friends often help one another with their homework.'</em>",
+                options: ["The two friends", "often help one another", "with their homework", "no error"],
+                correct: 1,
+                explanation: "Replace 'one another' with 'each other'. For two persons, 'each other' is used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'What of these options do you believe will yield the most significant results?'</em>",
+                options: ["What of these options", "do you believe will yield", "the most significant results?", "no error"],
+                correct: 0,
+                explanation: "Replace 'What' with 'Which'. For selection, 'which' is used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One should make his best effort if one wishes to achieve success in this organisation.'</em>",
+                options: ["One should make his", "best effort if one wishes to achieve", "success in this organisation.", "no error"],
+                correct: 0,
+                explanation: "Replace 'his' with 'one\\'s' as the subject is 'one'. If 'one' is used as the subject of the sentence then 'one\\'s' and 'oneself' will be used in the sentence and not 'him' and 'himself'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The little boy who I met yesterday was the winner of the quiz.'</em>",
+                options: ["The little boy who", "I met yesterday", "was the winner of the quiz.", "no error"],
+                correct: 0,
+                explanation: "Replace 'who' with 'whom'. 'whom' is used to refer to the object of a verb/preposition."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'She was more garrulous than either of her three friends.'</em>",
+                options: ["She was more garrulous", "than either of", "her three friends.", "no error"],
+                correct: 1,
+                explanation: "Eliminate 'either of' or 'three' as either is used for two things/persons only."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He sent all the furniture to Hisar that he had bought in Delhi.'</em>",
+                options: ["He sent all the", "furniture to Hisar that", "he had bought in Delhi.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Mr. Chaudhary, our representative will get in touch with you.'</em>",
+                options: ["Mr. Chaudhary, our representative", "will get in touch", "with you.", "no error"],
+                correct: 1,
+                explanation: "Eliminate 'he' from part (b) if present. If a person's name is given followed by a brief phrase giving some additional information about him then the pronoun will not follow such information."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Both of them will not deny the accusations against him.'</em>",
+                options: ["Both of them will not", "deny", "the accusations against him.", "no error"],
+                correct: 0,
+                explanation: "With 'both', 'not' is not used. The correct sentence is 'Neither of them will refute the charges.' We never use 'both' and 'not' together."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He claims to have read Shakespeare's all great tragedies who is the greatest playwright of English.'</em>",
+                options: ["He claims to have read Shakespeare's", "all great tragedies who is the greatest playwright", "of English.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'My mother is the kind of woman whom everybody knows is homely and gentle.'</em>",
+                options: ["My mother is the kind", "of woman whom everybody knows", "is homely and gentle.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The Himalayas are the highest mountains the formation of which has always been a matter of investigation.'</em>",
+                options: ["The Himalayas are the highest mountains", "the formation of which", "has always been a matter of investigation", "no error"],
+                correct: 1,
+                explanation: "If the sentence contained 'whose formation', it should be replaced with 'the formation of which'. 'whose' is used for living things; while 'which' is used for non-living things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The teacher did not know who of the students had cheated in the exam.'</em>",
+                options: ["The teacher did not know", "who of the students", "had cheated in the exam", "no error"],
+                correct: 1,
+                explanation: "Replace 'who' with 'which'. We have to choose one between the two so 'which' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The Principal ordered the peon to let the boys and I go in.'</em>",
+                options: ["The Principal ordered", "the peon to let", "the boys and I go in.", "no error"],
+                correct: 2,
+                explanation: "Replace 'I' with 'me'. 'Let' is followed by the objective pronoun and not subjective pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The newly formed party stood for Women's Reservation Bill and their stand was very clear.'</em>",
+                options: ["The newly formed party stood", "for Women's Reservation Bill", "and their stand was very clear.", "no error"],
+                correct: 2,
+                explanation: "The subject is singular (Newly formed Party), so 'its' will be used. Replace 'their' with 'its'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Such a self-sacrificing man as him wins our sympathy and admiration.'</em>",
+                options: ["Such a self-sacrificing man", "as him wins", "our sympathy and admiration.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'It is the best which the government can do for the upliftment of girls.'</em>",
+                options: ["It is the best", "which the government can do", "for the upliftment of girls", "no error"],
+                correct: 1,
+                explanation: "Replace 'which' with 'that'. There is no choice so 'which' can't be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The candidate being a graduate, he is eligible for the post of marketing officer.'</em>",
+                options: ["The candidate", "being a graduate, he is eligible for", "the post of marketing officer.", "no error"],
+                correct: 1,
+                explanation: "Eliminate 'he'. If a person's name is given followed by a brief phrase giving some additional information about him then the pronoun will not follow such information."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One must not think that he is always right as this will make it very difficult to work with him.'</em>",
+                options: ["One must not think", "that he is always right", "as this will make it very difficult to work with him.", "no error"],
+                correct: 1,
+                explanation: "Replace 'he' with 'one'. The subject is 'one' so one/one\\'s and oneself can only be used. He/him will not be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'All the factories in the area are in losses and have been unable to pay their employees since the lockdown.'</em>",
+                options: ["All the factories in the area are in losses", "and have been unable to pay their employees", "since the lockdown.", "no error"],
+                correct: 3,
+                explanation: "No error"
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'One should respect the religions of others as much as his own.'</em>",
+                options: ["One should respect", "the religions of others", "as much as his own.", "no error"],
+                correct: 2,
+                explanation: "Replace 'his' with 'one\\'s'. If 'one' is used as the subject of the sentence then 'one\\'s' and 'oneself' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The father has appointed teachers to help the children improve their communications skills and prepare for competitive exams.'</em>",
+                options: ["The father has appointed", "teachers to help the children improve their communications skills", "and prepare for competitive exams.", "no error"],
+                correct: 3,
+                explanation: "No error"
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Having been deprived from its homes in the recent earthquake they had no other option but to take shelter in a school.'</em>",
+                options: ["Having been deprived from its homes", "in the recent earthquake they had no other option", "but to take shelter in a school.", "no error"],
+                correct: 0,
+                explanation: "Replace 'its' with 'their'. Here, we are talking about 'they' which is plural. Thus, the plural pronoun 'their' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Developed and developing countries must reduce its carbon footprint and promote the use of solar energy.'</em>",
+                options: ["Developed and developing countries must reduce", "its carbon footprint", "and promote the use of solar energy.", "no error"],
+                correct: 1,
+                explanation: "Replace 'its' with 'their' as the subject is plural. 'Developed and developing countries' represent plural nouns, thus, plural verb 'their' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'John I and Hari have finished our work.'</em>",
+                options: ["John I and Hari", "have finished", "our work.", "no error"],
+                correct: 0,
+                explanation: "Replace 'John, I and Hari' with 'John, Hari and I'. In sentences where pronouns of different persons are used there is a specific order to place them (231)."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The players whom we have selected for our team are young and energetic.'</em>",
+                options: ["The players whom", "we have selected for our team", "are young and energetic.", "no error"],
+                correct: 0,
+                explanation: "Replace 'whom' with 'which'. 'whose' is used for living things; while 'which' is used for non-living things and to make a choice between two or more."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'His efforts will bring him more success than your.'</em>",
+                options: ["His efforts", "will bring him more success", "than your.", "no error"],
+                correct: 2,
+                explanation: "Replace 'your' with 'yours'. A pronoun is to be used and not an adjective."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'My brother doesn't know to cook.'</em>",
+                options: ["My brother doesn't", "know", "to cook.", "no error"],
+                correct: 2,
+                explanation: "Replace 'to cook' with 'how to cook'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Neither of the two friends has got their money back from the company.'</em>",
+                options: ["Neither of the two friends", "has got their money back", "from the company", "no error"],
+                correct: 1,
+                explanation: "Replace 'their' with 'his'. 'Neither of' is followed by a plural noun/pronoun but the verb and pronoun used is singular."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The criminal which was chained grumbled at the Police Inspector.'</em>",
+                options: ["The criminal which was chained", "grumbled at", "the Police Inspector.", "no error"],
+                correct: 0,
+                explanation: "Replace 'which' with 'who' as the subject is a human. 'Who' and 'whom' are used for persons."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'There were eight industrious workers and five lazy one in this factory.'</em>",
+                options: ["There were eight industrious workers", "and five lazy one", "in this factory.", "no error"],
+                correct: 1,
+                explanation: "'Five lazy one' is incorrect. Replace it with 'five lazy ones'. For plural countable nouns; 'ones' is used as a demonstrative pronoun."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The beggar whom we had suspected to be guilty turned out to be innocent.'</em>",
+                options: ["The beggar whom", "we had suspected to be guilty", "turned out to be innocent.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'I ordered some book on English Grammar but none has arrived yet.'</em>",
+                options: ["I ordered some book", "on English Grammar", "but none has arrived yet.", "no error"],
+                correct: 2,
+                explanation: "Replace 'has' with 'have'. 'None' is being referred to as books here which is plural. So, 'have' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'This bird is such a pest in rural areas that it has become necessary to find ways of controlling the growth of their population.'</em>",
+                options: ["This bird is such a pest in rural areas", "that it has become necessary to find ways", "of controlling the growth of their population.", "no error"],
+                correct: 2,
+                explanation: "The subject is 'This bird' which is singular. So, 'its' will be used in place of 'their'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'I don't appreciate those laugh at others without any apparent reason.'</em>",
+                options: ["I don't appreciate", "those laugh at others without", "any apparent reason.", "no error"],
+                correct: 1,
+                explanation: "Use 'who' after 'those'. Here, 'those' is an object and a relative pronoun is used to connect two sentences. Therefore, 'who' will be used."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Neither of the two children said their prayer before going to bed.'</em>",
+                options: ["Neither of the two children", "said their prayer", "before going to bed.", "no error"],
+                correct: 1,
+                explanation: "Use 'his' instead of 'their'. 'Neither of' is followed by a plural noun or pronoun, but the verb and pronoun used in the latter part of the sentence is singular."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The police said that the fake notes looked so real that anyone could have been misled.'</em>",
+                options: ["The police said that the fake notes", "looked so real", "that anyone could have been misled.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The bus was hired by the ladies for its picnic in the countryside.'</em>",
+                options: ["The bus was hired", "by the ladies for its picnic", "in the countryside.", "no error"],
+                correct: 1,
+                explanation: "Replace 'its' by 'their'. Here, the subject is 'the ladies'. Thus, the pronoun used will be 'their', not 'its'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'These schools have been asked to furnish all the details about its directors and affiliations.'</em>",
+                options: ["These schools have been asked", "to furnish all the details", "about its directors and affiliations.", "no error"],
+                correct: 2,
+                explanation: "Replace 'its' with 'their' as the subject is 'these schools'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Our school team outwitted their opponents in every single round to win this prestigious trophy.'</em>",
+                options: ["Our school team outwitted their opponents", "in every single round", "to win this prestigious trophy.", "no error"],
+                correct: 0,
+                explanation: "Replace 'their' with the relative pronoun 'its'."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'The five brothers are at daggers-drawn, so they feel it below their dignity to talk to each other.'</em>",
+                options: ["The five brothers are at daggers-drawn,", "so they feel it below their dignity", "to talk to each other.", "no error"],
+                correct: 2,
+                explanation: "Replace 'each other' by 'one another'. Use 'each other' when referring to two things. Use 'one another' when referring to three or more things."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'Each of the four great tragedies of Shakespeare is outstanding.'</em>",
+                options: ["Each of", "the four great tragedies of", "Shakespeare is outstanding.", "no error"],
+                correct: 3,
+                explanation: "No error."
+            },
+            {
+                question: "Identify the part with the error:<br><br><em>'He was much more surprised than me to see the dancing girl coming towards us.'</em>",
+                options: ["He was much more surprised than", "me to see the dancing girl", "coming towards us.", "no error"],
+                correct: 1,
+                explanation: "Replace 'me' with 'I'. While making comparisons in pronouns the pronouns compared should be of the same case. It means either both should be of the nominative pronouns or both should be objective pronouns."
+            }
+        ];
+
+        let currentQueue = []; 
+        let currentQueueIndex = 0; 
+        let score = 0;
+        let wrongQuestions = []; 
+        let userAnswers = {}; 
+        let hasAnsweredCurrent = false;
+
+        const rulesScreen = document.getElementById('rules-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const reviewScreen = document.getElementById('review-screen');
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const progressFill = document.getElementById('progress-fill');
+        const questionCounter = document.getElementById('question-counter');
+        
+        const explanationArea = document.getElementById('explanation-area');
+        const explanationText = document.getElementById('explanation-text');
+
+        function startQuiz() {
+            if (quizData.length === 0) {
+                alert("Quiz data is empty! Please add questions to the javascript array.");
+                return;
+            }
+            currentQueue = Array.from({length: quizData.length}, (_, i) => i);
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function resetQuiz() {
+            currentQueue = Array.from({length: quizData.length}, (_, i) => i);
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function reattemptWrongQuestions() {
+            if (wrongQuestions.length === 0) return;
+            currentQueue = [...wrongQuestions]; 
+            resetStateVariables();
+            showScreen(quizScreen);
+            loadQuestion();
+        }
+
+        function resetStateVariables() {
+            currentQueueIndex = 0;
+            score = 0;
+            wrongQuestions = [];
+            userAnswers = {};
+        }
+
+        function loadQuestion() {
+            hasAnsweredCurrent = false;
+            explanationArea.style.display = 'none';
+            nextBtn.style.display = 'none'; 
+
+            const actualQuestionIndex = currentQueue[currentQueueIndex];
+            const currentQData = quizData[actualQuestionIndex];
+
+            const progressPercentage = ((currentQueueIndex) / currentQueue.length) * 100;
+            progressFill.style.width = `${progressPercentage}%`;
+            questionCounter.innerText = `Question ${currentQueueIndex + 1} of ${currentQueue.length}`;
+
+            questionText.innerHTML = currentQData.question;
+            optionsContainer.innerHTML = '';
+
+            currentQData.options.forEach((option, index) => {
+                const optDiv = document.createElement('div');
+                optDiv.classList.add('option');
+                optDiv.innerHTML = option; 
+                optDiv.onclick = () => selectOption(index, optDiv);
+                optionsContainer.appendChild(optDiv);
+            });
+        }
+
+        function selectOption(selectedIndex, optionElement) {
+            if (hasAnsweredCurrent) return; 
+            hasAnsweredCurrent = true; 
+            
+            userAnswers[currentQueue[currentQueueIndex]] = selectedIndex; 
+            
+            const actualQuestionIndex = currentQueue[currentQueueIndex];
+            const currentQData = quizData[actualQuestionIndex];
+            const options = document.querySelectorAll('.option');
+
+            optionElement.classList.add('selected');
+
+            if (selectedIndex === currentQData.correct) {
+                score++;
+                optionElement.classList.add('correct-reveal');
+                
+                setTimeout(() => {
+                    moveToNextQuestion();
+                }, 500); 
+
+            } else {
+                wrongQuestions.push(actualQuestionIndex);
+                optionElement.classList.add('wrong-reveal');
+                options[currentQData.correct].classList.add('correct-reveal');
+
+                let fullExplanation = currentQData.explanation || "No explanation provided.";
+                if (currentQData.rule) {
+                    fullExplanation += `<br><br><strong style="color: #047857;">📌 Grammar Rule:</strong> <span style="color: var(--text-dark);">${currentQData.rule}</span>`;
+                }
+                
+                explanationText.innerHTML = fullExplanation;
+                explanationArea.style.display = 'block';
+
+                nextBtn.style.display = 'block';
+                nextBtn.disabled = false;
+                if (currentQueueIndex === currentQueue.length - 1) {
+                    nextBtn.innerText = "Finish Quiz";
+                } else {
+                    nextBtn.innerText = "Next Question";
+                }
+            }
+        }
+
+        function handleNextButton() {
+            moveToNextQuestion();
+        }
+
+        function moveToNextQuestion() {
+            quizScreen.style.opacity = 0; 
+
+            setTimeout(() => {
+                currentQueueIndex++;
+                if (currentQueueIndex < currentQueue.length) {
+                    loadQuestion();
+                } else {
+                    showReview();
+                }
+                quizScreen.style.opacity = 1; 
+            }, 300); 
+        }
+
+        function showReview() {
+            showScreen(reviewScreen);
+            
+            document.getElementById('final-score').innerText = `${score} / ${currentQueue.length}`;
+            
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '';
+
+            currentQueue.forEach((actualIndex) => {
+                const qData = quizData[actualIndex];
+                const selectedAns = userAnswers[actualIndex];
+                const isCorrect = selectedAns === qData.correct;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('review-item', isCorrect ? 'correct' : 'incorrect');
+
+                itemDiv.innerHTML = `
+                    <div class="review-question">${qData.question}</div>
+                    <div class="review-status ${isCorrect ? 'text-correct' : 'text-incorrect'}">
+                        ${isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                    </div>
+                    <div style="font-size: 0.9rem; margin-top: 5px; color: var(--text-light);">
+                        Your answer: <strong>${qData.options[selectedAns] || 'None'}</strong><br>
+                        Correct answer: <strong>${qData.options[qData.correct]}</strong>
+                    </div>
+                `;
+                reviewList.appendChild(itemDiv);
+            });
+
+            const reattemptBtn = document.getElementById('reattempt-btn');
+            if (wrongQuestions.length > 0) {
+                reattemptBtn.style.display = 'block';
+                reattemptBtn.innerText = `Reattempt Wrong (${wrongQuestions.length})`;
+            } else {
+                reattemptBtn.style.display = 'none';
+            }
+        }
+
+        function showScreen(screenElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screenElement.classList.add('active');
+        }
+    </script>
+</body>
+</html>
