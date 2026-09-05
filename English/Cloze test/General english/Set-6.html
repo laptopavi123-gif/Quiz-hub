@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Results Section */
+        .result-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-result-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-q-text { font-weight: 500; margin-bottom: 12px; font-size: 1.05rem; color: #334155; font-style: italic; }
+        .result-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 600; }
+        .text-wrong { color: #b91c1c; font-weight: 600; }
+        .result-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Comprehensive Practice Set</h1>
+    <button class="btn-finish" onclick="showResults()">Finish & View Results</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">Passage 1</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Passage 2</button>
+    <button class="tab-btn" onclick="switchPassage('p3', this)">Passage 3</button>
+    <button class="tab-btn" onclick="switchPassage('p4', this)">Passage 4</button>
+    <button class="tab-btn" onclick="switchPassage('p5', this)">Passage 5</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel">
+        <div id="questionArea">
+            <div class="q-header" id="questionTitle">Select the appropriate word for the highlighted blank:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-section" id="resultSection">
+    <div class="result-container" id="resultContainer">
+        <!-- Result Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p1: {
+            title: "Passage 1",
+            text: "'Quit India' came not from the lips but the aching heart of millions. In this open rebellion, the Indian, <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ 1 ]</span> reached its climax. The British were not only <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ 2 ]</span> by it, but also were obliged to quit unilaterally. The importance of Quit India can be <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ 3 ]</span> from Lord Linlithgow's statement, \"I am engaged here, in meeting by far the most <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ 4 ]</span> rebellion since that of 1857, the gravity and extent of which we have so far <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ 5 ]</span> from the world for reasons of military security\". Still more significant was Churchill's gloomy disclosure to the King Emperor that, \"the idea of <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ 6 ]</span> of power had become an admitted <span class='blank' id='b-p1-6' onclick='loadQuestion(\"p1\", 6)'>[ 7 ]</span> in the minds of British party leaders\", although his public statements were diametrically opposite. The <span class='blank' id='b-p1-7' onclick='loadQuestion(\"p1\", 7)'>[ 8 ]</span> created by Quit India made the British <span class='blank' id='b-p1-8' onclick='loadQuestion(\"p1\", 8)'>[ 9 ]</span> that they could no longer keep India in <span class='blank' id='b-p1-9' onclick='loadQuestion(\"p1\", 9)'>[ 10 ]</span>",
+            questions: [
+                { num: 1, opts: {a: "patriotism", b: "freedom", c: "liberation", d: "revolution", e: "leadership"}, ans: "a", expl: "<strong>(a) patriotism:</strong> The opening sentence highlights that the movement came from the 'aching heart of millions', which expresses deep emotional love and devotion for the country, perfectly encapsulated by 'patriotism'. 'Freedom' or 'liberation' are goals, not the internal driving force reaching a climax here.", context: "...the Indian, [...] reached its climax." },
+                { num: 2, opts: {a: "attacked", b: "inspired", c: "enfeebled", d: "threatened", e: "impressed"}, ans: "d", expl: "<strong>(d) threatened:</strong> The British were forced ('obliged to quit') because they felt endangered or 'threatened' by the massive rebellion. They were certainly not 'inspired' or 'impressed' in a positive sense, and 'attacked' is too literal for the structural phrasing.", context: "The British were not only [...] by it, but also were obliged..." },
+                { num: 3, opts: {a: "established", b: "diffused", c: "gauged", d: "determined", e: "invigorated"}, ans: "c", expl: "<strong>(c) gauged:</strong> To 'gauge' means to estimate, measure, or judge the magnitude of something. The importance of the event can be 'gauged' from the statement. 'Diffused' means spread out, and 'invigorated' means energized, neither of which fit.", context: "The importance of Quit India can be [...] from Lord Linlithgow's statement..." },
+                { num: 4, opts: {a: "trivial", b: "serious", c: "auspicious", d: "praiseworthy", e: "magnificent"}, ans: "b", expl: "<strong>(b) serious:</strong> A rebellion that threatens an empire is described negatively by that empire as 'serious' or severe. 'Trivial' means unimportant, which contradicts the context. 'Auspicious' and 'praiseworthy' are positive terms the British Viceroy would not use.", context: "...in meeting by far the most [...] rebellion since that of 1857..." },
+                { num: 5, opts: {a: "elicited", b: "excluded", c: "abstained", d: "concealed", e: "prevented"}, ans: "d", expl: "<strong>(d) concealed:</strong> Due to \"military security\", the British hid or 'concealed' the true gravity of the rebellion from the rest of the world. 'Excluded' and 'abstained' do not fit the grammatical structure here.", context: "...the gravity and extent of which we have so far [...] from the world..." },
+                { num: 6, opts: {a: "transfer", b: "seizure", c: "grabbing", d: "retainment", e: "enhancement"}, ans: "a", expl: "<strong>(a) transfer:</strong> 'Transfer of power' is the correct historical and political terminology used for handing over governance from the British to Indians. 'Seizure' or 'grabbing' implies illegal forceful taking, not a structured British political idea.", context: "...\"the idea of [...] of power had become..." },
+                { num: 7, opts: {a: "fantasy", b: "tactics", c: "occurrence", d: "inevitability", e: "disillusionment"}, ans: "d", expl: "<strong>(d) inevitability:</strong> The British realized they could not stop the transfer of power; it was unavoidable, hence an 'admitted inevitability'. 'Fantasy' completely contradicts the 'gloomy disclosure' of reality.", context: "...had become an admitted [...] in the minds of British party leaders\"..." },
+                { num: 8, opts: {a: "anarchy", b: "violence", c: "taboos", d: "exigencies", e: "vengeance"}, ans: "d", expl: "<strong>(d) exigencies:</strong> 'Exigencies' refers to urgent needs, demands, or pressing situations created by the movement that forced the British to act. 'Anarchy' implies total lack of order without purpose, whereas the movement had a focused political demand.", context: "The [...] created by Quit India made the British..." },
+                { num: 9, opts: {a: "anxious", b: "realise", c: "imagine", d: "pretend", e: "apprehend"}, ans: "b", expl: "<strong>(b) realise:</strong> The overwhelming pressure forced the British to finally understand or 'realise' that their rule was over. 'Imagine' or 'pretend' imply the situation wasn't real.", context: "...made the British [...] that they could no longer keep India..." },
+                { num: 10, opts: {a: "exile", b: "power", c: "bondage", d: "suspense", e: "abeyance"}, ans: "c", expl: "<strong>(c) bondage:</strong> Keeping a nation under colonial, non-consensual rule is referred to metaphorically as keeping it in 'bondage' (slavery/subjugation). 'Exile' or 'suspense' do not describe colonial occupation.", context: "...that they could no longer keep India in [...]" }
+            ],
+            answers: []
+        },
+        p2: {
+            title: "Passage 2",
+            text: "I am not writing this in praise of police, or to <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ 11 ]</span> police, nor to hold them up as paragons of <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ 12 ]</span> I <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ 13 ]</span> want people to put the problem in proper <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ 14 ]</span> and not be carried away by individual or <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ 15 ]</span> incidents, for <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ 16 ]</span> the entire police force, to <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ 17 ]</span> that they are all callous brutes and tortures. There is increasingly a <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ 18 ]</span> in the media to outrageously highlight individual <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ 19 ]</span> in a manner which gives an impression about the entire police force having become thoroughly cruel <span class='blank' id='b-p2-9' onclick='loadQuestion(\"p2\", 9)'>[ 20 ]</span> of the people.",
+            questions: [
+                { num: 11, opts: {a: "eulogise", b: "repent", c: "raise", d: "regard"}, ans: "a", expl: "<strong>(a) eulogise:</strong> 'Eulogise' means to praise highly. It runs parallel to the preceding phrase \"in praise of police\". 'Repent' makes no contextual sense here.", context: "I am not writing this in praise of police, or to [...] police..." },
+                { num: 12, opts: {a: "beauty", b: "esteem", c: "virtue", d: "goodness"}, ans: "c", expl: "<strong>(c) virtue:</strong> 'Paragons of virtue' is a very common, standard English idiom meaning a perfect example of moral excellence. 'Beauty' or 'goodness' are not used in this specific idiom.", context: "...nor to hold them up as paragons of [...]" },
+                { num: 13, opts: {a: "rarely", b: "merely", c: "hardly", d: "usually"}, ans: "b", expl: "<strong>(b) merely:</strong> 'I merely want' translates to 'I simply/only want', establishing a reasonable, modest intent. 'Rarely' or 'hardly' would negate the desire entirely.", context: "I [...] want people to put the problem..." },
+                { num: 14, opts: {a: "perspective", b: "idea", c: "form", d: "ideal"}, ans: "a", expl: "<strong>(a) perspective:</strong> To view a situation in \"proper perspective\" means to judge its true importance accurately relative to everything else. 'Idea' or 'form' do not fit this idiomatic structure.", context: "...want people to put the problem in proper [...]" },
+                { num: 15, opts: {a: "rare", b: "stray", c: "misleading", d: "unusual"}, ans: "b", expl: "<strong>(b) stray:</strong> 'Stray incidents' refers to random, isolated events that don't represent the whole. It pairs perfectly with 'individual'.", context: "...and not be carried away by individual or [...] incidents..." },
+                { num: 16, opts: {a: "humbling", b: "degrading", c: "condemning", d: "disregarding"}, ans: "c", expl: "<strong>(c) condemning:</strong> The author cautions against entirely blaming or 'condemning' the whole police force based on a few bad events. 'Humbling' or 'disregarding' do not match the severity of calling them 'brutes'.", context: "...incidents, for [...] the entire police force..." },
+                { num: 17, opts: {a: "impress", b: "assert", c: "establish", d: "instil"}, ans: "b", expl: "<strong>(b) assert:</strong> To 'assert' means to state a fact or belief confidently. The public shouldn't confidently state (assert) that all police are brutes. 'Impress' or 'instil' require different prepositions and objects.", context: "...to [...] that they are all callous brutes and tortures." },
+                { num: 18, opts: {a: "tendency", b: "habit", c: "nature", d: "occupation"}, ans: "a", expl: "<strong>(a) tendency:</strong> A 'tendency' is a trend or behavioral inclination within a group or system (like the media). 'Habit' is usually reserved for individual personal behaviors.", context: "There is increasingly a [...] in the media to outrageously highlight..." },
+                { num: 19, opts: {a: "occurrence", b: "incidents", c: "accidents", d: "instances"}, ans: "d", expl: "<strong>(d) instances:</strong> 'Instances' refers to specific examples of behavior. While 'incidents' is also correct, 'instances' avoids direct repetition of the word 'incidents' used just one sentence prior.", context: "...in the media to outrageously highlight individual [...] in a manner..." },
+                { num: 20, opts: {a: "tyrants", b: "brutes", c: "oppressors", d: "torturers"}, ans: "c", expl: "<strong>(c) oppressors:</strong> 'Oppressors of the people' is a standard, dramatic phrase describing authorities who misuse power against citizens. 'Tyrants' is grammatically okay but less idiomatic with 'of the people' in this exact phrasing.", context: "...having become thoroughly cruel [...] of the people." }
+            ],
+            answers: []
+        },
+        p3: {
+            title: "Passage 3",
+            text: "Why is it that the CRP, BSF and the Army give a better account of themselves than the state police? It is the structure of the state police that needs to be looked <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ 21 ]</span> In a district or city, where there is a separate police force, a majority of the policemen are <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ 22 ]</span> in police stations. The police station staff is often over-extended and no <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ 23 ]</span> is available at that level. It is the state force that has to be called <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ 24 ]</span> But it takes time to <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ 25 ]</span> forces. If the law and order situation <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ 26 ]</span> simultaneously at many places, there is manpower <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ 27 ]</span> Thus once rioting breaks <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ 28 ]</span>, it takes time to bring it under control so tht there is a time <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ 29 ]</span> between the first incident and the appearance of the adequate force to <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ 30 ]</span> the situation. The public hue and cry about the delayed arrival of the police force is not unjustified.",
+            questions: [
+                { num: 21, opts: {a: "through", b: "on", c: "into", d: "at"}, ans: "c", expl: "<strong>(c) into:</strong> The phrasal verb 'look into' means to investigate or examine a problem deeply.", context: "It is the structure of the state police that needs to be looked [...]" },
+                { num: 22, opts: {a: "detained", b: "deployed", c: "deputed", d: "employed"}, ans: "b", expl: "<strong>(b) deployed:</strong> In military and police contexts, personnel are 'deployed' (stationed or positioned) to specific areas like police stations.", context: "...a majority of the policemen are [...] in police stations." },
+                { num: 23, opts: {a: "reserve", b: "force", c: "company", d: "squad"}, ans: "a", expl: "<strong>(a) reserve:</strong> When staff are over-extended, it means there are no backup or 'reserve' personnel left to handle new emergencies.", context: "The police station staff is often over-extended and no [...] is available at that level." },
+                { num: 24, opts: {a: "upon", b: "up", c: "at", d: "on"}, ans: "b", expl: "<strong>(b) up:</strong> To 'call up' forces means to summon them for active duty or assistance.", context: "It is the state force that has to be called [...]" },
+                { num: 25, opts: {a: "move", b: "arrange", c: "mobilise", d: "prepare"}, ans: "c", expl: "<strong>(c) mobilise:</strong> 'Mobilise' is the specific terminology used for organizing and preparing armed forces or police for active service.", context: "But it takes time to [...] forces." },
+                { num: 26, opts: {a: "worsens", b: "proliferates", c: "degenerates", d: "aggravates"}, ans: "a", expl: "<strong>(a) worsens:</strong> A situation 'worsens' when it gets bad. 'Aggravates' requires a direct object (you aggravate a situation, the situation doesn't aggravate itself).", context: "If the law and order situation [...] simultaneously at many places..." },
+                { num: 27, opts: {a: "default", b: "shortage", c: "shortcoming", d: "failure"}, ans: "b", expl: "<strong>(b) shortage:</strong> If trouble happens in many places at once, the police will lack enough people, leading to a manpower 'shortage'.", context: "...simultaneously at many places, there is manpower [...]" },
+                { num: 28, opts: {a: "away", b: "in", c: "off", d: "out"}, ans: "d", expl: "<strong>(d) out:</strong> The phrasal verb 'breaks out' is used to describe the sudden start of violent events like rioting, war, or fire.", context: "Thus once rioting breaks [...], it takes time to bring it under control..." },
+                { num: 29, opts: {a: "lag", b: "interval", c: "delay", d: "difference"}, ans: "a", expl: "<strong>(a) lag:</strong> A 'time lag' refers to a period of delay between one event (first incident) and another (arrival of forces).", context: "...so tht there is a time [...] between the first incident and the appearance..." },
+                { num: 30, opts: {a: "control", b: "restrain", c: "step", d: "prevalent"}, ans: "a", expl: "<strong>(a) control:</strong> Forces arrive to 'control the situation' and restore order.", context: "...appearance of the adequate force to [...] the situation." }
+            ],
+            answers: []
+        },
+        p4: {
+            title: "Passage 4",
+            text: "In earlier days, a handicraftsman, the typical labourer, received a certain <span class='blank' id='b-p4-0' onclick='loadQuestion(\"p4\", 0)'>[ 31 ]</span> from the work he did. His efforts were mostly to his own <span class='blank' id='b-p4-1' onclick='loadQuestion(\"p4\", 1)'>[ 32 ]</span> He saw the fruits of his own work in the <span class='blank' id='b-p4-2' onclick='loadQuestion(\"p4\", 2)'>[ 33 ]</span> object he produced. More-over, the <span class='blank' id='b-p4-3' onclick='loadQuestion(\"p4\", 3)'>[ 34 ]</span> of this object <span class='blank' id='b-p4-4' onclick='loadQuestion(\"p4\", 4)'>[ 35 ]</span> demanded his adaptability or inventiveness to overcome the <span class='blank' id='b-p4-5' onclick='loadQuestion(\"p4\", 5)'>[ 36 ]</span> which arose. In a real sense one can speak of his being educated by his <span class='blank' id='b-p4-6' onclick='loadQuestion(\"p4\", 6)'>[ 37 ]</span> Today all is <span class='blank' id='b-p4-7' onclick='loadQuestion(\"p4\", 7)'>[ 38 ]</span> a standardised job is done in a standardised <span class='blank' id='b-p4-8' onclick='loadQuestion(\"p4\", 8)'>[ 39 ]</span> and a standardised job for a standardised <span class='blank' id='b-p4-9' onclick='loadQuestion(\"p4\", 9)'>[ 40 ]</span>",
+            questions: [
+                { num: 31, opts: {a: "satisfaction", b: "reward", c: "remuneration", d: "consolation"}, ans: "a", expl: "<strong>(a) satisfaction:</strong> The passage focuses on the emotional and educational connection a craftsman had to his work, making intrinsic 'satisfaction' the best fit over purely financial 'remuneration'.", context: "...received a certain [...] from the work he did." },
+                { num: 32, opts: {a: "advantage", b: "profit", c: "benefit", d: "betterment"}, ans: "a", expl: "<strong>(a) advantage:</strong> 'To his own advantage' is a standard phrase meaning for his own good or benefit.", context: "His efforts were mostly to his own [...]" },
+                { num: 33, opts: {a: "complete", b: "full", c: "perfect", d: "whole"}, ans: "a", expl: "<strong>(a) complete:</strong> A craftsman sees a project through from start to finish, viewing the 'complete' object rather than just a manufactured part.", context: "He saw the fruits of his own work in the [...] object he produced." },
+                { num: 34, opts: {a: "making", b: "creating", c: "attempting", d: "discovering"}, ans: "a", expl: "<strong>(a) making:</strong> The physical construction process of an object is typically referred to as the 'making' of this object.", context: "More-over, the [...] of this object..." },
+                { num: 35, opts: {a: "often", b: "generally", c: "mostly", d: "invariably"}, ans: "a", expl: "<strong>(a) often:</strong> The process 'often' demanded adaptability because handmade items regularly present unique challenges.", context: "...of this object [...] demanded his adaptability or inventiveness..." },
+                { num: 36, opts: {a: "doubts", b: "obstructions", c: "riddles", d: "difficulties"}, ans: "d", expl: "<strong>(d) difficulties:</strong> Craftsmen use inventiveness to overcome 'difficulties' or problems that arise during the work.", context: "...to overcome the [...] which arose." },
+                { num: 37, opts: {a: "trade", b: "labour", c: "talent", d: "attempt"}, ans: "a", expl: "<strong>(a) trade:</strong> A craftsman's profession or craft is universally referred to as his 'trade'. He is educated by the daily practice of his trade.", context: "In a real sense one can speak of his being educated by his [...]" },
+                { num: 38, opts: {a: "changed", b: "disappeared", c: "reversed", d: "revolutionised"}, ans: "a", expl: "<strong>(a) changed:</strong> The author contrasts the past with the present, simply stating that \"Today all is changed\" due to industrialization.", context: "Today all is [...] a standardised job is done..." },
+                { num: 39, opts: {a: "method", b: "mode", c: "manner", d: "fashion"}, ans: "c", expl: "<strong>(c) manner:</strong> 'Done in a standardised manner' is the correct idiomatic expression for describing the rigid way modern factory work is performed.", context: "...a standardised job is done in a standardised [...]" },
+                { num: 40, opts: {a: "pay", b: "salary", c: "wage", d: "remuneration"}, ans: "c", expl: "<strong>(c) wage:</strong> Factory workers performing standardized jobs typically earn a standardized hourly 'wage' as opposed to a salaried professional income.", context: "...and a standardised job for a standardised [...]" }
+            ],
+            answers: []
+        },
+        p5: {
+            title: "Passage 5",
+            text: "To change the hearts of the <span class='blank' id='b-p5-0' onclick='loadQuestion(\"p5\", 0)'>[ 41 ]</span> in such a way as to make it <span class='blank' id='b-p5-1' onclick='loadQuestion(\"p5\", 1)'>[ 42 ]</span> for them to indulge in these <span class='blank' id='b-p5-2' onclick='loadQuestion(\"p5\", 2)'>[ 43 ]</span> without changing the <span class='blank' id='b-p5-3' onclick='loadQuestion(\"p5\", 3)'>[ 44 ]</span> of the governments that rule over <span class='blank' id='b-p5-4' onclick='loadQuestion(\"p5\", 4)'>[ 45 ]</span> is an impossibility. When <span class='blank' id='b-p5-5' onclick='loadQuestion(\"p5\", 5)'>[ 46 ]</span> reaches that point it will <span class='blank' id='b-p5-6' onclick='loadQuestion(\"p5\", 6)'>[ 47 ]</span> to be human; it will become a <span class='blank' id='b-p5-7' onclick='loadQuestion(\"p5\", 7)'>[ 48 ]</span> of supermen of gods and it will no <span class='blank' id='b-p5-8' onclick='loadQuestion(\"p5\", 8)'>[ 49 ]</span> need the guidance of <span class='blank' id='b-p5-9' onclick='loadQuestion(\"p5\", 9)'>[ 50 ]</span> of the type of Mahatma Gandhi.",
+            questions: [
+                { num: 41, opts: {a: "crowd", b: "groups", c: "men", d: "mobs"}, ans: "d", expl: "<strong>(d) mobs:</strong> 'Mobs' represents unruly, violent groups of people. Changing the hearts of violent 'mobs' directly fits the context of them indulging in misdeeds.", context: "To change the hearts of the [...] in such a way..." },
+                { num: 42, opts: {a: "impossible", b: "likely", c: "unlikely", d: "possible"}, ans: "a", expl: "<strong>(a) impossible:</strong> The goal of changing hearts is to make it 'impossible' for the mobs to commit violent acts again.", context: "...in such a way as to make it [...] for them to indulge..." },
+                { num: 43, opts: {a: "cruelties", b: "misdeeds", c: "brutalities", d: "actions"}, ans: "c", expl: "<strong>(c) brutalities:</strong> Rioting mobs are known for severe violence, making 'brutalities' a strong fit. 'Cruelties' is also grammatically fine, but 'brutalities' matches the intense tone of the passage regarding mobs.", context: "...for them to indulge in these [...] without changing..." },
+                { num: 44, opts: {a: "stands", b: "hearts", c: "minds", d: "decisions"}, ans: "b", expl: "<strong>(b) hearts:</strong> The passage parallels changing the hearts of the people with changing the 'hearts' of the government. True peace requires internal change from both sides.", context: "...without changing the [...] of the governments that rule..." },
+                { num: 45, opts: {a: "you", b: "us", c: "them", d: "people"}, ans: "c", expl: "<strong>(c) them:</strong> The pronoun 'them' refers back to the 'mobs' mentioned earlier in the sentence.", context: "...governments that rule over [...] is an impossibility." },
+                { num: 46, opts: {a: "life", b: "nature", c: "humanity", d: "behaviour"}, ans: "c", expl: "<strong>(c) humanity:</strong> The phrase \"it will cease to be human\" heavily points to 'humanity' as the subject reaching an evolved state.", context: "When [...] reaches that point it will..." },
+                { num: 47, opts: {a: "continue", b: "cease", c: "start", d: "begin"}, ans: "b", expl: "<strong>(b) cease:</strong> If humanity evolves to the point of being incapable of bad deeds, it will 'cease' (stop) being merely human and become something more.", context: "...reaches that point it will [...] to be human;" },
+                { num: 48, opts: {a: "committee", b: "government", c: "organisation", d: "body"}, ans: "d", expl: "<strong>(d) body:</strong> A 'body of supermen' means a collective group. 'Committee' or 'organisation' are too formal and bureaucratic for describing enlightened beings.", context: "...it will become a [...] of supermen of gods..." },
+                { num: 49, opts: {a: "less", b: "further", c: "more", d: "longer"}, ans: "d", expl: "<strong>(d) longer:</strong> 'No longer' is the standard English phrasing to indicate that a condition has permanently ended.", context: "...and it will no [...] need the guidance of..." },
+                { num: 50, opts: {a: "men", b: "man", c: "god", d: "gods"}, ans: "a", expl: "<strong>(a) men:</strong> The text refers to human leaders, so 'men of the type of Mahatma Gandhi' is correct.", context: "...need the guidance of [...] of the type of Mahatma Gandhi." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = null;
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        switchPassage('p1', document.querySelector('.tab-btn'));
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+
+        // Automatically load the first question for immediate interaction
+        loadQuestion(passageId, 0);
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        const activeBlank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(activeBlank) activeBlank.classList.add('active');
+
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            loadQuestion(currentPassageId, nextIndex);
+            const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+            if(nextBlank) nextBlank.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function showResults() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        resultSection.style.display = 'block';
+        
+        let score = 0;
+        let resultHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            resultHTML += `<div class="passage-result-title">${passage.title} Results</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `(${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+                
+                const contextStr = q.context.replace('[...]', `<strong class="${statusClass}">[ ${statusText} ]</strong>`);
+
+                resultHTML += `
+                    <div class="result-item">
+                        <div class="result-q-text">"${contextStr}"</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="result-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="result-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        resultContainer.innerHTML = scoreCard + resultHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>
