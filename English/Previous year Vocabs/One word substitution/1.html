@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SSC One Word Substitution Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4338ca;
+      --primary-light: #e0e7ff;
+      --text-dark: #1e1b4b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --correct: #059669;
+      --correct-bg: #d1fae5;
+      --wrong: #dc2626;
+      --wrong-bg: #fee2e2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #eef2ff;
+      background-image: 
+        radial-gradient(at 10% 10%, #c7d2fe 0px, transparent 50%),
+        radial-gradient(at 90% 90%, #a5b4fc 0px, transparent 50%),
+        radial-gradient(at 50% 50%, #ffffff 0px, transparent 50%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", sans-serif;
+    }
+
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 680px;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(67, 56, 202, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #f1f5f9;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-content {
+      padding: 40px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .timer-badge, .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .score-badge.pop {
+      transform: scale(1.15);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .icon-svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.5;
+    }
+
+    /* Ultra-Smooth Transitions */
+    .quiz-wrapper {
+      position: relative;
+      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .quiz-wrapper.slide-out {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .quiz-wrapper.slide-in {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .question-container {
+      position: relative;
+      margin-bottom: 36px;
+    }
+
+    .question-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      line-height: 1.4;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 580px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .card-content {
+        padding: 32px 24px;
+      }
+      .question-title {
+        font-size: 1.3rem;
+      }
+    }
+
+    .option-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, background-color 0.2s;
+      user-select: none;
+    }
+
+    .option-card:active:not(.disabled) {
+      transform: scale(0.97);
+    }
+
+    .option-card:hover:not(.disabled) {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .option-prefix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .option-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .option-card.correct {
+      border-color: var(--correct);
+      background: var(--correct-bg);
+      transform: scale(1.02);
+    }
+
+    .option-card.correct .option-prefix {
+      background: var(--correct);
+      color: #ffffff;
+    }
+
+    .option-card.correct .option-label {
+      color: #064e3b;
+    }
+
+    .option-card.wrong {
+      border-color: var(--wrong);
+      background: var(--wrong-bg);
+    }
+
+    .option-card.wrong .option-prefix {
+      background: var(--wrong);
+      color: #ffffff;
+    }
+
+    .option-card.wrong .option-label {
+      color: #7f1d1d;
+    }
+
+    .option-card.disabled {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .score-view {
+      text-align: center;
+      padding: 40px 10px;
+    }
+
+    .score-val {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .score-label {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    .restart-btn {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px -8px rgba(67, 56, 202, 0.4);
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .restart-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="quizCard">
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <div class="card-content">
+      <div class="header">
+        <div class="badge-group">
+          <div class="timer-badge">
+            <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="timerText">Question 1/271</span>
+          </div>
+        </div>
+        <div class="score-badge" id="scoreBadge">
+          <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span id="scoreText">0</span>
+        </div>
+      </div>
+
+      <div class="quiz-wrapper" id="quizWrapper">
+        <div class="question-container">
+          <div class="question-title" id="questionTitle"></div>
+        </div>
+
+        <div class="options-grid" id="optionsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Format: [Question, Correct Answer, Distractor 1, Distractor 2, Distractor 3]
+    const rawData = [
+      ["Fear of ugliness", "Cacophobia", "Acrophobia", "Claustrophobia", "Hydrophobia"],
+      ["One who has an uncontrollable urge to steal", "Kleptomaniac", "Pyromaniac", "Dipsomaniac", "Megalomanic"],
+      ["One who preaches something but practices the opposite", "Hypocrite", "Misanthrope", "Cynic", "Pessimist"],
+      ["The practice of attributing human traits to non-humans", "Anthropomorphism", "Misanthropy", "Philanthropy", "Anthropology"],
+      ["A short, amusing or interesting story about a real incident or person", "Anecdote", "Parable", "Fable", "Allegory"],
+      ["A disease that spreads over a whole country or the world", "Pandemic", "Epidemic", "Endemic", "Sporadic"],
+      ["A government ruled by the wealthy", "Plutocracy", "Autocracy", "Theocracy", "Aristocracy"],
+      ["A person who studies the stars and planets to predict the future", "Astrologer", "Astronomer", "Cosmologist", "Astrophysicist"],
+      ["An expression of sympathy, especially on the occasion of death", "Condolence", "Eulogy", "Elegy", "Dirge"],
+      ["The practice of helping the poor and needy, especially by donating money", "Philanthropy", "Misanthropy", "Anthropology", "Sociology"],
+      ["Art of beautiful handwriting", "Calligraphy", "Cartography", "Choreography", "Epigraphy"],
+      ["Habit of delaying work", "Procrastination", "Prevarication", "Presumption", "Profanation"],
+      ["One who uses long or obscure words", "Sesquipedalian", "Pedantic", "Garrulous", "Loquacious"],
+      ["Someone who enjoys being around people, sociable and outgoing", "Gregarious", "Introvert", "Recluse", "Misanthrope"],
+      ["Someone unable to read or write", "Illiterate", "Ignorant", "Insolvent", "Illegible"],
+      ["Person showing excessive self-importance", "Narcissist", "Egoist", "Egotist", "Altruist"],
+      ["One who has an uncontrollable urge to steal", "Kleptomaniac", "Pyromaniac", "Dipsomaniac", "Nymphomaniac"],
+      ["A person who supports or is involved in the arts", "Aesthete", "Philistine", "Dilettante", "Connoisseur"],
+      ["A state of temporary disuse or suspension", "Abeyance", "Desuetude", "Amnesty", "Reprieve"],
+      ["One who donates money for social welfare", "Philanthropist", "Misanthrope", "Capitalist", "Plutocrat"],
+      ["Property inherited from father or ancestors", "Patrimony", "Alimony", "Matrimony", "Parsimony"],
+      ["Fictitious name used by an author", "Pseudonym", "Acronym", "Homonym", "Synonym"],
+      ["Government where one person has absolute power", "Autocracy", "Democracy", "Oligarchy", "Anarchy"],
+      ["One who dislikes men", "Misandrist", "Misogynist", "Misanthrope", "Philanthropist"],
+      ["People or things existing at the same time", "Contemporaries", "Predecessors", "Ancestors", "Descendants"],
+      ["A person who can foresee future events", "Seer", "Sorcerer", "Mystic", "Charlatan"],
+      ["A person who collects or studies butterflies", "Lepidopterist", "Philatelist", "Numismatist", "Ornithologist"],
+      ["A place where you can buy medicines", "Pharmacy", "Bakery", "Grocery", "Armory"],
+      ["A technique creating narrative rhythm", "Repetition", "Alliteration", "Metaphor", "Hyperbole"],
+      ["A person who loves and collects stamps", "Philatelist", "Numismatist", "Lepidopterist", "Bibliophile"],
+      ["A belief that the Earth is the center of the universe", "Geocentrism", "Heliocentrism", "Polytheism", "Pantheism"],
+      ["A person who studies birds", "Ornithologist", "Zoologist", "Botanist", "Anthropologist"],
+      ["A place where records and documents are stored", "Archive", "Museum", "Library", "Arsenal"],
+      ["The killing of one's own mother", "Matricide", "Patricide", "Fratricide", "Sororicide"],
+      ["A large-scale departure of people from one place", "Exodus", "Influx", "Immigration", "Migration"],
+      ["A person who is unable to pay their debts", "Insolvent", "Affluent", "Opulent", "Solvent"],
+      ["A person who believes everything is determined by fate", "Fatalist", "Optimist", "Pessimist", "Realist"],
+      ["The art of beautiful handwriting", "Calligraphy", "Typography", "Photography", "Cartography"],
+      ["A sudden and violent event causing great destruction", "Cataclysm", "Miracle", "Triumph", "Epiphany"],
+      ["A person who is in charge of a ship", "Captain", "Sailor", "Admiral", "Pilot"],
+      ["A person who studies casually without seriousness", "Dilettante", "Professional", "Expert", "Veteran"],
+      ["A person who studies the stars and space", "Astronomer", "Astrologer", "Geologist", "Meteorologist"],
+      ["A person who supports the status quo and opposes change", "Conservative", "Radical", "Liberal", "Progressive"],
+      ["A person trained to care for animals", "Veterinarian", "Pediatrician", "Physician", "Surgeon"],
+      ["A stain caused by a discoloring substance", "Blot", "Gleam", "Sparkle", "Polish"],
+      ["A person who loves collecting books", "Bibliophile", "Philatelist", "Numismatist", "Aesthete"],
+      ["A substance with a calming or soothing effect", "Sedative", "Stimulant", "Irritant", "Antidote"],
+      ["A person who believes the world is controlled by stars", "Astrologer", "Astronomer", "Cosmologist", "Geologist"],
+      ["A place where dead bodies are kept for examination", "Morgue", "Cemetery", "Crematorium", "Asylum"],
+      ["A person who performs magic tricks", "Magician", "Musician", "Comedian", "Politician"],
+      ["A person who repairs shoes", "Cobbler", "Tailor", "Blacksmith", "Carpenter"],
+      ["A longing for past times", "Nostalgia", "Amnesia", "Euphoria", "Dementia"],
+      ["A writing style with exaggerated sentimentality", "Melodrama", "Tragedy", "Comedy", "Satire"],
+      ["A person who studies the human mind", "Psychologist", "Cardiologist", "Dermatologist", "Neurologist"],
+      ["A person who lives in solitude", "Recluse", "Socialite", "Extrovert", "Gregarious"],
+      ["A person who denies the existence of God", "Atheist", "Theist", "Agnostic", "Polytheist"],
+      ["A feeling of apprehension in tense situations", "Trepidation", "Confidence", "Arrogance", "Audacity"],
+      ["A lover of fine arts", "Aesthete", "Philistine", "Barbarian", "Vandal"],
+      ["A person who studies rocks and minerals", "Mineralogist", "Biologist", "Zoologist", "Botanist"],
+      ["A person who works with gemstones", "Gemologist", "Cardiologist", "Radiologist", "Pathologist"],
+      ["The study of the human mind and its functions", "Psychology", "Sociology", "Anthropology", "Physiology"],
+      ["Assumption of something as true without proof", "Presumption", "Fact", "Evidence", "Proof"],
+      ["Persistent harassment to do something", "Importune", "Appease", "Pacify", "Mollify"],
+      ["A person who lives in a foreign country", "Expatriate", "Patriot", "Citizen", "Native"],
+      ["Strong and deep hatred of something", "Antipathy", "Sympathy", "Empathy", "Apathy"],
+      ["A sound that cannot be heard clearly", "Muffled", "Deafening", "Resonant", "Loud"],
+      ["Government controlled by monopolists", "Plutonomy", "Democracy", "Republic", "Monarchy"],
+      ["Graceful and balanced behavior", "Poise", "Clumsiness", "Awkwardness", "Agitation"],
+      ["A person who writes dictionaries", "Lexicographer", "Choreographer", "Cartographer", "Photographer"],
+      ["Absence of government", "Anarchy", "Monarchy", "Oligarchy", "Autocracy"],
+      ["Government by a single person", "Autocracy", "Democracy", "Plutocracy", "Aristocracy"],
+      ["One who believes in more than one God", "Polytheist", "Monotheist", "Atheist", "Agnostic"],
+      ["Habitual absenteeism", "Truant", "Diligent", "Punctual", "Meticulous"],
+      ["Place where soldiers are stationed", "Barracks", "Convent", "Monastery", "Igloo"],
+      ["Showing deep respect", "Reverent", "Irreverent", "Flippant", "Insolent"],
+      ["A person who loves and enjoys food", "Gourmand", "Ascetic", "Glutton", "Teetotaler"],
+      ["Generously supports those in need", "Philanthropist", "Miser", "Niggard", "Skinflint"],
+      ["A school or college one has attended", "Alma mater", "Kindergarten", "Nursery", "Creche"],
+      ["Person in charge of a museum", "Curator", "Janitor", "Mayor", "Governor"],
+      ["Excessive praise in speech/writing", "Panegyric", "Criticism", "Censure", "Condemnation"],
+      ["Disdain for humanity; avoids society", "Misanthrope", "Philanthropist", "Socialite", "Gregarious"],
+      ["Person who travels to distant lands", "Explorer", "Commuter", "Resident", "Citizen"],
+      ["State of stunned confusion", "Daze", "Clarity", "Lucidity", "Alertness"],
+      ["Person who loves collecting coins", "Numismatist", "Philatelist", "Lepidopterist", "Bibliophile"],
+      ["Person who studies human societies", "Sociologist", "Psychologist", "Biologist", "Geologist"],
+      ["Famous person's signature", "Autograph", "Photograph", "Telegraph", "Paragraph"],
+      ["Writing of a person's life by someone else", "Biography", "Autobiography", "Bibliography", "Calligraphy"],
+      ["Highly educated in a specific field", "Expert", "Novice", "Amateur", "Beginner"],
+      ["Person who abandons his religion", "Apostate", "Apostle", "Prophet", "Disciple"],
+      ["Statement obviously true, needs no proof", "Axiom", "Paradox", "Fallacy", "Enigma"],
+      ["Misuse/violation of something sacred", "Desecration", "Consecration", "Veneration", "Adoration"],
+      ["Strong feeling of not liking", "Hatred", "Affection", "Adoration", "Fondness"],
+      ["Water safe for drinking", "Potable", "Edible", "Portable", "Palatable"],
+      ["Indifferent/distrustful of human morality", "Cynic", "Optimist", "Idealist", "Utopian"],
+      ["Funeral procession", "Cortege", "Parade", "Cavalcade", "Carnival"],
+      ["Vehemently opposes authority/ tradition", "Anarchist", "Loyalist", "Royalist", "Conformist"],
+      ["Self-punishment for wrongdoing", "Penitence", "Impenitence", "Defiance", "Arrogance"],
+      ["Overly self-centered person", "Narcissist", "Altruist", "Philanthropist", "Humanitarian"],
+      ["Removal of a leader by force", "Coup", "Election", "Nomination", "Coronation"],
+      ["Repairs and maintains machines", "Mechanic", "Surgeon", "Dentist", "Optician"],
+      ["A person who can talk non-stop", "Garrulous", "Taciturn", "Reticent", "Reserved"],
+      ["a person who works for low pay, in order to learn the skills", "Apprentice", "Master", "Veteran", "Professional"],
+      ["Never been married", "Bachelor", "Widower", "Spouse", "Fiance"],
+      ["Killing of an unborn baby", "Foeticide", "Homicide", "Suicide", "Genocide"],
+      ["Person who does not drink alcohol", "Teetotaler", "Drunkard", "Sot", "Alcoholic"],
+      ["Life thriving in water habitats", "Aquatic", "Terrestrial", "Aerial", "Amphibian"],
+      ["Place where an army is trained", "Barracks", "Aquarium", "Aviary", "Apiary"],
+      ["Society free of poverty and suffering", "Utopia", "Dystopia", "Hell", "Purgatory"],
+      ["A person believed to be involved in a crime", "Suspect", "Victim", "Witness", "Judge"],
+      ["Person who believes in fate", "Fatalist", "Realist", "Illusionist", "Pragmatist"],
+      ["Substance in blood that neutralizes harmful matter", "Antibody", "Antigen", "Pathogen", "Toxin"],
+      ["An official reprimand or strong criticism", "Censure", "Praise", "Eulogy", "Acclaim"],
+      ["A person who abstains from all forms of indulgence", "Ascetic", "Sybarite", "Epicure", "Hedonist"],
+      ["A state of disuse or inactivity", "Desuetude", "Activity", "Vigor", "Vitality"],
+      ["A political system based on the rule of the wealthy", "Plutocracy", "Kakistocracy", "Gerontocracy", "Ochlocracy"],
+      ["A professional who prepares maps", "Cartographer", "Seismologist", "Meteorologist", "Geologist"],
+      ["A person who eats excessively or greedily", "Glutton", "Gourmet", "Dietitian", "Vegan"],
+      ["A self-contradictory statement that may be true", "Paradox", "Truism", "Cliché", "Platitude"],
+      ["A speech or writing that praises someone highly", "Encomium", "Critique", "Diatribe", "Tirade"],
+      ["Act of intentionally setting fire to property", "Arson", "Burglary", "Larceny", "Treason"],
+      ["Fear of public speaking", "Glossophobia", "Acrophobia", "Nyctophobia", "Claustrophobia"],
+      ["A person who opposes official policy", "Dissident", "Conformist", "Supporter", "Advocate"],
+      ["Excessive self-importance or over-confidence.", "Arrogance", "Humility", "Modesty", "Meekness"],
+      ["Mental weariness and lack of enthusiasm", "Ennui", "Vigor", "Zeal", "Exuberance"],
+      ["A general pardon by a government", "Amnesty", "Penalty", "Conviction", "Sentence"],
+      ["A secret or disguised way of writing", "Cipher", "Prose", "Poetry", "Sonnet"],
+      ["Something impossible to be read", "Illegible", "Legible", "Readable", "Comprehensible"],
+      ["A deep and bottomless chasm", "Abyss", "Summit", "Apex", "Zenith"],
+      ["One who abandons his religious faith", "Apostate", "Devotee", "Fanatic", "Zealot"],
+      ["A formal split in a religious organization", "Schism", "Union", "Merger", "Amalgamation"],
+      ["A person who supports change", "Reformer", "Conservative", "Reactionary", "Traditionalist"],
+      ["'Extremely old-fashioned; belonging to a time before the biblical flood'.", "Antediluvian", "Modern", "Contemporary", "Futuristic"],
+      ["Indifferent to pain or pleasure", "Stoic", "Emotional", "Passionate", "Hysterical"],
+      ["One who pretends to have knowledge or skills", "Charlatan", "Expert", "Master", "Professional"],
+      ["A person who opposes war", "Pacifist", "Warmonger", "Belligerent", "Militarist"],
+      ["A belief or opinion that goes against the established doctrine, especially in religion or ideology.", "Heresy", "Orthodoxy", "Dogma", "Doctrine"],
+      ["A loud and confused noise", "Cacophony", "Symphony", "Harmony", "Melody"],
+      ["One who writes traditional poems", "Bard", "Novelist", "Playwright", "Essayist"],
+      ["Excessively concerned with minor details", "Pedant", "Pragmatist", "Visionary", "Generalist"],
+      ["To leave suddenly and hurriedly", "Abscond", "Arrive", "Remain", "Tarry"],
+      ["One who lives entirely for pleasure", "Epicure", "Ascetic", "Puritan", "Monk"],
+      ["A person who pretends to be what he is not", "Impostor", "Authentic", "Genuine", "Realist"],
+      ["Government exploiting resources and stealing", "Kleptocracy", "Democracy", "Republic", "Meritocracy"],
+      ["A place where wild animals are kept", "Menagerie", "Aquarium", "Apiary", "Aviary"],
+      ["A building where dead bodies are kept temporarily", "Mortuary", "Sanatorium", "Dispensary", "Infirmary"],
+      ["Government ruled by priests", "Theocracy", "Aristocracy", "Plutocracy", "Autocracy"],
+      ["A fake or inactive medicine that looks like a real one", "Placebo", "Panacea", "Antibiotic", "Vaccine"],
+      ["Cancellation of a penalty or debt", "Remission", "Imposition", "Exaction", "Levy"],
+      ["The use of trickery to achieve a political or financial goal", "Chicanery", "Honesty", "Candor", "Probity"],
+      ["Study of ancient societies", "Archaeology", "Astrology", "Biology", "Ecology"],
+      ["A person who loves and collects books", "Bibliophile", "Philatelist", "Numismatist", "Misogynist"],
+      ["Something no longer in use", "Obsolete", "Contemporary", "Vogue", "Modern"],
+      ["A person with great skill in arts/music", "Virtuoso", "Amateur", "Novice", "Tyro"],
+      ["A state of temporary disuse or suspension", "Abeyance", "Continuance", "Continuation", "Resumption"],
+      ["Record of one's own life written by oneself", "Autobiography", "Biography", "Calligraphy", "Typography"],
+      ["Study of human races and societies", "Anthropology", "Entomology", "Etymology", "Pathology"],
+      ["Praising speech at death", "Eulogy", "Elegy", "Dirge", "Epitaph"],
+      ["A person who doubts goodness of others", "Cynic", "Trusting", "Gullible", "Naive"],
+      ["Deliberate breach of faith or betrayal of trust", "Perfidy", "Fidelity", "Loyalty", "Allegiance"],
+      ["A person who insists on strict adherence to rules", "Martinet", "Libertarian", "Anarchist", "Free-spirit"],
+      ["A person who believes in fate", "Fatalist", "Determinant", "Free-willer", "Pragmatist"],
+      ["A person unable to pay debts", "Bankrupt", "Solvent", "Wealthy", "Affluent"],
+      ["Skilled in many areas", "Polymath", "Specialist", "Monolingual", "Amateur"],
+      ["A person who hates marriage", "Misogamist", "Misogynist", "Misandrist", "Misanthrope"],
+      ["Something mysterious or difficult to understand", "Enigma", "Clarity", "Certainty", "Solution"],
+      ["An exact copy", "Facsimile", "Original", "Prototype", "Archetype"],
+      ["Lives in solitude and seclusion", "Recluse", "Extrovert", "Socialite", "Gregarious"],
+      ["Animal feeding on plants and animals", "Omnivore", "Carnivore", "Herbivore", "Piscivore"],
+      ["Expression of grief or sorrow", "Dirge", "Ode", "Sonnet", "Ballad"],
+      ["Government by the few", "Oligarchy", "Monarchy", "Democracy", "Anarchy"],
+      ["A person who offers unsolicited and unwanted advice.", "Meddler", "Helper", "Assistant", "Advisor"],
+      ["A large group of people moving together", "Horde", "Individual", "Loner", "Hermit"],
+      ["Person who talks in sleep", "Somniloquist", "Somnambulist", "Insomniac", "Narcoleptic"],
+      ["Fond of luxury and sensual pleasures", "Sybarite", "Ascetic", "Spartan", "Stoic"],
+      ["A substance that induces insensitivity to pain.", "Analgesic", "Stimulant", "Irritant", "Placebo"],
+      ["Study of coins and medals", "Numismatics", "Philately", "Lepidoptery", "Cartography"],
+      ["Fear of open spaces", "Agoraphobia", "Claustrophobia", "Acrophobia", "Hydrophobia"],
+      ["The invention or use of new words or expressions.", "Neology", "Etymology", "Morphology", "Phonology"],
+      ["One who vehemently opposes authority", "Anarchist", "Loyalist", "Royalist", "Patriot"],
+      ["A person who is indifferent to pleasure or pain.", "Stoic", "Hedonist", "Epicure", "Sensualist"],
+      ["An ideal society marked by justice, equality, and happiness.", "Utopia", "Dystopia", "Apocalypse", "Armageddon"],
+      ["Prohibited by law or treaty from being imported or exported.", "Contraband", "Legitimate", "Lawful", "Authorized"],
+      ["A humorous poem of five lines.", "Limerick", "Haiku", "Sonnet", "Epic"],
+      ["A person who hates other people or mankind.", "Misanthrope", "Philanthropist", "Humanitarian", "Altruist"],
+      ["an idea is expressed by denying its opposite, often to create emphasis or understatement..", "Litotes", "Hyperbole", "Metaphor", "Simile"],
+      ["A brief note or explanation added for clarity or context.", "Annotation", "Omission", "Deletion", "Erasure"],
+      ["A place where aircraft are kept.", "Hangar", "Garage", "Dock", "Barn"],
+      ["Someone excluded or ignored by society.", "Pariah", "Idol", "Celebrity", "Icon"],
+      ["Property inherited from one's father.", "Patrimony", "Alimony", "Matrimony", "Parsimony"],
+      ["A facility for studying celestial bodies.", "Observatory", "Laboratory", "Conservatory", "Lavatory"],
+      ["A place for ammunition and weapons.", "Arsenal", "Granary", "Brewery", "Tannery"],
+      ["A medicine that induces sleep.", "Hypnotic", "Stimulant", "Emetic", "Purgative"],
+      ["One who studies the evolution of mankind.", "Anthropologist", "Archaeologist", "Geologist", "Meteorologist"],
+      ["A place where wild animals are kept.", "Zoo", "Aquarium", "Botanical garden", "Museum"],
+      ["A person's peculiar habit or mannerism.", "Idiosyncrasy", "Norm", "Standard", "Convention"],
+      ["A speech delivered without preparation.", "Impromptu", "Rehearsed", "Scripted", "Memorized"],
+      ["The act of placing a dead person in a grave.", "Interment", "Exhumation", "Cremation", "Resurrection"],
+      ["A person forced to flee his country.", "Refugee", "Tourist", "Invader", "Conqueror"],
+      ["A word formed from initial letters.", "Acronym", "Pseudonym", "Antonym", "Synonym"],
+      ["A system of retirement benefits for employees", "Superannuation", "Termination", "Inauguration", "Commencement"],
+      ["Graduates of a particular institution.", "Alumni", "Freshmen", "Sophomores", "Juniors"],
+      ["One who is indifferent to pain and pleasure.", "Stoic", "Epicurean", "Hedonist", "Sensualist"],
+      ["A person who studies human societies and cultures.", "Anthropologist", "Entomologist", "Etymologist", "Ornithologist"],
+      ["A person who loves or collects books.", "Bibliophile", "Philatelist", "Numismatist", "Lepidopterist"],
+      ["A person who writes books.", "Author", "Reader", "Publisher", "Printer"],
+      ["The murder of a king.", "Regicide", "Homicide", "Suicide", "Genocide"],
+      ["A political disorder and absence of government.", "Anarchy", "Monarchy", "Oligarchy", "Democracy"],
+      ["A poem of mourning.", "Elegy", "Ode", "Sonnet", "Ballad"],
+      ["A symbol that serves as an emblem of a group of people.", "Totem", "Taboo", "Talisman", "Amulet"],
+      ["A short amusing story.", "Anecdote", "Novel", "Epic", "Saga"],
+      ["The act of killing one's brother.", "Fratricide", "Patricide", "Matricide", "Sororicide"],
+      ["A man whose wife is dead.", "Widower", "Bachelor", "Spinster", "Divorcee"],
+      ["A partner in crime.", "Accomplice", "Adversary", "Opponent", "Rival"],
+      ["A person without a settled home.", "Vagabond", "Resident", "Citizen", "Inhabitant"],
+      ["A person difficult to please.", "Fastidious", "Easygoing", "Lenient", "Tolerant"],
+      ["A person with long experience.", "Veteran", "Novice", "Amateur", "Tyro"],
+      ["A short stay at a place.", "Sojourn", "Residence", "Habitation", "Settlement"],
+      ["One who abandons religious faith.", "Apostate", "Devotee", "Disciple", "Follower"],
+      ["Misappropriation of money.", "Embezzlement", "Donation", "Contribution", "Endowment"],
+      ["A doctor who treats children.", "Pediatrician", "Geriatrician", "Obstetrician", "Orthopedist"],
+      ["A speech or text that praises someone highly.", "Eulogy", "Critique", "Condemnation", "Censure"],
+      ["A four-footed animal.", "Quadruped", "Biped", "Centipede", "Millipede"],
+      ["The art of making maps and charts.", "Cartography", "Calligraphy", "Choreography", "Photography"],
+      ["A person who is talkative.", "Garrulous", "Taciturn", "Reticent", "Reserved"],
+      ["A book written about a person's life by someone else.", "Biography", "Autobiography", "Bibliography", "Lexicon"],
+      ["Too much official formality.", "Red tape", "Efficiency", "Expediency", "Promptness"],
+      ["A child born after the death of their father.", "Posthumous", "Premature", "Stillborn", "Legitimate"],
+      ["The sound of the funeral bell.", "Knell", "Chime", "Peal", "Jingle"],
+      ["Fear of being enclosed in small spaces.", "Claustrophobia", "Agoraphobia", "Acrophobia", "Hydrophobia"],
+      ["The killing of a whole group of people.", "Genocide", "Homicide", "Suicide", "Regicide"],
+      ["A person who dislikes human beings.", "Misanthrope", "Philanthropist", "Humanitarian", "Altruist"],
+      ["A person who pretends to have moral beliefs they don't possess.", "Hypocrite", "Saint", "Martyr", "Prophet"],
+      ["Dissection of a dead body to find the cause of death.", "Autopsy", "Biopsy", "Surgery", "Amputation"],
+      ["A person who cannot make a mistake.", "Infallible", "Fallible", "Errant", "Flawed"],
+      ["The study of the origin and history of words.", "Etymology", "Entomology", "Ecology", "Economy"],
+      ["The scientific study of insects.", "Entomology", "Etymology", "Ornithology", "Ichthyology"],
+      ["A speech made without preparation.", "Extempore", "Rehearsed", "Prepared", "Drafted"],
+      ["One who is beyond reforms.", "Incorrigible", "Corrigible", "Amendable", "Tractable"],
+      ["Impossible to describe in words.", "Ineffable", "Describable", "Expressible", "Utterable"],
+      ["A person who enjoys the company of others.", "Gregarious", "Reclusive", "Introverted", "Solitary"],
+      ["A statement seemingly self-contradictory but true.", "Paradox", "Axiom", "Truism", "Fact"],
+      ["A speech given by one person in a play.", "Monologue", "Dialogue", "Prologue", "Epilogue"],
+      ["A spot or stain caused by discoloration.", "Blot", "Gleam", "Sparkle", "Shine"],
+      ["A disgusting and unpleasant smell.", "Rancid", "Fragrant", "Aromatic", "Sweet"],
+      ["A person who writes dictionaries.", "Lexicographer", "Biographer", "Calligrapher", "Choreographer"],
+      ["A person with long experience in any occupation.", "Veteran", "Novice", "Amateur", "Beginner"],
+      ["Something that is no longer in use.", "Obsolete", "Current", "Modern", "Contemporary"],
+      ["A person who eats too much.", "Glutton", "Gourmet", "Ascetic", "Faster"],
+      ["A person who walks in sleep.", "Somnambulist", "Somniloquist", "Insomniac", "Narcoleptic"],
+      ["A belief that the universe and all existence are divine.", "Pantheism", "Atheism", "Monotheism", "Polytheism"],
+      ["Group of ships.", "Fleet", "Flock", "Herd", "Swarm"],
+      ["Secret or disguised language, often used by a particular group.", "Argot", "Dialect", "Jargon", "Vernacular"],
+      ["One who believes their culture is superior.", "Ethnocentric", "Egalitarian", "Cosmopolitan", "Tolerant"],
+      ["Fear of clusters of small holes.", "Trypophobia", "Acrophobia", "Hydrophobia", "Claustrophobia"],
+      ["Study of growing fruits and vegetables.", "Horticulture", "Agriculture", "Aquaculture", "Sericulture"],
+      ["A lover of work.", "Ergophile", "Ergophobe", "Sluggard", "Idler"],
+      ["One who believes pleasure is supreme.", "Epicurean", "Stoic", "Ascetic", "Puritan"],
+      ["A place where dead bodies are kept temporarily.", "Morgue", "Cemetery", "Graveyard", "Mausoleum"],
+      ["Fear of spiders.", "Arachnophobia", "Ophidiophobia", "Cynophobia", "Ailurophobia"],
+      ["Narrative technique shifting back in time.", "Flashback", "Foreshadowing", "Climax", "Resolution"],
+      ["The inability to feel pleasure in normally pleasurable activities", "Anhedonia", "Euphoria", "Ecstasy", "Joy"],
+      ["The philosophical system based on the ideas of Immanuel Kant.", "Kantianism", "Marxism", "Platonism", "Nihilism"],
+      ["A literary or rhetorical device in which the opposite of what is expected occurs.", "Situational Irony", "Metaphor", "Simile", "Personification"],
+      ["Condition with only one chromosome copy.", "Monosomy", "Trisomy", "Polysomy", "Diploidy"],
+      ["Short moral story with allegory.", "Parable", "Fable", "Epic", "Myth"],
+      ["Region from which nothing escapes.", "Black Hole", "Nebula", "Supernova", "Quasar"],
+      ["Fiction blurring reality and imagination.", "Metafiction", "Nonfiction", "Biography", "Documentary"],
+      ["One who finds pleasure in own pain.", "Masochist", "Sadist", "Hedonist", "Altruist"],
+      ["Strong desire to travel the world.", "Dromomaniac", "Kleptomaniac", "Pyromaniac", "Megalomanic"],
+      ["people feel anonymous or unobserved, often in groups, which reduces self-awareness and personal accountability-making them more likely to act unethically", "Deindividuation", "Individuation", "Self-actualization", "Conformity"],
+      ["Use of light and shadow in art.", "Chiaroscuro", "Fresco", "Mosaic", "Collage"]
+    ];
+
+    function shuffleOptions(array) {
+      let shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+    let currentCorrectAnswer = "";
+
+    const quizWrapper = document.getElementById("quizWrapper");
+    const questionTitle = document.getElementById("questionTitle");
+    const optionsGrid = document.getElementById("optionsGrid");
+    const progressBar = document.getElementById("progressBar");
+    const scoreText = document.getElementById("scoreText");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const timerText = document.getElementById("timerText");
+    const prefixes = ["A", "B", "C", "D"];
+
+    function loadQuestion() {
+      answered = false;
+      const qData = rawData[currentIndex];
+      const questionText = qData[0];
+      currentCorrectAnswer = qData[1];
+      
+      const distractors = [qData[2], qData[3], qData[4]];
+      const allOptions = shuffleOptions([currentCorrectAnswer, ...distractors]);
+
+      timerText.textContent = `Question ${currentIndex + 1}/${rawData.length}`;
+      questionTitle.textContent = questionText;
+      progressBar.style.width = `${((currentIndex + 1) / rawData.length) * 100}%`;
+      optionsGrid.innerHTML = "";
+
+      allOptions.forEach((optText, idx) => {
+        const optCard = document.createElement("div");
+        optCard.className = "option-card";
+        optCard.dataset.value = optText;
+        optCard.innerHTML = `
+          <div class="option-prefix">${prefixes[idx]}</div>
+          <span class="option-label">${optText}</span>
+        `;
+        optCard.onclick = () => selectOption(optText, optCard);
+        optionsGrid.appendChild(optCard);
+      });
+    }
+
+    function selectOption(selectedValue, clickedCard) {
+      if (answered) return;
+      answered = true;
+
+      const cards = optionsGrid.querySelectorAll(".option-card");
+      cards.forEach(card => card.classList.add("disabled"));
+
+      if (selectedValue === currentCorrectAnswer) {
+        clickedCard.classList.add("correct");
+        score++;
+        scoreText.textContent = score;
+        scoreBadge.classList.add("pop");
+        setTimeout(() => scoreBadge.classList.remove("pop"), 300);
+      } else {
+        clickedCard.classList.add("wrong");
+        cards.forEach(card => {
+          if (card.dataset.value === currentCorrectAnswer) {
+            card.classList.add("correct");
+          }
+        });
+      }
+
+      // Smooth slide transition crossfade
+      setTimeout(() => {
+        quizWrapper.classList.add("slide-out");
+        
+        setTimeout(() => {
+          currentIndex++;
+          if (currentIndex < rawData.length) {
+            loadQuestion();
+            quizWrapper.classList.remove("slide-out");
+            quizWrapper.classList.add("slide-in");
+            
+            // Allow DOM to register the slide-in class before removing it for smooth entry
+            requestAnimationFrame(() => {
+              quizWrapper.classList.remove("slide-in");
+            });
+          } else {
+            showResults();
+            quizWrapper.classList.remove("slide-out");
+          }
+        }, 350); // Matches CSS transition duration
+      }, 900); // Wait time before sliding out
+    }
+
+    function showResults() {
+      const accuracy = Math.round((score / rawData.length) * 100);
+      quizWrapper.innerHTML = `
+        <div class="score-view">
+          <div class="score-val">${score} / ${rawData.length}</div>
+          <div class="score-label">Final Accuracy: ${accuracy}%</div>
+          <button class="restart-btn" onclick="location.reload()">Restart Quiz</button>
+        </div>
+      `;
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
