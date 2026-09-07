@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+            scroll-behavior: smooth;
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Results Section */
+        .result-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-result-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-q-text { font-weight: 500; margin-bottom: 12px; font-size: 1.05rem; color: #334155; font-style: italic; }
+        .result-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 600; }
+        .text-wrong { color: #b91c1c; font-weight: 600; }
+        .result-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Comprehensive Practice Set</h1>
+    <button class="btn-finish" onclick="showResults()">Finish & View Results</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">Passage 1</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Passage 2</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel" id="passageScrollPanel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel" id="questionPanel">
+        <div id="questionArea">
+            <div class="q-header" id="questionTitle">Select the appropriate word for the highlighted blank:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-section" id="resultSection">
+    <div class="result-container" id="resultContainer">
+        <!-- Result Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p1: {
+            title: "Passage 1",
+            text: "Do women <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ &nbsp; ]</span> leadership differently than men do? And if so, will feminine leadership <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ &nbsp; ]</span> where <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ &nbsp; ]</span> leadership does not? A recent study suggests somewhat paradoxically that female managers <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ &nbsp; ]</span> their male <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ &nbsp; ]</span> even when the personal characteristics of both are very <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ &nbsp; ]</span>. Of the two schools of thought, the structuralist theory argues that men and women do not receive the same treatment in the workplace and that stamping out <span class='blank' id='b-p1-6' onclick='loadQuestion(\"p1\", 6)'>[ &nbsp; ]</span> bias would stamp out the observed <span class='blank' id='b-p1-7' onclick='loadQuestion(\"p1\", 7)'>[ &nbsp; ]</span>. In contrast, the socialisation theory contends that men and women experience work differently because men see work as more <span class='blank' id='b-p1-8' onclick='loadQuestion(\"p1\", 8)'>[ &nbsp; ]</span> to their lives. These <span class='blank' id='b-p1-9' onclick='loadQuestion(\"p1\", 9)'>[ &nbsp; ]</span> explanations apart, today business appears to be undergoing a feminisation of leadership.",
+            questions: [
+                { opts: {a: "exercise", b: "tolerate", c: "empower", d: "authorise", e: "undertake"}, ans: "a", expl: "<strong>exercise:</strong> 'Exercise leadership' is the correct idiomatic expression meaning to use or apply leadership skills. 'Tolerate' (endure), 'empower' (grant power), 'authorise' (give permission), and 'undertake' (commit to a task) do not collocate grammatically with 'leadership' in this context.", context: "Do women [...] leadership differently than men do?" },
+                { opts: {a: "complete", b: "affect", c: "succeed", d: "progress", e: "dominate"}, ans: "c", expl: "<strong>succeed:</strong> The sentence questions if feminine leadership will 'succeed' (achieve its aim) where other leadership fails. 'Complete', 'affect', 'progress', and 'dominate' do not logically fit the comparative condition of achieving results where others do not.", context: "And if so, will feminine leadership [...] where..." },
+                { opts: {a: "masculine", b: "benevolent", c: "traditional", d: "charismatic", e: "authoritarian"}, ans: "a", expl: "<strong>masculine:</strong> The passage explicitly contrasts men and women. Therefore, 'feminine leadership' is directly contrasted with 'masculine' leadership. The other styles (benevolent, traditional, etc.) are irrelevant to the core gender debate of the passage.", context: "...will feminine leadership succeed where [...] leadership does not?" },
+                { opts: {a: "out-cast", b: "out-do", c: "out-live", d: "out-work", e: "out-stand"}, ans: "b", expl: "<strong>out-do:</strong> 'Out-do' means to perform better than someone else, fitting the paradox that females perform better. 'Out-cast' means to reject, 'out-live' means to survive longer, 'out-work' lacks the comparative success aspect, and 'out-stand' is not a standard verb in this context.", context: "...paradoxically that female managers [...] their male..." },
+                { opts: {a: "superiors", b: "employees", c: "managers", d: "subordinates", e: "counterparts"}, ans: "e", expl: "<strong>counterparts:</strong> A 'counterpart' is a person holding an equivalent role. Female managers are compared to their equivalent male peers (counterparts). Using 'managers' would be redundant, while superiors/subordinates changes the hierarchy being compared.", context: "...female managers out-do their male [...] even when..." },
+                { opts: {a: "similar", b: "unique", c: "minimal", d: "distinct", e: "constant"}, ans: "a", expl: "<strong>similar:</strong> The 'paradox' mentioned earlier exists because female managers outperform males *even when* their personal characteristics are 'similar' (alike). Words like 'distinct' (different) or 'unique' would destroy the paradox.", context: "...even when the personal characteristics of both are very [...]." },
+                { opts: {a: "class", b: "culture", c: "gender", d: "category", e: "employment"}, ans: "c", expl: "<strong>gender:</strong> The entire passage discusses the differential treatment of men and women, clearly referring to 'gender bias'. Class, culture, or employment biases are outside the scope of the text.", context: "...and that stamping out [...] bias would stamp out..." },
+                { opts: {a: "equalities", b: "variations", c: "distortions", d: "resemblances", e: "discrimination"}, ans: "b", expl: "<strong>variations:</strong> The structuralist theory argues that removing bias would remove the 'observed variations' (differences in behavior and outcomes) between male and female leaders. 'Equalities' or 'resemblances' are the opposite of what is observed. 'Discrimination' is the cause, not the behavioral observation.", context: "...would stamp out the observed [...]." },
+                { opts: {a: "trivial", b: "central", c: "needy", d: "desperate", e: "preliminary"}, ans: "b", expl: "<strong>central:</strong> Socialisation theory argues men view work as 'central' (highly important/core) to their lives. 'Trivial' means unimportant, 'preliminary' means introductory, and 'needy/desperate' do not make sense in this context.", context: "...because men see work as more [...] to their lives." },
+                { opts: {a: "identical", b: "analogical", c: "discriminating", d: "contradictory", e: "corresponding"}, ans: "d", expl: "<strong>contradictory:</strong> The two theories (structuralist vs socialisation) offer fundamentally opposing or 'contradictory' explanations for the phenomenon. 'Identical', 'analogical', and 'corresponding' imply they agree, which they do not.", context: "These [...] explanations apart, today business appears..." }
+            ],
+            answers: []
+        },
+        p2: {
+            title: "Passage 2",
+            text: "U.S. policy <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ &nbsp; ]</span> human rights has been a major irritant in Asia. A case can be successfully made out that <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ &nbsp; ]</span> in the history of the world have the human <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ &nbsp; ]</span> of so many people improved so <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ &nbsp; ]</span> over so short a period of time as has happened in China in the last decade. Over a billion people now enjoy two <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ &nbsp; ]</span> meals a day and a standard of living they could hardly have imagined a few years ago. Most have access to basic <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ &nbsp; ]</span>. Life expectancy at birth is longer in Shanghai today than it is in New York. At the same time <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ &nbsp; ]</span> conditions prevail in many areas as it always has in pre-industrial <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ &nbsp; ]</span>. Over time, with spread of prosperity and political pluralism will surely come <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ &nbsp; ]</span> in these conditions. Meanwhile identifying human right as a major issue for confrontation further <span class='blank' id='b-p2-9' onclick='loadQuestion(\"p2\", 9)'>[ &nbsp; ]</span> the problem instead of alleviating it.",
+            questions: [
+                { opts: {a: "regarding", b: "about", c: "involving", d: "after"}, ans: "a", expl: "<strong>regarding:</strong> 'Regarding' is a formal preposition meaning 'concerning' or 'in respect to', which is perfectly suited for diplomatic and policy discourse. 'About' is too informal, and 'involving/after' change the meaning.", context: "U.S. policy [...] human rights has been a major irritant..." },
+                { opts: {a: "ever", b: "seldom", c: "never", d: "often"}, ans: "c", expl: "<strong>never:</strong> The inverted grammatical structure ('have the human condition...') requires a negative adverb at the beginning. 'Never in the history of the world' emphasizes the unprecedented nature of the improvement. 'Ever' and 'often' break the grammatical inversion.", context: "...made out that [...] in the history of the world have the..." },
+                { opts: {a: "situation", b: "condition", c: "state", d: "concept"}, ans: "b", expl: "<strong>condition:</strong> 'The human condition' is a well-established, standard English phrase encompassing the characteristics and key events of human life (survival, living standards). 'Situation' and 'state' are less idiomatic in this exact phrase.", context: "...have the human [...] of so many people improved..." },
+                { opts: {a: "dramatically", b: "theatrically", c: "exhaustively", d: "drastically"}, ans: "a", expl: "<strong>dramatically:</strong> Means suddenly and greatly, which accurately describes the rapid economic improvement. 'Drastically' usually carries a negative or severe connotation, while 'theatrically' implies artificial exaggeration.", context: "...improved so [...] over so short a period of time..." },
+                { opts: {a: "rare", b: "square", c: "full", d: "standard"}, ans: "b", expl: "<strong>square:</strong> 'Square meals' is a widely used idiom referring to substantial, nutritious, and satisfying meals. None of the other options form this specific idiom.", context: "Over a billion people now enjoy two [...] meals a day..." },
+                { opts: {a: "facilities", b: "privileges", c: "amenities", d: "accessories"}, ans: "c", expl: "<strong>amenities:</strong> 'Basic amenities' is a strong collocation referring to essential features that provide comfort, convenience, and hygiene (water, electricity). 'Privileges' implies special rights, and 'accessories' means non-essential add-ons.", context: "Most have access to basic [...]." },
+                { opts: {a: "tough", b: "harsh", c: "strong", d: "rough"}, ans: "b", expl: "<strong>harsh:</strong> 'Harsh conditions' is the standard collocation used to describe severe, difficult, or cruel living and working environments. 'Strong' or 'rough' are not typically used to describe overarching societal conditions.", context: "At the same time [...] conditions prevail in many areas..." },
+                { opts: {a: "societies", b: "traditions", c: "customs", d: "festivities"}, ans: "a", expl: "<strong>societies:</strong> The passage compares current harsh conditions to historical 'pre-industrial societies' (human communities sharing a common culture/era). 'Traditions' or 'customs' do not represent the physical living environment.", context: "...as it always has in pre-industrial [...]." },
+                { opts: {a: "improvements", b: "reshuffling", c: "attainment", d: "settlement"}, ans: "a", expl: "<strong>improvements:</strong> Prosperity naturally brings 'improvements' (betterments) to the harsh conditions mentioned previously. 'Reshuffling' means reorganizing, and 'attainment' means achieving, neither of which directly contrast the 'harsh conditions'.", context: "...with spread of prosperity and political pluralism will surely come [...] in these conditions." },
+                { opts: {a: "accentuates", b: "alleviates", c: "endangers", d: "diminishes"}, ans: "a", expl: "<strong>accentuates:</strong> To 'accentuate' means to make more noticeable or prominent (worsen in this context). This perfectly contrasts with the latter half of the sentence \"instead of alleviating it\" (lessening it). 'Diminishes' would mean the same as alleviating.", context: "...identifying human right as a major issue for confrontation further [...] the problem instead of alleviating it." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = null;
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        switchPassage('p1', document.querySelector('.tab-btn'));
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+
+        loadQuestion(passageId, 0);
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        const activeBlank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(activeBlank) activeBlank.classList.add('active');
+
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+
+        // Auto-scroll the right panel to make the 'Next Blank' button or explanation fully visible
+        setTimeout(() => {
+            const nextBtn = document.getElementById('nextBlankBtn');
+            const qPanel = document.getElementById('questionPanel');
+            if (nextBtn && nextBtn.style.display !== 'none') {
+                nextBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            } else {
+                explBox.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }, 100);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            if (nextIndex < clozeData[currentPassageId].questions.length) {
+                loadQuestion(currentPassageId, nextIndex);
+                const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+                if(nextBlank) {
+                    document.getElementById('passageScrollPanel').scrollTo({
+                        top: nextBlank.offsetTop - 150,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+    }
+
+    function showResults() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        resultSection.style.display = 'block';
+        
+        let score = 0;
+        let resultHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            resultHTML += `<div class="passage-result-title">${passage.title} Results</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `(${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+                
+                const contextStr = q.context.replace('[...]', `<strong class="${statusClass}">[ ${statusText} ]</strong>`);
+
+                resultHTML += `
+                    <div class="result-item">
+                        <div class="result-q-text">"${contextStr}"</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="result-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="result-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        resultContainer.innerHTML = scoreCard + resultHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>
