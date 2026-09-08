@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSC/Banking - Sentence Improvement Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --correct-bg: #dcfce7;
+            --correct-border: #22c55e;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-border: #ef4444;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: var(--bg-panel);
+            max-width: 850px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h2 { margin: 0; font-size: 1.5rem; letter-spacing: 0.5px; }
+
+        .progress-container {
+            background: #e0e7ff;
+            height: 8px;
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- Question View Styles --- */
+        .question-body { padding: 40px; min-height: 400px; }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #1e293b;
+        }
+
+        .question-text u {
+            text-decoration-color: var(--primary);
+            text-decoration-thickness: 3px;
+            padding-bottom: 2px;
+            font-style: italic;
+        }
+
+        .options-list { display: flex; flex-direction: column; gap: 14px; }
+
+        .option-btn {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px 22px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-border);
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong-border);
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 30px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.4s ease;
+            color: #334155;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .footer-nav {
+            padding: 20px 40px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+
+        .nav-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            background: var(--border-color);
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .nav-btn:hover:not(:disabled) { background: #cbd5e1; }
+        .nav-btn.primary-btn { background: var(--primary); color: white; }
+        .nav-btn.primary-btn:hover:not(:disabled) { background: var(--primary-hover); }
+        .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* --- Final Result Dashboard Styles --- */
+        .result-body {
+            display: none;
+            padding: 40px;
+            background: #f8fafc;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h3 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin: 0 0 10px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .val-total { color: var(--primary); }
+        .val-correct { color: #16a34a; }
+        .val-wrong { color: #dc2626; }
+        .val-acc { color: #d97706; }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .review-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+        }
+
+        .review-card.is-correct::before { background: #22c55e; }
+        .review-card.is-wrong::before { background: #ef4444; }
+        .review-card.is-skipped::before { background: #94a3b8; }
+
+        .r-question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .r-answer-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .r-row {
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .icon { margin-right: 8px; font-size: 1.1rem; }
+
+        .r-explanation {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .question-body, .result-body { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h2>Sentence Improvement Practice Test</h2>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Interface for Answering Questions -->
+    <div class="question-body" id="questionBody">
+        <div class="question-meta">
+            <span id="questionCount">Question 1 of 35</span>
+            <span>SSC / Bank Pattern</span>
+        </div>
+        
+        <div class="question-text" id="questionText"></div>
+        <div class="options-list" id="optionsContainer"></div>
+        <div class="explanation" id="explanationBox"></div>
+    </div>
+
+    <div class="footer-nav" id="footerNav">
+        <button class="nav-btn" id="prevBtn" onclick="prevQuestion()" disabled>Previous</button>
+        <button class="nav-btn primary-btn" id="nextBtn" onclick="nextQuestion()">Next</button>
+    </div>
+
+    <!-- Interface for Final Results -->
+    <div class="result-body" id="resultBody">
+        <div class="dashboard-header">
+            <h3>Performance Dashboard</h3>
+            <p style="color: var(--text-muted);">Review your answers and explanations below.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value val-total" id="statTotal">0</div>
+                <div class="stat-label">Total Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-correct" id="statCorrect">0</div>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-wrong" id="statWrong">0</div>
+                <div class="stat-label">Incorrect Answers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value val-acc" id="statAcc">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+        </div>
+
+        <div class="review-list" id="reviewList">
+            <!-- Review cards injected here via JS -->
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <button class="nav-btn primary-btn" onclick="location.reload()" style="padding: 16px 40px; font-size: 1.1rem;">Restart Practice</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Full dataset accurately transcribed, ensuring original question structures are perfectly maintained.
+    const quizData = [
+        {
+            q: "Do not take another step, else your life <u>will face great</u> peril.",
+            options: { a: "might be thrown into", b: "will be in", c: "would be placed in great", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) will be in:</strong> The correct and most natural idiomatic expression is to be 'in peril'. Replacing the phrase with 'will be in' correctly forms 'your life will be in peril'."
+        },
+        {
+            q: "The political situation is <u>no better and not even as good as</u> it was last year.",
+            options: { a: "not better", b: "not better than", c: "no better to", d: "no better than", e: "No correction required" },
+            ans: "d",
+            expl: "<strong>(d) no better than:</strong> The comparative adjective 'better' must be followed by 'than'. The original phrase is redundant and clunky; 'no better than' is the grammatically correct and concise comparative structure."
+        },
+        {
+            q: "Mary met with an accident. She didn't just twist her leg, she <u>has broken it</u>.",
+            options: { a: "had broken it", b: "breaks it", c: "broke it too", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) had broken it:</strong> The preceding clauses are in the past tense ('met', 'didn't just twist'). The subsequent action must also be in the past tense, making the past perfect 'had broken it' (or simple past) appropriate, rather than the present perfect 'has broken it'."
+        },
+        {
+            q: "The man prides <u>on his</u> wealth.",
+            options: { a: "is proud on", b: "prides of", c: "prides himself on", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) prides himself on:</strong> When used as an active verb, 'pride' is reflexive. The correct structure is to 'pride oneself on' something."
+        },
+        {
+            q: "<u>If I was you</u>, I would not have joined the party.",
+            options: { a: "As you", b: "If I am you", c: "Were I you", d: "If I be you", e: "No correction required" },
+            ans: "c",
+            expl: "<strong>(c) Were I you:</strong> In an unreal conditional sentence, the subjunctive mood must be used ('If I were you'). This can also be inverted correctly as 'Were I you'."
+        },
+        {
+            q: "If you are absent for a week, you have to <u>catch with</u> the work when you return.",
+            options: { a: "catch up with", b: "catch on with", c: "catch in with", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) catch up with:</strong> The correct phrasal verb meaning to do work that one should have done earlier to get back on schedule is 'catch up with'."
+        },
+        {
+            q: "He was urgently in need <u>to get his eye operation</u>.",
+            options: { a: "of an eye operation", b: "for operation on eye", c: "for eye to be operated", d: "No correction" },
+            ans: "a",
+            expl: "<strong>(a) of an eye operation:</strong> The correct grammatical idiom is to be 'in need of' something."
+        },
+        {
+            q: "Having finished the book, <u>it was put away by him</u>.",
+            options: { a: "he put it away", b: "it was being put away by him", c: "it was putting away by him", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) he put it away:</strong> This corrects a dangling modifier. The subject immediately following the introductory participial phrase ('Having finished the book') must be the person who performed the action ('he')."
+        },
+        {
+            q: "A well behaved boy is always obedient <u>towards his</u> parents.",
+            options: { a: "for his parents", b: "of his parents", c: "to his parents", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) to his parents:</strong> The adjective 'obedient' is correctly followed by the preposition 'to'."
+        },
+        {
+            q: "When it was feared that the serfs might go too far and gain their freedom from serfdom, the Protestant leaders joined the princes <u>at crushing</u> them.",
+            options: { a: "into crushing", b: "in crushing", c: "without crushing", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) in crushing:</strong> The correct prepositional phrase is to 'join someone in doing something'."
+        },
+        {
+            q: "He is the best and <u>popular</u> actor of Bollywood.",
+            options: { a: "the more popular", b: "the most popular", c: "popular most", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) the most popular:</strong> To maintain parallelism with the superlative adjective 'best', the second adjective must also be in the superlative degree ('most popular')."
+        },
+        {
+            q: "It is <u>easy for children than</u> for adults to learn a new language.",
+            options: { a: "as easy as children", b: "easy for children as", c: "very easy to children as", d: "easier for children than", e: "No correction required" },
+            ans: "d",
+            expl: "<strong>(d) easier for children than:</strong> The presence of the conjunction 'than' dictates that a comparative adjective ('easier') must be used instead of the positive adjective ('easy')."
+        },
+        {
+            q: "The strangers were heading <u>into</u> a serious disaster.",
+            options: { a: "for", b: "towards", c: "along", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) for:</strong> The correct and widely accepted English idiom is to be 'heading for a disaster'."
+        },
+        {
+            q: "The company goes to great length to ensure that employees <u>can be comfortable</u> in their work environment.",
+            options: { a: "will be comfortable", b: "should be comfortable", c: "are comfortable", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) are comfortable:</strong> Since the sentence expresses a general fact and goal, the simple present tense ('are') is the most direct and grammatically appropriate choice."
+        },
+        {
+            q: "They could not complete the work; <u>neither could we</u>.",
+            options: { a: "neither we did", b: "neither did we", c: "nor could we", d: "nor did we", e: "No improvement" },
+            ans: "e",
+            expl: "<strong>(e) No improvement:</strong> The phrase 'neither could we' is grammatically correct as an independent clause following a semicolon, utilizing the proper inverted order (neither + auxiliary + subject)."
+        },
+        {
+            q: "The quality of food served in this hotel is so poor that no respectable person <u>would want to eat</u> over here.",
+            options: { a: "will want to eat", b: "will want to have eaten", c: "will have wanted to eat", d: "will be wanting to eat", e: "No correction required" },
+            ans: "e",
+            expl: "<strong>(e) No correction required:</strong> 'Would want to eat' is perfectly correct, expressing a hypothetical inclination based on the poor quality of the food."
+        },
+        {
+            q: "We should take up the first item, let <u>us begin this</u> song.",
+            options: { a: "this song begin us", b: "us begin with this song", c: "us beginning this song", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) us begin with this song:</strong> When starting an agenda or a list, the proper prepositional phrase is 'begin with'. (Replacing the underlined text makes the sentence 'let us begin with this song'.)"
+        },
+        {
+            q: "I do not give any cognizance <u>on what he says</u>.",
+            options: { a: "to", b: "about", c: "for", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) to:</strong> You give cognizance (attention or notice) 'to' something."
+        },
+        {
+            q: "<u>All, but her,</u> had made an attempt.",
+            options: { a: "All, but she", b: "all, but herself", c: "All, but she herself", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> When 'but' means 'except', it functions as a preposition. Prepositions are correctly followed by the objective case pronoun ('her')."
+        },
+        {
+            q: "He did not <u>obey to his orders</u>.",
+            options: { a: "obey his orders", b: "obey him", c: "obey to him", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) obey his orders:</strong> The verb 'obey' is a transitive verb in English, meaning it takes a direct object without needing a preposition like 'to'."
+        },
+        {
+            q: "The notorious, dacoit, with all, his gangsters, <u>have been robbing</u> banks for the last few months.",
+            options: { a: "is robbing", b: "has been robbing", c: "are robbing", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) has been robbing:</strong> The primary subject is 'The notorious dacoit' (singular). The prepositional phrase 'with all his gangsters' does not make the subject plural, so the singular verb 'has' is required."
+        },
+        {
+            q: "Our team is likely to lose unless all members learn to cooperate <u>with one other</u>.",
+            options: { a: "with one and all", b: "with one another", c: "one other with", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) with one another:</strong> The correct reciprocal pronoun used for a relationship involving more than two people is 'one another'."
+        },
+        {
+            q: "<u>Any able bodied man</u> is eligible for the job.",
+            options: { a: "Any able-bodied men are", b: "Each able-bodied man is", c: "Any able-bodied men have been", d: "No improvement" },
+            ans: "d",
+            expl: "<strong>(d) No improvement:</strong> 'Any able bodied man is eligible' is grammatically correct as is. 'Any' can precede a singular countable noun and take a singular verb."
+        },
+        {
+            q: "<u>If a person studied</u> this period of history, he would have wondered how such things had happened in India.",
+            options: { a: "a person had studied", b: "a person would study", c: "a person could have studied", d: "No improvement" },
+            ans: "a",
+            expl: "<strong>(a) a person had studied:</strong> This forms a Type 3 conditional (referring to an unreal past). The 'if' clause must be in the past perfect tense ('had studied') to align with the main clause ('would have wondered')."
+        },
+        {
+            q: "They succeeded without <u>hardly making</u> any effort.",
+            options: { a: "hardly without making", b: "with hardly making", c: "without making hardly", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) with hardly making:</strong> Using 'without' and 'hardly' together creates a double negative. Changing to 'with hardly making' resolves this grammatical error."
+        },
+        {
+            q: "He died of a wound and <u>not from malaria</u>.",
+            options: { a: "from a wound and not from malaria", b: "of a wound and not of malaria", c: "from a wound and not of malaria", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) from a wound and not of malaria:</strong> In precise English usage, one dies 'of' a disease (malaria) and 'from' an external cause (a wound)."
+        },
+        {
+            q: "Governments in developing countries are under increasing pressure for the <u>recruiting and training teachers</u> to meet, the demands of their rapidly expanding systems of education.",
+            options: { a: "so as to recruit and train", b: "to recruit and train", c: "in the recruiting and training of", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) to recruit and train:</strong> The noun 'pressure' is most idiomatically followed by an infinitive phrase ('pressure to recruit and train')."
+        },
+        {
+            q: "Citizens should be prohibited <u>to smoke</u> in public places.",
+            options: { a: "for smoking", b: "against smoking", c: "from smoking", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) from smoking:</strong> The verb 'prohibit' is correctly followed by the preposition 'from' and a gerund (-ing form)."
+        },
+        {
+            q: "The workers are <u>hell bent at getting</u> what is due to them.",
+            options: { a: "hell bent for getting", b: "hell bent on getting", c: "hell bent upon getting", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) hell bent on getting:</strong> The correct idiom is to be 'hell-bent on' doing something (though 'upon' is also technically acceptable, 'on' is the standard preferred choice)."
+        },
+        {
+            q: "Miss Pillai teaches very well, <u>isn't it</u>?",
+            options: { a: "didn't she?", b: "doesn't she?", c: "wasn't it?", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) doesn't she?:</strong> Question tags must match the auxiliary verb and subject of the main clause. 'Teaches' is simple present, so the auxiliary is 'does'. The positive statement requires the negative tag 'doesn't she?'."
+        },
+        {
+            q: "<u>Leaving aside little room</u> for misinterpretation, the senior politician offered clarification about his role in the party elections.",
+            options: { a: "Leaving less room for", b: "Leaving little room for", c: "Having left less room for", d: "Leaving for little room to", e: "No correction required" },
+            ans: "b",
+            expl: "<strong>(b) Leaving little room for:</strong> 'Leaving aside' means to ignore or exclude, which makes no sense here. 'Leaving little room' correctly means providing almost no opportunity for misinterpretation."
+        },
+        {
+            q: "It is high time he <u>starts to look</u> into his own flaws before speaking ill of others.",
+            options: { a: "started to look", b: "starts looking", c: "started looking", d: "No improvement" },
+            ans: "c",
+            expl: "<strong>(c) started looking:</strong> The phrase 'It is high time' must be followed by a clause in the simple past tense, indicating an action that should have already begun."
+        },
+        {
+            q: "The fast train <u>came a halt to</u> before crossing the bridge.",
+            options: { a: "came before to a halt", b: "came to a halt before", c: "came to halts before a", d: "came before a halt to", e: "No correction required" },
+            ans: "b",
+            expl: "<strong>(b) came to a halt before:</strong> The standard fixed idiom for stopping is 'to come to a halt'."
+        },
+        {
+            q: "Mr. Hyon and the other dissident leaders <u>have taken</u> shelter at the church last month after the authorities ordered their arrest.",
+            options: { a: "had taken shelter", b: "took shelter", c: "are taking shelter", d: "No improvement" },
+            ans: "b",
+            expl: "<strong>(b) took shelter:</strong> The phrase 'last month' denotes a specific completed time in the past, which strictly requires the simple past tense ('took'), not the present perfect."
+        },
+        {
+            q: "When a man has to give evidence he must <u>have a clean breast of</u> the whole matter.",
+            options: { a: "make a clean breast", b: "obtain a clean breast", c: "possess a clean breast", d: "NO improvement" },
+            ans: "a",
+            expl: "<strong>(a) make a clean breast:</strong> The correct English idiom for confessing or telling the whole truth is to 'make a clean breast of' something."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    const userAnswers = new Array(quizData.length).fill(null);
+    
+    // UI Elements
+    const qBody = document.getElementById('questionBody');
+    const footerNav = document.getElementById('footerNav');
+    const resultBody = document.getElementById('resultBody');
+    const qText = document.getElementById('questionText');
+    const optsContainer = document.getElementById('optionsContainer');
+    const explBox = document.getElementById('explanationBox');
+    const progBar = document.getElementById('progressBar');
+    const qCount = document.getElementById('questionCount');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function loadQuestion(index) {
+        const qData = quizData[index];
+        
+        qCount.innerText = `Question ${index + 1} of ${quizData.length}`;
+        progBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+        
+        qText.innerHTML = `${index + 1}. ${qData.q}`;
+        optsContainer.innerHTML = '';
+        explBox.style.display = 'none';
+        
+        for (const [key, value] of Object.entries(qData.options)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${value}`;
+            
+            if (userAnswers[index]) {
+                btn.disabled = true;
+                if (key === qData.ans) {
+                    btn.classList.add('correct');
+                } else if (key === userAnswers[index] && key !== qData.ans) {
+                    btn.classList.add('wrong');
+                }
+            } else {
+                btn.onclick = () => selectAnswer(key, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (userAnswers[index]) {
+            explBox.innerHTML = qData.expl;
+            explBox.style.display = 'block';
+        }
+
+        prevBtn.disabled = index === 0;
+        nextBtn.innerText = index === quizData.length - 1 ? 'Finish & View Results' : 'Next';
+    }
+
+    function selectAnswer(selectedKey, btnElement) {
+        const qData = quizData[currentQuestionIndex];
+        userAnswers[currentQuestionIndex] = selectedKey;
+        
+        const allBtns = optsContainer.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (selectedKey !== qData.ans) btnElement.classList.add('wrong');
+
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+        
+        // Auto Scroll Feature
+        setTimeout(() => {
+            footerNav.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 150);
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion(currentQuestionIndex);
+        } else {
+            showFinalResults();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion(currentQuestionIndex);
+        }
+    }
+
+    function showFinalResults() {
+        qBody.style.display = 'none';
+        footerNav.style.display = 'none';
+        resultBody.style.display = 'block';
+
+        let correct = 0;
+        let wrong = 0;
+        let skipped = 0;
+        let reviewHTML = '';
+
+        quizData.forEach((q, idx) => {
+            const userAns = userAnswers[idx];
+            let isCorrect = false;
+            let cardClass = '';
+            let userIcon = '';
+            
+            if (!userAns) {
+                skipped++;
+                cardClass = 'is-skipped';
+                userIcon = '<span class="icon" style="color:#94a3b8;">➖</span>';
+            } else if (userAns === q.ans) {
+                correct++;
+                isCorrect = true;
+                cardClass = 'is-correct';
+                userIcon = '<span class="icon" style="color:#22c55e;">✅</span>';
+            } else {
+                wrong++;
+                cardClass = 'is-wrong';
+                userIcon = '<span class="icon" style="color:#ef4444;">❌</span>';
+            }
+
+            reviewHTML += `
+                <div class="review-card ${cardClass}">
+                    <div class="r-question">Q${idx + 1}. ${q.q}</div>
+                    <div class="r-answer-block">
+                        <div class="r-row ${isCorrect ? 'text-correct' : (userAns ? 'text-wrong' : 'text-muted')}">
+                            ${userIcon} Your Answer: ${userAns ? `(${userAns}) ${q.options[userAns]}` : 'Skipped'}
+                        </div>
+                        ${!isCorrect ? `
+                        <div class="r-row text-correct">
+                            <span class="icon">🎯</span> Correct Answer: (${q.ans}) ${q.options[q.ans]}
+                        </div>` : ''}
+                    </div>
+                    <div class="r-explanation">${q.expl}</div>
+                </div>
+            `;
+        });
+
+        const total = quizData.length;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        document.getElementById('statTotal').innerText = total;
+        document.getElementById('statCorrect').innerText = correct;
+        document.getElementById('statWrong').innerText = wrong;
+        document.getElementById('statAcc').innerText = `${accuracy}%`;
+        
+        document.getElementById('reviewList').innerHTML = reviewHTML;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Initialize Quiz
+    loadQuestion(0);
+</script>
+
+</body>
+</html>
