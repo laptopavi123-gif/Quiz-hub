@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SSC One Word Substitution Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4338ca;
+      --primary-light: #e0e7ff;
+      --text-dark: #1e1b4b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --correct: #059669;
+      --correct-bg: #d1fae5;
+      --wrong: #dc2626;
+      --wrong-bg: #fee2e2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #eef2ff;
+      background-image: 
+        radial-gradient(at 10% 10%, #c7d2fe 0px, transparent 50%),
+        radial-gradient(at 90% 90%, #a5b4fc 0px, transparent 50%),
+        radial-gradient(at 50% 50%, #ffffff 0px, transparent 50%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      font-family: "Plus Jakarta Sans", sans-serif;
+    }
+
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 680px;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(67, 56, 202, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #f1f5f9;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-content {
+      padding: 40px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .badge-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .timer-badge, .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .score-badge.pop {
+      transform: scale(1.15);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .icon-svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.5;
+    }
+
+    /* Ultra-Smooth Transitions */
+    .quiz-wrapper {
+      position: relative;
+      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .quiz-wrapper.slide-out {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .quiz-wrapper.slide-in {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .question-container {
+      position: relative;
+      margin-bottom: 36px;
+    }
+
+    .question-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      line-height: 1.4;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 580px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .card-content {
+        padding: 32px 24px;
+      }
+      .question-title {
+        font-size: 1.3rem;
+      }
+    }
+
+    .option-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, background-color 0.2s;
+      user-select: none;
+    }
+
+    .option-card:active:not(.disabled) {
+      transform: scale(0.97);
+    }
+
+    .option-card:hover:not(.disabled) {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .option-prefix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .option-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .option-card.correct {
+      border-color: var(--correct);
+      background: var(--correct-bg);
+      transform: scale(1.02);
+    }
+
+    .option-card.correct .option-prefix {
+      background: var(--correct);
+      color: #ffffff;
+    }
+
+    .option-card.correct .option-label {
+      color: #064e3b;
+    }
+
+    .option-card.wrong {
+      border-color: var(--wrong);
+      background: var(--wrong-bg);
+    }
+
+    .option-card.wrong .option-prefix {
+      background: var(--wrong);
+      color: #ffffff;
+    }
+
+    .option-card.wrong .option-label {
+      color: #7f1d1d;
+    }
+
+    .option-card.disabled {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .score-view {
+      text-align: center;
+      padding: 40px 10px;
+    }
+
+    .score-val {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .score-label {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    .restart-btn {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px -8px rgba(67, 56, 202, 0.4);
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .restart-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="quizCard">
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <div class="card-content">
+      <div class="header">
+        <div class="badge-group">
+          <div class="timer-badge">
+            <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="timerText">Question 1/204</span>
+          </div>
+        </div>
+        <div class="score-badge" id="scoreBadge">
+          <svg class="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span id="scoreText">0</span>
+        </div>
+      </div>
+
+      <div class="quiz-wrapper" id="quizWrapper">
+        <div class="question-container">
+          <div class="question-title" id="questionTitle"></div>
+        </div>
+
+        <div class="options-grid" id="optionsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Format: [Question, Correct Answer, Distractor 1, Distractor 2, Distractor 3]
+    const rawData = [
+      ["A person who hates and avoids other people", "Misanthrope", "Philanthropist", "Extrovert", "Altruist"],
+      ["A place where coins, medals and tokens are made", "Mint", "Armory", "Treasury", "Arsenal"],
+      ["A book or set of books giving information of all areas of work", "Encyclopedia", "Dictionary", "Thesaurus", "Directory"],
+      ["A place to play games and bet on them", "Casino", "Stadium", "Gymnasium", "Arcade"],
+      ["Any female animal which feeds its young on milk from her own body", "Mammal", "Reptile", "Amphibian", "Marsupial"],
+      ["Certain to happen", "Inevitable", "Improbable", "Unlikely", "Avoidable"],
+      ["A similarity between like features of two things, on which a comparison may be based", "Analogy", "Anomaly", "Antipathy", "Apathy"],
+      ["A detailed description of a series of real or fictional events taking place over a long period of time", "Saga", "Anecdote", "Parable", "Fable"],
+      ["Under the influence of drugs and alcohol", "Inebriated", "Sober", "Lucid", "Abstinent"],
+      ["A sentimental memory of the past", "Nostalgia", "Amnesia", "Euphoria", "Dementia"],
+      ["A large number of fish swimming together", "Shoal", "Flock", "Herd", "Swarm"],
+      ["A secret plan used to do something (usually wrong)", "Conspiracy", "Strategy", "Blueprint", "Tactic"],
+      ["A person who gives help and sympathy to people who need it", "Samaritan", "Misanthrope", "Mercenary", "Adversary"],
+      ["Being careful that every detail of something is correct", "Fastidious", "Careless", "Negligent", "Sloppy"],
+      ["Something that is absolutely necessary, that you can not do without", "Indispensable", "Superfluous", "Redundant", "Expendable"],
+      ["Animal living both on land and water", "Amphibian", "Reptile", "Mammal", "Avian"],
+      ["Person who betrays his own country", "Traitor", "Patriot", "Loyalist", "Martyr"],
+      ["Child bereaved of one or both the parents", "Orphan", "Foundling", "Urchin", "Waif"],
+      ["Having a consistency that does not easily yield to pressure", "Firm", "Supple", "Pliable", "Yielding"],
+      ["Copying someone else's work and trying to submit as your own", "Plagiarism", "Copyright", "Originality", "Forgery"],
+      ["A person who enjoys doing dangerous things, in a way that other people may think is stupid", "Daredevil", "Coward", "Craven", "Dastard"],
+      ["A homeless, neglected, or abandoned person, especially a child", "Waif", "Heir", "Aristocrat", "Prodigy"],
+      ["Capable of being bent or pulled into different shapes", "Ductile", "Brittle", "Rigid", "Stiff"],
+      ["Gradual recovery of health and strength", "Convalescence", "Relapse", "Deterioration", "Decline"],
+      ["Waver between different opinions or actions", "Vacillate", "Decide", "Determine", "Resolve"],
+      ["A person who kills somebody, especially for political reasons", "Assassin", "Executioner", "Murderer", "Butcher"],
+      ["A group of worshippers", "Congregation", "Mob", "Crowd", "Audience"],
+      ["The place that a person treats as his permanent home, or lives in and has a substantial connection with", "Domicile", "Resort", "Camp", "Sojourn"],
+      ["Capable of or adapted for turning easily from one to another of various tasks, fields of endeavour, etc. and is able to do many things", "Versatile", "Inflexible", "Rigid", "Limited"],
+      ["A big clumsy often slow-witted person", "Oaf", "Genius", "Sage", "Prodigy"],
+      ["A violent, overbearing, turbulent, brawling, quarrelsome woman", "Termagant", "Pacifist", "Philanthropist", "Samaritan"],
+      ["One who cannot hear", "Deaf", "Blind", "Mute", "Dumb"],
+      ["Causing or wanting to cause harm or evil to someone", "Malevolent", "Benevolent", "Magnanimous", "Charitable"],
+      ["Causing or ending in death", "Fatal", "Vital", "Benign", "Harmless"],
+      ["A formal agreement between two or more nations or peoples", "Pact", "Dispute", "Conflict", "Rift"],
+      ["A person whose age is between 70 and 79 years old", "Septuagenarian", "Octogenarian", "Nonagenarian", "Centenarian"],
+      ["Willing to take risks and try new ideas", "Adventurous", "Cautious", "Timid", "Cowardly"],
+      ["To move or travel back and forth frequently", "Shuttle", "Stagnate", "Settle", "Remain"],
+      ["A speech by an actor at the end of a play", "Epilogue", "Prologue", "Dialogue", "Monologue"],
+      ["Author's explanatory remarks at the beginning of a book", "Preface", "Appendix", "Epilogue", "Index"],
+      ["Never changing and therefore boring", "Monotonous", "Exciting", "Varied", "Dynamic"],
+      ["Kind, generous, and forgiving", "Magnanimous", "Vindictive", "Petty", "Spiteful"],
+      ["Enjoying or affording warm secure shelter or cover and opportunity for ease and contentment", "Snug", "Exposed", "Vulnerable", "Bleak"],
+      ["Changing secret and coded messages in a readable form", "Decoding", "Encoding", "Encrypting", "Ciphering"],
+      ["Which cannot be read", "Illegible", "Legible", "Readable", "Comprehensible"],
+      ["Life history written by oneself", "Autobiography", "Biography", "Bibliography", "Cartography"],
+      ["Something belonging to or surviving from an earlier period", "Relic", "Novelty", "Innovation", "Invention"],
+      ["Filled with fear or dread", "Tremulous", "Brave", "Courageous", "Fearless"],
+      ["Someone who regards the world as his country", "Cosmopolitan", "Patriot", "Nationalist", "Chauvinist"],
+      ["Burial ground consisting of graves", "Cemetery", "Orchard", "Vineyard", "Sanctuary"],
+      ["Not informed about or aware of something", "Oblivious", "Conscious", "Aware", "Mindful"],
+      ["The practice of writing dictionaries", "Lexicography", "Calligraphy", "Cartography", "Typography"],
+      ["Circular arrangement of flowers", "Wreath", "Bouquet", "Garland", "Corsage"],
+      ["Outer protective layer of a tree", "Bark", "Core", "Pith", "Sap"],
+      ["Place where grains are stored", "Granary", "Armory", "Aviary", "Apiary"],
+      ["Killing of many people", "Carnage", "Salvation", "Rescue", "Preservation"],
+      ["The quality of being faithful", "Fidelity", "Treachery", "Perfidy", "Disloyalty"],
+      ["In a friendly and peaceable manner", "Amicably", "Hostilely", "Aggressively", "Belligerently"],
+      ["Social organisation where males are heads of families", "Patriarchy", "Matriarchy", "Oligarchy", "Autocracy"],
+      ["A building containing interesting, rare, and old objects", "Museum", "Laboratory", "Observatory", "Planetarium"],
+      ["Something which lasts forever", "Eternal", "Ephemeral", "Transient", "Temporary"],
+      ["The examination of one's own conscious thoughts and feelings", "Introspection", "Extrospection", "Observation", "Inspection"],
+      ["The wide variety of shared and different personal and group characteristics among human beings", "Diversity", "Uniformity", "Homogeneity", "Similarity"],
+      ["Severe or strict in manner", "Austere", "Lenient", "Genial", "Affable"],
+      ["A floating container anchored to the sea bottom, so used for directing ships and warning them of possible danger", "Buoy", "Anchor", "Mast", "Helm"],
+      ["Jokes and funny remarks amongst friends", "Banter", "Argument", "Debate", "Dispute"],
+      ["Springs to mind", "Dawns on", "Escapes", "Forgets", "Evades"],
+      ["In the order of occurrence", "Chronological order", "Alphabetical order", "Random order", "Reverse order"],
+      ["An official appointed to resolve a dispute", "Arbitrator", "Advocate", "Prosecutor", "Defendant"],
+      ["Giving cause for legal action", "Actionable", "Permissible", "Lawful", "Legitimate"],
+      ["The young of a frog", "Tadpole", "Caterpillar", "Larva", "Nymph"],
+      ["A group of people who have no permanent abode but wander from place to place", "Nomad", "Settler", "Resident", "Inhabitant"],
+      ["The art of cutting gems", "Lapidary", "Sculpture", "Carving", "Engraving"],
+      ["The sound made by frogs", "Croak", "Chirp", "Hiss", "Roar"],
+      ["A house of shelter for a dog", "Kennel", "Stable", "Coop", "Hutch"],
+      ["That can be seen through", "Transparent", "Opaque", "Translucent", "Murky"],
+      ["A diagram showing the path of planets", "Zodiac", "Equator", "Meridian", "Orbit"],
+      ["Something that is necessary or crucial", "Indispensable", "Trivial", "Optional", "Dispensable"],
+      ["Persons who are unfairly blamed for something that others have done", "Scapegoat", "Culprit", "Instigator", "Perpetrator"],
+      ["Bearing no name", "Anonymous", "Famed", "Renowned", "Identified"],
+      ["Extreme physical or mental sufferings", "Agony", "Ecstasy", "Bliss", "Euphoria"],
+      ["Beginning to exist; recently formed or developed", "Nascent", "Dying", "Fading", "Moribund"],
+      ["A feeling of excitement or happiness", "Exhilaration", "Depression", "Melancholy", "Despair"],
+      ["Difficult to interpret or understand", "Enigmatic", "Lucid", "Clear", "Obvious"],
+      ["A person who easily believes without demanding proof", "Credulous", "Skeptical", "Incredulous", "Suspicious"],
+      ["A woman with brown hair", "Brunette", "Blonde", "Redhead", "Raven"],
+      ["The act of destroying or damaging something", "Sabotage", "Construction", "Creation", "Protection"],
+      ["Experiences that are very unpleasant or difficult", "Ordeal", "Pleasure", "Delight", "Comfort"],
+      ["To enter unlawfully upon the land of another", "Trespass", "Welcome", "Invite", "Greet"],
+      ["A residence for nuns", "Convent", "Monastery", "Abbey", "Priory"],
+      ["A local meeting of party members to select candidates, elect convention delegates, etc", "Caucus", "Rally", "Parade", "Fiesta"],
+      ["The flowers of a particular region", "Flora", "Fauna", "Foliage", "Vegetation"],
+      ["Scientific tests or techniques used in connection with the detection of crime", "Forensics", "Genetics", "Robotics", "Mechanics"],
+      ["Impossible to deny or disapprove", "Incontrovertible", "Debatable", "Questionable", "Doubtful"],
+      ["A portable case for holding papers, drawing etc.", "Portfolio", "Briefcase", "Backpack", "Suitcase"],
+      ["Disease that spreads over a whole country or the whole world", "Pandemic", "Endemic", "Epidemic", "Sporadic"],
+      ["A residence for monks or priests", "Monastery", "Convent", "Nunnery", "Asylum"],
+      ["One appointed to act in place of another", "Deputy", "Principal", "Chief", "Leader"],
+      ["The sound of owls", "Hoot", "Quack", "Moo", "Bleat"],
+      ["Rights to vote in an election", "Suffrage", "Veto", "Censorship", "Ban"],
+      ["An adventurous or bold person", "Foolhardy", "Cautious", "Timid", "Wary"],
+      ["Open to more than one interpretation, not having one obvious meaning", "Ambiguous", "Clear", "Definite", "Explicit"],
+      ["A person who believes in the equality of all people", "Egalitarian", "Elitist", "Racist", "Chauvinist"],
+      ["Someone who knows a lot about the arts, food, drink or some other subject", "Connoisseur", "Ignoramus", "Amateur", "Novice"],
+      ["An exact copy of handwriting, printing", "Facsimile", "Original", "Masterpiece", "Prototype"],
+      ["The sound of elephants", "Trumpet", "Roar", "Growl", "Bark"],
+      ["Departure from common rule", "Anomaly", "Normality", "Regularity", "Conformity"],
+      ["Government by two rulers or authorities", "Diarchy", "Monarchy", "Oligarchy", "Anarchy"],
+      ["A case in which the blade of a sword is kept", "Sheath", "Quiver", "Holster", "Scabbard"],
+      ["A living organism that steals nourishment from other living beings", "Parasite", "Host", "Symbiote", "Predator"],
+      ["The medieval forerunner of chemistry", "Alchemy", "Astrology", "Biology", "Physics"],
+      ["A long wandering or voyage usually marked by many changes of fortune", "Odyssey", "Stroll", "Saunter", "Amble"],
+      ["One who is 100 years old or older", "Centenarian", "Octogenarian", "Nonagenarian", "Septuagenarian"],
+      ["A large, tall cupboard in which clothes may be hung or stored", "Wardrobe", "Pantry", "Cabinet", "Bureau"],
+      ["A ground where the last funeral rites are performed", "Crematorium", "Sanctuary", "Auditorium", "Planetarium"],
+      ["Liable to catch fire easily", "Inflammable", "Nonflammable", "Incombustible", "Fireproof"],
+      ["A unit to measure light", "Lumen", "Kelvin", "Ampere", "Decibel"],
+      ["Destruction of a fetus", "Feticide", "Homicide", "Fratricide", "Patricide"],
+      ["To forbid something, especially by law", "Proscribe", "Prescribe", "Permit", "Allow"],
+      ["A circular house made of blocks of hard snow", "Igloo", "Cabin", "Tent", "Chalet"],
+      ["A man who is womanish in his habits", "Effeminate", "Masculine", "Macho", "Manly"],
+      ["The science of foretelling events by mapping stars", "Astrology", "Astronomy", "Cosmology", "Meteorology"],
+      ["A person holding conversational belief especially in matter of religion", "Orthodox", "Heretic", "Radical", "Liberal"],
+      ["Information, especially of a biased or misleading nature, used to promote a political cause or point of view", "Propaganda", "Truth", "Fact", "Evidence"],
+      ["A container for housing honeybees", "Hive", "Nest", "Web", "Burrow"],
+      ["A person who has money especially invested in business", "Capitalist", "Socialist", "Communist", "Philanthropist"],
+      ["Ethically good behaviour one has", "Virtue", "Vice", "Sin", "Immorality"],
+      ["A calculated move to gain an advantage", "Gambit", "Blunder", "Mistake", "Error"],
+      ["One who hates or discriminates against women", "Misogynist", "Philogynist", "Misandrist", "Feminist"],
+      ["A violent wind that has a circular movement", "Hurricane", "Breeze", "Zephyr", "Gale"],
+      ["A thing that is kept as a reminder of a person, place, or event", "Souvenir", "Trash", "Debris", "Junk"],
+      ["The art of careful public speaking, using clear pronunciation", "Elocution", "Stuttering", "Mumbling", "Stammering"],
+      ["To reveal a secret", "Divulge", "Conceal", "Hide", "Suppress"],
+      ["Fit to drink", "Potable", "Edible", "Inedible", "Toxic"],
+      ["A state of agitation especially over a trivial matter", "Fuss", "Calm", "Peace", "Tranquility"],
+      ["Sets of principles concerned with the nature and appreciation of beauty", "Aesthetics", "Ethics", "Logic", "Metaphysics"],
+      ["One who gives shape to stone", "Sculptor", "Painter", "Musician", "Writer"],
+      ["People who belong to the same country", "Natives", "Aliens", "Foreigners", "Immigrants"],
+      ["A group of ants", "Colony", "Flock", "Herd", "School"],
+      ["A small structure with one or more open sides that is used to vend merchandise", "Kiosk", "Mansion", "Castle", "Palace"],
+      ["Partial or total loss of memory", "Amnesia", "Nostalgia", "Remembrance", "Recollection"],
+      ["A place where snakes are kept", "Serpentarium", "Aquarium", "Aviary", "Apiary"],
+      ["Killing of one person by another", "Homicide", "Suicide", "Genocide", "Regicide"],
+      ["Having a sharply strong taste or smell", "Pungent", "Bland", "Mild", "Tasteless"],
+      ["A building where animals are butchered", "Abattoir", "Bakery", "Brewery", "Dairy"],
+      ["A historical account or biography written from personal knowledge", "Memoir", "Fiction", "Fable", "Myth"],
+      ["The branch of physics concerned with the properties of sound", "Acoustics", "Optics", "Thermodynamics", "Mechanics"],
+      ["Disappointed and annoyed about something", "Disgruntled", "Satisfied", "Content", "Pleased"],
+      ["Study of heavenly bodies", "Astronomy", "Astrology", "Geology", "Biology"],
+      ["One who hates institution of marriage", "Misogamist", "Misogynist", "Misanthrope", "Philanthropist"],
+      ["Compulsory enlistment for military service", "Conscription", "Exemption", "Discharge", "Retirement"],
+      ["A specialist of kidney", "Nephrologist", "Cardiologist", "Neurologist", "Dermatologist"],
+      ["One who offers one's services without being forced", "Volunteer", "Conscript", "Mercenary", "Employee"],
+      ["A professional rider in horse race", "Jockey", "Chauffeur", "Pilot", "Captain"],
+      ["Containing more words than necessary", "Verbose", "Concise", "Terse", "Succinct"],
+      ["Recovering from an illness or medical treatment", "Convalescent", "Deteriorating", "Failing", "Terminal"],
+      ["A man who is womanish in his habits", "Effeminate", "Macho", "Masculine", "Virile"],
+      ["A lover of oneself, of one's advancement", "Egoist", "Altruist", "Philanthropist", "Humanitarian"],
+      ["The animals of a particular region", "Fauna", "Flora", "Vegetation", "Foliage"],
+      ["One who cures eye disease", "Ophthalmologist", "Dentist", "Cardiologist", "Orthopedist"],
+      ["A person who is never happy with what he has", "Malcontent", "Optimist", "Content", "Satisfied"],
+      ["Feeling or expressing overwhelming happiness or joyful excitement", "Ecstatic", "Depressed", "Miserable", "Sorrowful"],
+      ["The art of identifying a disease from its signs and symptoms", "Diagnosis", "Prognosis", "Treatment", "Therapy"],
+      ["Affecting all or most people, places, things, etc.", "General", "Specific", "Particular", "Unique"],
+      ["Overly concerned with minute details or formalisms", "Pedantic", "Careless", "Sloppy", "Negligent"],
+      ["One that cannot be harmed or wounded", "Invulnerable", "Vulnerable", "Defenseless", "Weak"],
+      ["A substance for killing algae", "Fungicide", "Herbicide", "Insecticide", "Pesticide"],
+      ["A person who is interested in material gains and is hostile to art/culture", "Philistine", "Aesthete", "Connoisseur", "Dilettante"],
+      ["One who feeds on plants only", "Herbivorous", "Carnivorous", "Omnivorous", "Insectivorous"],
+      ["One who is against religion", "Heretic", "Devotee", "Disciple", "Believer"],
+      ["Exclusive command or possession", "Monopoly", "Sharing", "Distribution", "Competition"],
+      ["Rhythmic flow of sounds or words", "Cadence", "Cacophony", "Discord", "Noise"],
+      ["A person who attacks or criticizes cherished beliefs or institutions", "Iconoclast", "Conformist", "Traditionalist", "Loyalist"],
+      ["The origin or birth of a thing", "Genesis", "Conclusion", "End", "Termination"],
+      ["A religious war", "Crusade", "Truce", "Peace", "Armistice"],
+      ["A slight fault that can be forgiven", "Venial", "Mortal", "Unforgivable", "Fatal"],
+      ["Lion like characteristics", "Leonine", "Canine", "Feline", "Bovine"],
+      ["Someone who avoids other people's company", "Reclusive", "Sociable", "Gregarious", "Extroverted"],
+      ["The violation or profanation of anything sacred or held sacred", "Sacrilege", "Veneration", "Reverence", "Respect"],
+      ["One who is a centre of attraction", "Cynosure", "Outcast", "Pariah", "Nobody"],
+      ["Travelling from place to place", "Itinerant", "Sedentary", "Stationary", "Fixed"],
+      ["A person who can speak multiple languages", "Polyglot", "Monolingual", "Mute", "Silent"],
+      ["One who adapts oneself readily to various situations", "Versatile", "Rigid", "Inflexible", "Obstinate"],
+      ["A lover of good food", "Gourmand", "Ascetic", "Faster", "Dieter"],
+      ["Study of body functions", "Physiology", "Anatomy", "Morphology", "Pathology"],
+      ["Belonging to the same kind", "Homogeneous", "Heterogeneous", "Diverse", "Varied"],
+      ["A person who is experiencing dementia brought about by old age", "Senile", "Lucid", "Alert", "Youthful"],
+      ["Dependent on chance or uncertainty", "Precarious", "Secure", "Certain", "Safe"],
+      ["Exaggerated claims, not meant to be taken seriously", "Hyperbole", "Understatement", "Fact", "Truth"],
+      ["Photographers who follow celebrities to get their pictures to sell them", "Paparazzi", "Journalists", "Reporters", "Anchors"],
+      ["The science and art of growing vegetables, fruits and flowers", "Horticulture", "Agriculture", "Aquaculture", "Sericulture"],
+      ["One who is a boot licker and flatterer", "Sycophant", "Critic", "Detractor", "Opponent"],
+      ["An arched structure in a garden having climbing plants", "Pergola", "Gazebo", "Patio", "Deck"],
+      ["The possible results of an action", "Ramification", "Cause", "Origin", "Source"],
+      ["The study of chemistry in a medieval fashion", "Alchemy", "Biology", "Physics", "Geology"],
+      ["The study of ancient writings and scriptures", "Palaeography", "Typography", "Calligraphy", "Cartography"],
+      ["The situation in which a disease is spread by touching someone or something", "Contagion", "Immunity", "Resistance", "Isolation"],
+      ["A piece of a living tissue or plant that is transplanted surgically", "Graft", "Seed", "Root", "Stem"],
+      ["Feeling or showing extreme tiredness", "Weary", "Energetic", "Vibrant", "Lively"],
+      ["Giving the worrying impression that something bad is going to happen", "Ominous", "Auspicious", "Promising", "Favorable"],
+      ["Plants of a particular region", "Flora", "Fauna", "Wildlife", "Animals"],
+      ["A shortened version of a larger work", "Abridgement", "Enlargement", "Expansion", "Addition"],
+      ["Man supervising the exam", "Invigilator", "Examinee", "Candidate", "Student"],
+      ["Adjust or make right; correct", "Rectify", "Damage", "Ruin", "Spoil"]
+    ];
+
+    function shuffleOptions(array) {
+      let shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+    let currentCorrectAnswer = "";
+
+    const quizWrapper = document.getElementById("quizWrapper");
+    const questionTitle = document.getElementById("questionTitle");
+    const optionsGrid = document.getElementById("optionsGrid");
+    const progressBar = document.getElementById("progressBar");
+    const scoreText = document.getElementById("scoreText");
+    const scoreBadge = document.getElementById("scoreBadge");
+    const timerText = document.getElementById("timerText");
+    const prefixes = ["A", "B", "C", "D"];
+
+    function loadQuestion() {
+      answered = false;
+      const qData = rawData[currentIndex];
+      const questionText = qData[0];
+      currentCorrectAnswer = qData[1];
+      
+      const distractors = [qData[2], qData[3], qData[4]];
+      const allOptions = shuffleOptions([currentCorrectAnswer, ...distractors]);
+
+      timerText.textContent = `Question ${currentIndex + 1}/${rawData.length}`;
+      questionTitle.textContent = questionText;
+      progressBar.style.width = `${((currentIndex + 1) / rawData.length) * 100}%`;
+      optionsGrid.innerHTML = "";
+
+      allOptions.forEach((optText, idx) => {
+        const optCard = document.createElement("div");
+        optCard.className = "option-card";
+        optCard.dataset.value = optText;
+        optCard.innerHTML = `
+          <div class="option-prefix">${prefixes[idx]}</div>
+          <span class="option-label">${optText}</span>
+        `;
+        optCard.onclick = () => selectOption(optText, optCard);
+        optionsGrid.appendChild(optCard);
+      });
+    }
+
+    function selectOption(selectedValue, clickedCard) {
+      if (answered) return;
+      answered = true;
+
+      const cards = optionsGrid.querySelectorAll(".option-card");
+      cards.forEach(card => card.classList.add("disabled"));
+
+      if (selectedValue === currentCorrectAnswer) {
+        clickedCard.classList.add("correct");
+        score++;
+        scoreText.textContent = score;
+        scoreBadge.classList.add("pop");
+        setTimeout(() => scoreBadge.classList.remove("pop"), 300);
+      } else {
+        clickedCard.classList.add("wrong");
+        cards.forEach(card => {
+          if (card.dataset.value === currentCorrectAnswer) {
+            card.classList.add("correct");
+          }
+        });
+      }
+
+      setTimeout(() => {
+        quizWrapper.classList.add("slide-out");
+        
+        setTimeout(() => {
+          currentIndex++;
+          if (currentIndex < rawData.length) {
+            loadQuestion();
+            quizWrapper.classList.remove("slide-out");
+            quizWrapper.classList.add("slide-in");
+            
+            requestAnimationFrame(() => {
+              quizWrapper.classList.remove("slide-in");
+            });
+          } else {
+            showResults();
+            quizWrapper.classList.remove("slide-out");
+          }
+        }, 350); 
+      }, 900); 
+    }
+
+    function showResults() {
+      const accuracy = Math.round((score / rawData.length) * 100);
+      quizWrapper.innerHTML = `
+        <div class="score-view">
+          <div class="score-val">${score} / ${rawData.length}</div>
+          <div class="score-label">Final Accuracy: ${accuracy}%</div>
+          <button class="restart-btn" onclick="location.reload()">Restart Quiz</button>
+        </div>
+      `;
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
