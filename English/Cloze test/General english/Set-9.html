@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloze Test - Interactive Practice Set</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-panel: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --blank-bg: #e0e7ff;
+            --blank-active: #fef08a;
+            --correct-bg: #dcfce7;
+            --correct-text: #166534;
+            --wrong-bg: #fee2e2;
+            --wrong-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 { margin: 0; font-size: 1.25rem; }
+
+        .btn-finish {
+            background: #ffffff;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover { background: #e0e7ff; }
+
+        .tabs {
+            display: flex;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .passage-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            background: var(--bg-body);
+            scroll-behavior: smooth;
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 2;
+            color: #334155;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+            padding: 0 10px;
+            margin: 0 5px;
+            background: var(--blank-bg);
+            border: 2px dashed #818cf8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: #c7d2fe; }
+        
+        .blank.active {
+            background: var(--blank-active);
+            border-color: #eab308;
+            color: #854d0e;
+            transform: scale(1.05);
+        }
+
+        .blank.correct {
+            background: var(--correct-bg);
+            border: 2px solid #22c55e;
+            color: var(--correct-text);
+        }
+
+        .blank.wrong {
+            background: var(--wrong-bg);
+            border: 2px solid #ef4444;
+            color: var(--wrong-text);
+            text-decoration: line-through;
+        }
+
+        .question-panel {
+            flex: 1;
+            padding: 40px;
+            background: var(--bg-panel);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        .q-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            background: var(--bg-body);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #94a3b8;
+            background: #f1f5f9;
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: #22c55e;
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-bg);
+            border-color: #ef4444;
+            color: var(--wrong-text);
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        .nav-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .btn-action:hover { background: var(--primary-hover); }
+
+        /* Results Section */
+        .result-section {
+            display: none;
+            padding: 40px;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-body);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .score-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .passage-result-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-q-text { font-weight: 500; margin-bottom: 12px; font-size: 1.05rem; color: #334155; font-style: italic; }
+        .result-ans { font-size: 0.95rem; margin-bottom: 5px; }
+        .text-correct { color: #15803d; font-weight: 600; }
+        .text-wrong { color: #b91c1c; font-weight: 600; }
+        .result-expl { margin-top: 10px; font-size: 0.9rem; background: #f8fafc; padding: 12px; border-radius: 6px; color: #475569; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; overflow: auto; }
+            .passage-panel, .question-panel { flex: none; width: 100%; border-right: none; padding: 20px; }
+            .passage-panel { border-bottom: 2px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Comprehensive Practice Set</h1>
+    <button class="btn-finish" onclick="showResults()">Finish & View Results</button>
+</header>
+
+<div class="tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchPassage('p1', this)">Passage 1</button>
+    <button class="tab-btn" onclick="switchPassage('p2', this)">Passage 2</button>
+    <button class="tab-btn" onclick="switchPassage('p3', this)">Passage 3</button>
+</div>
+
+<div class="main-container" id="mainContainer">
+    <div class="passage-panel" id="passageScrollPanel">
+        <div class="passage-text" id="passageContent">
+            <!-- Passage injected via JS -->
+        </div>
+    </div>
+
+    <div class="question-panel" id="questionPanel">
+        <div id="questionArea">
+            <div class="q-header" id="questionTitle">Select the appropriate word for the highlighted blank:</div>
+            <div class="options-grid" id="optionsContainer"></div>
+            <div class="explanation" id="explanationBox"></div>
+            
+            <div class="nav-actions">
+                <button class="btn-action" id="nextBlankBtn" onclick="goToNextBlank()">Next Blank ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="result-section" id="resultSection">
+    <div class="result-container" id="resultContainer">
+        <!-- Result Content Injected via JS -->
+    </div>
+</div>
+
+<script>
+    const clozeData = {
+        p1: {
+            title: "Passage 1",
+            text: "History is an interesting subject but that which <span class='blank' id='b-p1-0' onclick='loadQuestion(\"p1\", 0)'>[ &nbsp; ]</span> history, properly so called, is in great part <span class='blank' id='b-p1-1' onclick='loadQuestion(\"p1\", 1)'>[ &nbsp; ]</span> from works on the subject. Only of late years have historians <span class='blank' id='b-p1-2' onclick='loadQuestion(\"p1\", 2)'>[ &nbsp; ]</span> giving us, in any considered quantity, the truly valuable information. As in the past people meant nothing to the <span class='blank' id='b-p1-3' onclick='loadQuestion(\"p1\", 3)'>[ &nbsp; ]</span>. So, in past histories, the <span class='blank' id='b-p1-4' onclick='loadQuestion(\"p1\", 4)'>[ &nbsp; ]</span> of the king fill the picture, to which the national life forms but an <span class='blank' id='b-p1-5' onclick='loadQuestion(\"p1\", 5)'>[ &nbsp; ]</span> background. While only now, when the <span class='blank' id='b-p1-6' onclick='loadQuestion(\"p1\", 6)'>[ &nbsp; ]</span> of nations rather than the rulers is becoming the <span class='blank' id='b-p1-7' onclick='loadQuestion(\"p1\", 7)'>[ &nbsp; ]</span> idea, are historians beginning to <span class='blank' id='b-p1-8' onclick='loadQuestion(\"p1\", 8)'>[ &nbsp; ]</span> themselves to the phenomenon of social progress. What we are <span class='blank' id='b-p1-9' onclick='loadQuestion(\"p1\", 9)'>[ &nbsp; ]</span> about, is the natural history of society. we want all facts which help us to understand how a nation has grown.",
+            questions: [
+                { opts: {a: "creates", b: "constitute", c: "assumes", d: "regards"}, ans: "b", expl: "<strong>constitute:</strong> 'Constitute' means to make up or form the essence of something. The phrase refers to the elements that truly make up history. 'Creates' implies bringing into existence, 'assumes' means taking on, and 'regards' means to consider, none of which fit the structural definition of history here." },
+                { opts: {a: "refuted", b: "concealed", c: "withdrawn", d: "omitted"}, ans: "d", expl: "<strong>omitted:</strong> 'Omitted' means left out. The author argues that true history has been left out of most historical works. 'Refuted' means proven wrong, 'concealed' means deliberately hidden, and 'withdrawn' means taken back." },
+                { opts: {a: "launched", b: "started", c: "instituted", d: "introduced"}, ans: "b", expl: "<strong>started:</strong> 'Started' is the only verb here that idiomatically pairs with the gerund 'giving' in this context (started giving us). 'Launched', 'instituted', and 'introduced' do not naturally precede 'giving' in this phrasing." },
+                { opts: {a: "king", b: "leader", c: "queen", d: "representative"}, ans: "a", expl: "<strong>king:</strong> The passage contrasts the common people with the ruler. The subsequent sentence explicitly mentions \"the doings of the king\", confirming 'king' as the correct contextual choice over leader, queen, or representative." },
+                { opts: {a: "autobiographies", b: "saying", c: "doings", d: "thoughts"}, ans: "c", expl: "<strong>doings:</strong> 'Doings' refers to the actions or deeds of the king which historically filled the books. 'Autobiographies' are written by the person themselves, 'saying' is grammatically singular (would need sayings), and 'thoughts' are internal, whereas history records actions." },
+                { opts: {a: "entire", b: "obscure", c: "interesting", d: "active"}, ans: "b", expl: "<strong>obscure:</strong> 'Obscure' means hidden, unnoticed, or unclear. The national life is pushed to an obscure background behind the prominence of the king. 'Entire', 'interesting', and 'active' do not convey this shadowing effect." },
+                { opts: {a: "goodwill", b: "relevance", c: "concern", d: "welfare"}, ans: "d", expl: "<strong>welfare:</strong> The modern focus is on the well-being or 'welfare' of the entire nation rather than just its rulers. 'Goodwill' is a friendly disposition, 'concern' is worry, and 'relevance' doesn't fit the context of national progress." },
+                { opts: {a: "rampant", b: "dominant", c: "potent", d: "impressive"}, ans: "b", expl: "<strong>dominant:</strong> 'Dominant' means the main, prevailing, or most influential idea. The idea of national welfare is taking over. 'Rampant' has a negative, uncontrolled connotation, 'potent' means powerful but not necessarily prevailing, and 'impressive' is subjective." },
+                { opts: {a: "occupy", b: "avail", c: "address", d: "dwell"}, ans: "c", expl: "<strong>address:</strong> To 'address themselves to' is an English idiom meaning to direct one's attention or efforts towards something specific. 'Occupy', 'avail', and 'dwell' require different prepositions or contexts." },
+                { opts: {a: "involved", b: "worried", c: "interested", d: "concerned"}, ans: "d", expl: "<strong>concerned:</strong> \"What we are concerned about\" is a standard phrase meaning what we are interested in, care about, or are focused on. 'Involved', 'worried', and 'interested' do not form the same natural collocation with 'about' in this specific academic context." }
+            ],
+            answers: []
+        },
+        p2: {
+            title: "Passage 2",
+            text: "To spoil a heritage is not difficult but to maintain it in its <span class='blank' id='b-p2-0' onclick='loadQuestion(\"p2\", 0)'>[ &nbsp; ]</span> form is becoming <span class='blank' id='b-p2-1' onclick='loadQuestion(\"p2\", 1)'>[ &nbsp; ]</span> difficult. While it was in tune with the times to hold the Republic Day parades marking the <span class='blank' id='b-p2-2' onclick='loadQuestion(\"p2\", 2)'>[ &nbsp; ]</span> of India as the new Republic, and while it is lovely to see families and children gathering around the <span class='blank' id='b-p2-3' onclick='loadQuestion(\"p2\", 3)'>[ &nbsp; ]</span> of India Gate during summer evenings, none of these things have <span class='blank' id='b-p2-4' onclick='loadQuestion(\"p2\", 4)'>[ &nbsp; ]</span> the formal design of the place or its <span class='blank' id='b-p2-5' onclick='loadQuestion(\"p2\", 5)'>[ &nbsp; ]</span> and atmosphere. One must <span class='blank' id='b-p2-6' onclick='loadQuestion(\"p2\", 6)'>[ &nbsp; ]</span> the carefully crafted geometry of the hexagon that served as the basic <span class='blank' id='b-p2-7' onclick='loadQuestion(\"p2\", 7)'>[ &nbsp; ]</span> on which Edwin Lutyens designed New Delhi. It is sad that <span class='blank' id='b-p2-8' onclick='loadQuestion(\"p2\", 8)'>[ &nbsp; ]</span> the entire area north of the Central Vista has been destroyed by development, so that the surroundings of Connaught Place look like a jungle of ill-conceived, fire prone multi-storeyed buildings of <span class='blank' id='b-p2-9' onclick='loadQuestion(\"p2\", 9)'>[ &nbsp; ]</span> character reflecting the lust and greed of the new predators who have arrived on the Indian urban scene.",
+            questions: [
+                { opts: {a: "true", b: "real", c: "original", d: "actual"}, ans: "c", expl: "<strong>original:</strong> Maintaining a heritage refers to keeping its 'original' (initial, unaltered, authentic) form. 'True', 'real', and 'actual' are synonyms but 'original form' is the standard terminology for architectural and historical preservation." },
+                { opts: {a: "infinitely", b: "increasingly", c: "incessantly", d: "introvertly"}, ans: "b", expl: "<strong>increasingly:</strong> 'Increasingly difficult' implies growing difficulty over time due to modern pressures. 'Infinitely' is an exaggeration, 'incessantly' means without pause (usually for annoyances), and 'introvertly' does not make sense here." },
+                { opts: {a: "incoming", b: "entrance", c: "emergence", d: "appearance"}, ans: "c", expl: "<strong>emergence:</strong> The 'emergence' of a new Republic refers to its coming into existence or becoming known. 'Incoming' and 'entrance' refer to physical movement, and 'appearance' is too superficial for the birth of a nation." },
+                { opts: {a: "proximity", b: "premises", c: "pavalion", d: "precincts"}, ans: "d", expl: "<strong>precincts:</strong> 'Precincts' refers to the area enclosed by boundaries or the environs of a specific building or monument like India Gate. 'Proximity' means nearness (not a place itself), and 'premises' usually refers to privately owned buildings." },
+                { opts: {a: "suffocated", b: "mutilated", c: "mentioned", d: "differently"}, ans: "b", expl: "<strong>mutilated:</strong> The author notes that gatherings and parades did not 'mutilate' (severely damage or destroy) the formal design, contrasting with the later destruction caused by developers. 'Suffocated' applies to living things, and 'mentioned'/'differently' are irrelevant." },
+                { opts: {a: "ambience", b: "sanctity", c: "beauty", d: "splendour"}, ans: "a", expl: "<strong>ambience:</strong> 'Ambience and atmosphere' are common, paired collocations referring to the mood, character, or feel of a place. The other words do not pair as naturally with 'atmosphere' in this specific way." },
+                { opts: {a: "appreciate", b: "praise", c: "eulogise", d: "affirm"}, ans: "a", expl: "<strong>appreciate:</strong> To understand, recognize, and value the complex geometry is to 'appreciate' it. 'Praise' and 'eulogise' are verbal expressions of approval, whereas 'appreciate' reflects intellectual and aesthetic recognition." },
+                { opts: {a: "magnificence", b: "foundation", c: "base", d: "module"}, ans: "d", expl: "<strong>module:</strong> In architectural design, a repeating geometric shape used to plan a layout (like Lutyens' hexagon) is called a 'module'. 'Foundation' or 'base' are too generic and often refer to physical ground structures." },
+                { opts: {a: "virtually", b: "overtly", c: "obviously", d: "distinctly"}, ans: "a", expl: "<strong>virtually:</strong> 'Virtually' means almost entirely or for all practical purposes. \"Virtually the entire area\" means almost the whole area has been destroyed. 'Overtly' means openly, which doesn't fit the quantitative context." },
+                { opts: {a: "ominous", b: "dubious", c: "prejudicial", d: "foreboding"}, ans: "b", expl: "<strong>dubious:</strong> Buildings of 'dubious' (questionable, suspect, or low-quality) character reflects the negative tone of the passage regarding the lust and greed of developers. 'Ominous' and 'foreboding' mean predicting evil, which is too dramatic for ugly buildings." }
+            ],
+            answers: []
+        },
+        p3: {
+            title: "Passage 3",
+            text: "\"One thing scientists have discovered\", notes Thomas Dreie, is <span class='blank' id='b-p3-0' onclick='loadQuestion(\"p3\", 0)'>[ &nbsp; ]</span> often-praised children become more <span class='blank' id='b-p3-1' onclick='loadQuestion(\"p3\", 1)'>[ &nbsp; ]</span> than often-blamed ones. There's a creative element in praise\". Good leaders know that Fundamentally, their job is to <span class='blank' id='b-p3-2' onclick='loadQuestion(\"p3\", 2)'>[ &nbsp; ]</span> others make the most of themselves. Viewed in strictly <span class='blank' id='b-p3-3' onclick='loadQuestion(\"p3\", 3)'>[ &nbsp; ]</span> terms, that is their greatest <span class='blank' id='b-p3-4' onclick='loadQuestion(\"p3\", 4)'>[ &nbsp; ]</span> to their companies. People, employees, are a great untapped <span class='blank' id='b-p3-5' onclick='loadQuestion(\"p3\", 5)'>[ &nbsp; ]</span> of energy. Leaders who can tap this source are <span class='blank' id='b-p3-6' onclick='loadQuestion(\"p3\", 6)'>[ &nbsp; ]</span> to any organisation. It doesn't take elaborate <span class='blank' id='b-p3-7' onclick='loadQuestion(\"p3\", 7)'>[ &nbsp; ]</span> to bring out the best in people. If you <span class='blank' id='b-p3-8' onclick='loadQuestion(\"p3\", 8)'>[ &nbsp; ]</span> their work, they'll <span class='blank' id='b-p3-9' onclick='loadQuestion(\"p3\", 9)'>[ &nbsp; ]</span> give you the best that's in them.",
+            questions: [
+                { opts: {a: "when", b: "since", c: "that", d: "quite", e: "because"}, ans: "c", expl: "<strong>that:</strong> \"Discovered that\" is the standard grammatical structure for introducing a relative clause explaining a finding or fact." },
+                { opts: {a: "adamant", b: "notorious", c: "rebellion", d: "whimsical", e: "intelligent"}, ans: "e", expl: "<strong>intelligent:</strong> Praise has a \"creative element,\" leading children to develop positively and become more 'intelligent' or capable. The other options (adamant, notorious, rebellion, whimsical) are negative or unrelated to the benefits of praise." },
+                { opts: {a: "help", b: "tell", c: "order", d: "provide", e: "prevent"}, ans: "a", expl: "<strong>help:</strong> A good leader's fundamental job is to 'help' others make the most of themselves, aligning with the positive theme of praise and support. 'Order' or 'tell' are too authoritarian." },
+                { opts: {a: "casual", b: "useful", c: "narrow", d: "sensible", e: "commercial"}, ans: "e", expl: "<strong>commercial:</strong> The sentence explicitly mentions 'companies' immediately after, making 'commercial terms' (business or financial perspectives) the only logical fit." },
+                { opts: {a: "plight", b: "right", c: "handicap", d: "privilege", e: "contribution"}, ans: "e", expl: "<strong>contribution:</strong> Helping employees grow is a leader's greatest 'contribution' (valuable addition or service) to the company's success." },
+                { opts: {a: "wastage", b: "reservoir", c: "utilization", d: "conservation", e: "consumption"}, ans: "b", expl: "<strong>reservoir:</strong> An 'untapped reservoir of energy' is a standard metaphor comparing human potential to a hidden pool of resources waiting to be used." },
+                { opts: {a: "available", b: "tolerable", c: "valuable", d: "disastrous", e: "troublesome"}, ans: "c", expl: "<strong>valuable:</strong> Leaders who can access this hidden energy are highly 'valuable' (important and beneficial) to their organizations." },
+                { opts: {a: "baits", b: "pains", c: "troubles", d: "benefits", e: "incentives"}, ans: "b", expl: "<strong>pains:</strong> 'Take elaborate pains' is a standard English idiom meaning to make a lot of careful effort. It doesn't require massive, exhausting effort to bring out the best in people." },
+                { opts: {a: "share", b: "ignore", c: "perform", d: "recognize", e: "advertise"}, ans: "d", expl: "<strong>recognize:</strong> 'Recognizing' (acknowledging and praising) someone's work links directly back to the initial concept of praising children to get creative results." },
+                { opts: {a: "seldom", b: "usually", c: "probably", d: "reluctant", e: "occasionally"}, ans: "b", expl: "<strong>usually:</strong> If you recognize their work, human nature dictates they will 'usually' (most of the time) respond by giving you their best effort." }
+            ],
+            answers: []
+        }
+    };
+
+    let currentPassageId = null;
+    let currentBlankIndex = null;
+    let totalQuestions = 0;
+
+    window.onload = () => {
+        for (let key in clozeData) totalQuestions += clozeData[key].questions.length;
+        switchPassage('p1', document.querySelector('.tab-btn'));
+    };
+
+    function switchPassage(passageId, btnElement) {
+        currentPassageId = passageId;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+
+        document.getElementById('passageContent').innerHTML = clozeData[passageId].text;
+        
+        clozeData[passageId].answers.forEach((ansData, idx) => {
+            if(ansData) updateBlankUI(passageId, idx, ansData.selectedText, ansData.isCorrect);
+        });
+
+        loadQuestion(passageId, 0);
+    }
+
+    function loadQuestion(passageId, qIndex) {
+        currentBlankIndex = qIndex;
+        const qData = clozeData[passageId].questions[qIndex];
+        const hasAnswered = clozeData[passageId].answers[qIndex];
+
+        document.querySelectorAll('.blank').forEach(b => b.classList.remove('active'));
+        const activeBlank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(activeBlank) activeBlank.classList.add('active');
+
+        document.getElementById('explanationBox').style.display = 'none';
+        document.getElementById('nextBlankBtn').style.display = 'none';
+        
+        const optsContainer = document.getElementById('optionsContainer');
+        optsContainer.innerHTML = '';
+
+        for (const [key, val] of Object.entries(qData.opts)) {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `(${key}) ${val}`;
+            
+            if (hasAnswered) {
+                btn.disabled = true;
+                if (key === qData.ans) btn.classList.add('correct');
+                else if (key === hasAnswered.selectedKey && key !== qData.ans) btn.classList.add('wrong');
+            } else {
+                btn.onclick = () => selectOption(passageId, qIndex, key, val, btn);
+            }
+            optsContainer.appendChild(btn);
+        }
+
+        if (hasAnswered) {
+            document.getElementById('explanationBox').innerHTML = qData.expl;
+            document.getElementById('explanationBox').style.display = 'block';
+            showNextBtn(passageId, qIndex);
+        }
+    }
+
+    function selectOption(passageId, qIndex, selectedKey, selectedText, btnElement) {
+        const qData = clozeData[passageId].questions[qIndex];
+        const isCorrect = (selectedKey === qData.ans);
+        
+        clozeData[passageId].answers[qIndex] = { selectedKey, selectedText, isCorrect };
+
+        const allBtns = document.getElementById('optionsContainer').querySelectorAll('.option-btn');
+        allBtns.forEach(btn => {
+            btn.disabled = true;
+            const btnKey = btn.innerText.match(/\((.)\)/)[1];
+            if (btnKey === qData.ans) btn.classList.add('correct');
+        });
+
+        if (!isCorrect) btnElement.classList.add('wrong');
+
+        const explBox = document.getElementById('explanationBox');
+        explBox.innerHTML = qData.expl;
+        explBox.style.display = 'block';
+
+        updateBlankUI(passageId, qIndex, selectedText, isCorrect);
+        showNextBtn(passageId, qIndex);
+
+        // Auto-scroll the right panel to make the 'Next Blank' button or explanation fully visible
+        setTimeout(() => {
+            const nextBtn = document.getElementById('nextBlankBtn');
+            if (nextBtn && nextBtn.style.display !== 'none') {
+                nextBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            } else {
+                explBox.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }, 100);
+    }
+
+    function updateBlankUI(passageId, qIndex, text, isCorrect) {
+        const blank = document.getElementById(`b-${passageId}-${qIndex}`);
+        if(blank) {
+            blank.innerText = text;
+            blank.classList.remove('active');
+            if (isCorrect) {
+                blank.classList.add('correct');
+                blank.classList.remove('wrong');
+            } else {
+                blank.classList.add('wrong');
+                blank.classList.remove('correct');
+            }
+        }
+    }
+
+    function showNextBtn(passageId, qIndex) {
+        if (qIndex < clozeData[passageId].questions.length - 1) {
+            document.getElementById('nextBlankBtn').style.display = 'block';
+        } else {
+            document.getElementById('nextBlankBtn').style.display = 'none';
+        }
+    }
+
+    function goToNextBlank() {
+        if (currentBlankIndex !== null) {
+            const nextIndex = currentBlankIndex + 1;
+            if (nextIndex < clozeData[currentPassageId].questions.length) {
+                loadQuestion(currentPassageId, nextIndex);
+                const nextBlank = document.getElementById(`b-${currentPassageId}-${nextIndex}`);
+                if(nextBlank) {
+                    document.getElementById('passageScrollPanel').scrollTo({
+                        top: nextBlank.offsetTop - 150,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+    }
+
+    function showResults() {
+        document.getElementById('tabsBar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.querySelector('.btn-finish').style.display = 'none';
+        
+        const resultSection = document.getElementById('resultSection');
+        const resultContainer = document.getElementById('resultContainer');
+        
+        resultSection.style.display = 'block';
+        
+        let score = 0;
+        let resultHTML = '';
+
+        for (let key in clozeData) {
+            const passage = clozeData[key];
+            resultHTML += `<div class="passage-result-title">${passage.title} Results</div>`;
+            
+            passage.questions.forEach((q, idx) => {
+                const userAns = passage.answers[idx];
+                if (userAns && userAns.isCorrect) score++;
+
+                const statusClass = userAns ? (userAns.isCorrect ? 'text-correct' : 'text-wrong') : 'text-muted';
+                const statusText = userAns ? `(${userAns.selectedKey}) ${userAns.selectedText}` : 'Not Attempted';
+                
+                // Hide brackets purely for clean reading in results
+                let contextStr = q.context ? q.context.replace('[...]', `<strong class="${statusClass}">[ ${statusText} ]</strong>`) : `Blank [ ${idx + 1} ]`;
+
+                resultHTML += `
+                    <div class="result-item">
+                        <div class="result-q-text">"${contextStr}"</div>
+                        ${(!userAns || !userAns.isCorrect) ? `<div class="result-ans text-correct">Correct Answer: (${q.ans}) ${q.opts[q.ans]}</div>` : ''}
+                        <div class="result-expl">${q.expl}</div>
+                    </div>
+                `;
+            });
+        }
+
+        const scoreCard = `<div class="score-card">You scored ${score} out of ${totalQuestions}</div>`;
+        const restartBtn = `
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn-finish" style="background: var(--primary); color: white; padding: 15px 30px; font-size: 1.1rem;" onclick="location.reload()">Restart Practice</button>
+            </div>
+        `;
+
+        resultContainer.innerHTML = scoreCard + resultHTML + restartBtn;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>
