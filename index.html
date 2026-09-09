@@ -20,9 +20,10 @@
 
         body {
             margin: 0;
-            height: 100vh;
+            min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,6 +34,8 @@
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            padding: 60px 0;
+            box-sizing: border-box;
         }
 
         body::before {
@@ -44,7 +47,7 @@
         }
 
         #particle-canvas {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
