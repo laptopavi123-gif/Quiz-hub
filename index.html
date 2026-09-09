@@ -14,8 +14,8 @@
             --sphere-gk-2: #498603;
             --sphere-math-1: #000000;
             --sphere-math-2: #86afd3;
-            --sphere-reasoning-1: #c8ff00;
-            --sphere-reasoning-2: #851b00;
+            --sphere-reasoning-1: #a3cc00; /* Darkened slightly for better text contrast */
+            --sphere-reasoning-2: #6b1500;
         }
 
         body {
@@ -40,14 +40,14 @@
 
         body::before {
             content: '';
-            position: absolute;
+            position: fixed; /* Fixed so the dark tint covers the whole screen while scrolling */
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.4); 
             z-index: -2;
         }
 
         #particle-canvas {
-            position: fixed;
+            position: fixed; /* Fixed so particles don't scroll up with the page */
             top: 0;
             left: 0;
             width: 100%;
@@ -63,6 +63,7 @@
             animation: slideDown 0.8s ease-out;
             position: relative;
             z-index: 10;
+            text-align: center;
         }
 
         .orbit-container {
@@ -83,10 +84,16 @@
             cursor: pointer;
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             will-change: transform; 
+            outline: none; /* Removes default focus outline */
         }
 
-        .sphere-wrapper:hover {
+        .sphere-wrapper:hover,
+        .sphere-wrapper:focus {
             transform: translateY(-15px) scale(1.05) !important;
+        }
+
+        .sphere-wrapper:focus .sphere {
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.8), 0 15px 35px rgba(0,0,0,0.5);
         }
 
         .sphere {
@@ -141,10 +148,16 @@
             padding: 5px 15px;
             border-radius: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center; /* Ensures text is centered natively */
+        }
+
+        .icon-emoji {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
         }
 
         .back-btn {
-            position: absolute;
+            position: fixed; /* Fixed so it remains on screen when scrolling */
             top: 40px;
             left: 40px;
             border: none;
@@ -163,9 +176,11 @@
             z-index: 20;
         }
 
-        .back-btn:hover {
+        .back-btn:hover,
+        .back-btn:focus {
             transform: scale(1.05);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            outline: none;
         }
 
         .hidden { display: none !important; }
@@ -174,6 +189,16 @@
         .exit-zoom {
             animation: zoomOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             pointer-events: none;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            h1 { font-size: 2.2rem; margin-bottom: 30px; }
+            .orbit-container { gap: 30px; padding: 20px; }
+            .sphere { width: 120px; height: 120px; }
+            .sphere span { font-size: 2.5rem; }
+            .label { font-size: 1.1rem; }
+            .back-btn { top: 20px; left: 20px; padding: 10px 18px; font-size: 0.9rem; }
         }
 
         @keyframes slideDown {
@@ -196,26 +221,26 @@
 
     <canvas id="particle-canvas"></canvas>
 
-    <button id="back-btn" class="back-btn hidden" onclick="goBack()">❮ Back</button>
+    <button id="back-btn" class="back-btn hidden" tabindex="0" onclick="goBack()">❮ Back</button>
 
     <h1 id="main-title">Select Category</h1>
 
     <div id="level-1" class="orbit-container fade-in">
-        <div class="sphere-wrapper" onclick="showLevel2('english')">
+        <div class="sphere-wrapper" tabindex="0" role="button" onclick="showLevel2('english')" onkeydown="handleKey(event, () => showLevel2('english'))">
             <div class="sphere english"><span>Aa</span></div>
-            <div class="label"><center><div>📘</div></center>English</div>
+            <div class="label"><div class="icon-emoji">📘</div>English</div>
         </div>
-        <div class="sphere-wrapper" onclick="showLevel2('gk')">
+        <div class="sphere-wrapper" tabindex="0" role="button" onclick="showLevel2('gk')" onkeydown="handleKey(event, () => showLevel2('gk'))">
             <div class="sphere gk"><span>Gk</span></div>
-            <div class="label"><div> <center>🌍</center> </div>General knowledge </div>
+            <div class="label"><div class="icon-emoji">🌍</div>General Knowledge</div>
         </div>
-        <div class="sphere-wrapper" onclick="showLevel2('math')">
+        <div class="sphere-wrapper" tabindex="0" role="button" onclick="showLevel2('math')" onkeydown="handleKey(event, () => showLevel2('math'))">
             <div class="sphere math"><span>+-×÷</span></div>
-            <div class="label"><div> <center>📐</center> </div>Mathematics</div>
+            <div class="label"><div class="icon-emoji">📐</div>Mathematics</div>
         </div>
-        <div class="sphere-wrapper" onclick="showLevel2('reasoning')">
+        <div class="sphere-wrapper" tabindex="0" role="button" onclick="showLevel2('reasoning')" onkeydown="handleKey(event, () => showLevel2('reasoning'))">
             <div class="sphere reasoning"><span>Ga</span></div>
-            <div class="label"><div> <center>🧠</center> </div>General Awarness </div>
+            <div class="label"><div class="icon-emoji">🧠</div>General Awareness</div>
         </div>
     </div>
 
@@ -224,6 +249,14 @@
     <div id="level-4" class="orbit-container hidden"></div>
 
     <script>
+        // --- KEYBOARD ACCESSIBILITY HELPER ---
+        function handleKey(event, action) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                action();
+            }
+        }
+
         let currentFolderIndex = 0;
         let currentSubFolderIndex = 0;
 
@@ -464,6 +497,9 @@
 
             if (to > 1) backBtn.classList.remove('hidden');
             else backBtn.classList.add('hidden');
+            
+            // Auto-scroll to top when switching sections
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function populateContainer(container, items, levelNum) {
@@ -482,7 +518,8 @@
                 }
 
                 newHTML += `
-                <div class="sphere-wrapper fade-in" title="${item.name}" style="animation-delay: ${delay}ms" onclick="${clickAction}">
+                <div class="sphere-wrapper fade-in" tabindex="0" role="button" title="${item.name}" style="animation-delay: ${delay}ms" 
+                     onclick="${clickAction}" onkeydown="handleKey(event, () => ${clickAction})">
                     <div class="sphere ${item.theme || 'sub'}">
                         <span style="font-size: 2.5rem">${item.icon}</span>
                     </div>
@@ -502,9 +539,18 @@
                 switchLevel(3, 2, data[currentCategoryKey].title);
             } else if (currentLevel === 2) {
                 switchLevel(2, 1, "Select Category");
-                history.replaceState(null, null, ' ');
+                // Clear the hash without triggering a jump
+                history.pushState('', document.title, window.location.pathname + window.location.search);
             }
         }
+
+        // Support for Native Browser Back Button
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1);
+            if (!hash && currentLevel > 1) {
+                switchLevel(currentLevel, 1, "Select Category");
+            }
+        });
 
         function launchQuiz(file) {
             document.body.classList.add('exit-zoom');
